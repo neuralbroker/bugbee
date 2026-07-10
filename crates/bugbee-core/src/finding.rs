@@ -48,6 +48,19 @@ pub enum FindingStatus {
     WontFix,
 }
 
+impl FindingStatus {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            FindingStatus::New => "new",
+            FindingStatus::Triaged => "triaged",
+            FindingStatus::Confirmed => "confirmed",
+            FindingStatus::FalsePositive => "false_positive",
+            FindingStatus::Fixed => "fixed",
+            FindingStatus::WontFix => "wont_fix",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum LocationRole {

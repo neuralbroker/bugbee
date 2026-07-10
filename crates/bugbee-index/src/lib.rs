@@ -101,10 +101,37 @@ impl RepoIndex {
     }
 
     pub fn read_file(&self, rel: &str) -> Result<String> {
-        let path = Path::new(&self.root).join(rel);
         if bugbee_core::Redactor::is_sensitive_path(rel) {
             return Err(BugbeeError::Engine(format!(
                 "refusing to read sensitive path: {rel}"
+            )));
+        }
+        let rel_path = Path::new(rel);
+        if rel_path.is_absolute()
+            || rel_path.components().any(|component| {
+                matches!(
+                    component,
+                    std::path::Component::ParentDir
+                        | std::path::Component::RootDir
+                        | std::path::Component::Prefix(_)
+                )
+            })
+        {
+            return Err(BugbeeError::Engine(format!(
+                "refusing path outside project index: {rel}"
+            )));
+        }
+        if !self.files.iter().any(|file| file.path == rel) {
+            return Err(BugbeeError::Engine(format!(
+                "refusing unindexed file read: {rel}"
+            )));
+        }
+
+        let root = fs::canonicalize(&self.root)?;
+        let path = fs::canonicalize(root.join(rel_path))?;
+        if !path.starts_with(&root) {
+            return Err(BugbeeError::Engine(format!(
+                "refusing resolved path outside project index: {rel}"
             )));
         }
         Ok(fs::read_to_string(path)?)
@@ -353,6 +380,18 @@ mod tests {
         let idx = Indexer::new(&dir).build().unwrap();
         assert_eq!(idx.file_count(), 1);
         assert_eq!(idx.files[0].path, "app.py");
+    }
+
+    #[test]
+    fn read_file_rejects_path_traversal_and_unindexed_files() {
+        let dir = tempfile_dir();
+        fs::write(dir.join("app.py"), "def app():\n    pass\n").unwrap();
+        fs::write(dir.join("notes.txt"), "not indexed").unwrap();
+        let idx = Indexer::new(&dir).build().unwrap();
+
+        assert!(idx.read_file("app.py").is_ok());
+        assert!(idx.read_file("../app.py").is_err());
+        assert!(idx.read_file("notes.txt").is_err());
     }
 
     fn tempfile_dir() -> PathBuf {

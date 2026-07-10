@@ -20,15 +20,20 @@ static PATTERNS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
             "***REDACTED PRIVATE KEY***",
         ),
         (
-            Regex::new(r"\b(sk-[A-Za-z0-9]{20,})\b").unwrap(),
+            Regex::new(r"\b(sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{20,})\b").unwrap(),
             "***REDACTED_KEY***",
         ),
         (
-            Regex::new(r"\b(xai-[A-Za-z0-9]{20,})\b").unwrap(),
+            Regex::new(r"\b(sk-ant-[A-Za-z0-9_-]{20,})\b").unwrap(),
             "***REDACTED_KEY***",
         ),
         (
-            Regex::new(r"\b(ghp_[A-Za-z0-9]{20,})\b").unwrap(),
+            Regex::new(r"\b(xai-[A-Za-z0-9_-]{20,})\b").unwrap(),
+            "***REDACTED_KEY***",
+        ),
+        (
+            Regex::new(r"\b(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b")
+                .unwrap(),
             "***REDACTED_TOKEN***",
         ),
         (
@@ -98,6 +103,22 @@ mod tests {
         let s = r.redact("api_key=sk-abcdefghijklmnopqrstuvwxyz123456");
         assert!(!s.contains("sk-abcdef"));
         assert!(s.contains("REDACTED") || s.contains("***"));
+    }
+
+    #[test]
+    fn redacts_current_provider_and_github_token_formats() {
+        let redactor = Redactor::enterprise();
+        let tokens = [
+            "sk-proj-abcdefghijklmnopqrstuvwxyz123456",
+            "sk-ant-api03-abcdefghijklmnopqrstuvwxyz123456",
+            "github_pat_abcdefghijklmnopqrstuvwxyz_1234567890",
+        ];
+        for token in tokens {
+            assert!(
+                !redactor.redact(token).contains(token),
+                "token should be redacted: {token}"
+            );
+        }
     }
 
     #[test]

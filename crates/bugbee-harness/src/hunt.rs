@@ -37,13 +37,10 @@ pub struct HuntCampaign {
 impl HuntCampaign {
     pub fn new(root: impl AsRef<Path>, config: BugbeeConfig) -> Self {
         let root = root.as_ref().to_path_buf();
-        let mut rules_dirs = vec![
-            root.join("rules"),
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../rules/owasp-2025"),
-        ];
-        // Also workspace-relative when installed from source tree
+        let mut rules_dirs = vec![root.join("rules")];
+        // Also permit a workspace-level custom rules directory in source use.
+        // The maintained baseline is embedded in the engine for release builds.
         if let Ok(cwd) = std::env::current_dir() {
-            rules_dirs.push(cwd.join("rules/owasp-2025"));
             rules_dirs.push(cwd.join("rules"));
         }
         Self {

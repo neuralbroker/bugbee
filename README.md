@@ -17,7 +17,7 @@
 ## Features
 
 - **Any model**: OpenAI-compatible endpoints, xAI Grok, DeepSeek, Qwen, Kimi, GLM, Claude, GPT, Ollama, OpenRouter, custom gateways — you bring the key and model id
-- **Deterministic engines**: pattern rules, secrets, taint heuristics (Python / JS / TS / Go)
+- **Deterministic engines**: embedded OWASP baseline rules, secrets, taint heuristics (Python / JS / TS / Go)
 - **Repository-safe indexing**: honors Git ignores and excludes generated, dependency, and local-state directories by default
 - **Scoring**: Bugbee Risk Score (BRS) + Evidence Completeness (ECS) + dual-review gates
 - **Review queue**: confirm / false-positive / fixed with SARIF export
