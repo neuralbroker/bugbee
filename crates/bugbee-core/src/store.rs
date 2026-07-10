@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use rusqlite::{params, Connection};
@@ -69,6 +70,45 @@ impl FindingStore {
         Ok(())
     }
 
+    /// Record the latest observation of a detector finding while preserving
+    /// analyst decisions and history from earlier scans.
+    pub fn upsert_observation(&self, finding: &Finding) -> Result<()> {
+        let mut merged = finding.clone();
+        if let Ok(existing) = self.get(&finding.id) {
+            merged.created_at = existing.created_at;
+            merged.reviews = existing.reviews;
+            merged.patch_diff = existing.patch_diff;
+            merged.status = match existing.status {
+                // A finding marked fixed that is still detected has regressed.
+                FindingStatus::Fixed => FindingStatus::New,
+                status => status,
+            };
+        }
+        merged.updated_at = chrono::Utc::now();
+        self.upsert(&merged)
+    }
+
+    /// Remove stale findings that were never given a durable analyst decision.
+    /// Confirmed, false-positive, fixed, and won't-fix findings remain as history.
+    pub fn prune_unreviewed_except(&self, observed_ids: &[Uuid]) -> Result<usize> {
+        let statuses = "'new', 'triaged'";
+        if observed_ids.is_empty() {
+            return Ok(self.conn.execute(
+                &format!("DELETE FROM findings WHERE status IN ({statuses})"),
+                [],
+            )?);
+        }
+
+        let placeholders = std::iter::repeat_n("?", observed_ids.len())
+            .collect::<Vec<_>>()
+            .join(", ");
+        let query = format!(
+            "DELETE FROM findings WHERE status IN ({statuses}) AND id NOT IN ({placeholders})"
+        );
+        let ids = observed_ids.iter().map(Uuid::to_string).collect::<Vec<_>>();
+        Ok(self.conn.execute(&query, rusqlite::params_from_iter(ids))?)
+    }
+
     pub fn get(&self, id: &Uuid) -> Result<Finding> {
         let json: String = self
             .conn
@@ -118,7 +158,27 @@ impl FindingStore {
     pub fn export_sarif(&self) -> Result<serde_json::Value> {
         let findings = self.list_all()?;
         let mut results = Vec::new();
+        let mut rules = BTreeMap::new();
         for f in &findings {
+            let rule_id = f
+                .evidence
+                .rule_id
+                .clone()
+                .unwrap_or_else(|| f.category.clone());
+            rules.entry(rule_id.clone()).or_insert_with(|| {
+                serde_json::json!({
+                    "id": rule_id,
+                    "name": f.title,
+                    "shortDescription": { "text": f.title },
+                    "fullDescription": { "text": f.description },
+                    "help": { "text": f.evidence.agent_notes.clone().unwrap_or_else(|| "Review the evidence and validate the finding before remediation.".into()) },
+                    "properties": {
+                        "category": f.category,
+                        "cwe": f.cwe,
+                        "owasp": f.owasp
+                    }
+                })
+            });
             let level = match f.severity {
                 crate::finding::Severity::Critical | crate::finding::Severity::High => "error",
                 crate::finding::Severity::Medium => "warning",
@@ -135,7 +195,7 @@ impl FindingStore {
                 })
             });
             results.push(serde_json::json!({
-                "ruleId": f.evidence.rule_id.clone().unwrap_or_else(|| f.category.clone()),
+                "ruleId": rule_id,
                 "level": level,
                 "message": { "text": format!("{} (BRS={:.1}, ECS={:.2})", f.title, f.brs, f.ecs) },
                 "locations": physical.map(|p| vec![serde_json::json!({"physicalLocation": p})]).unwrap_or_default(),
@@ -157,13 +217,119 @@ impl FindingStore {
                 "tool": {
                     "driver": {
                         "name": "Bugbee",
-                        "informationUri": "https://github.com/bugbee-dev/bugbee",
+                        "informationUri": "https://github.com/neuralbroker/bugbee",
                         "version": env!("CARGO_PKG_VERSION"),
-                        "rules": []
+                        "rules": rules.into_values().collect::<Vec<_>>()
                     }
                 },
                 "results": results
             }]
         }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::finding::{Evidence, FindingLocation, LocationRole, Severity};
+    use crate::scoring::BrsWeights;
+
+    fn test_store() -> (FindingStore, std::path::PathBuf) {
+        let path = std::env::temp_dir().join(format!("bugbee-store-{}.db", Uuid::new_v4()));
+        let store = FindingStore::open(&path).expect("open temporary finding store");
+        (store, path)
+    }
+
+    fn candidate() -> Finding {
+        let mut finding = Finding::new("Unsafe evaluation", "desc", Severity::High, "injection");
+        finding.evidence = Evidence {
+            rule_id: Some("python.eval".into()),
+            ..Evidence::default()
+        };
+        finding.add_location(FindingLocation {
+            file: "app.py".into(),
+            start_line: 9,
+            end_line: 9,
+            start_col: None,
+            end_col: None,
+            role: LocationRole::Sink,
+            snippet: None,
+        });
+        finding.recompute_scores(&BrsWeights::default());
+        finding
+    }
+
+    #[test]
+    fn observations_preserve_review_state_and_do_not_duplicate() {
+        let (store, path) = test_store();
+        let first = candidate();
+        store.upsert_observation(&first).unwrap();
+        store
+            .update_status(&first.id, FindingStatus::Confirmed)
+            .unwrap();
+
+        store.upsert_observation(&candidate()).unwrap();
+        assert_eq!(store.count().unwrap(), 1);
+        assert_eq!(
+            store.get(&first.id).unwrap().status,
+            FindingStatus::Confirmed
+        );
+
+        drop(store);
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn pruning_only_removes_unreviewed_findings() {
+        let (store, path) = test_store();
+        let active = candidate();
+        store.upsert_observation(&active).unwrap();
+
+        let mut stale = candidate();
+        stale.locations[0].start_line = 10;
+        stale.locations[0].end_line = 10;
+        stale.recompute_scores(&BrsWeights::default());
+        store.upsert_observation(&stale).unwrap();
+        store
+            .update_status(&stale.id, FindingStatus::Confirmed)
+            .unwrap();
+
+        assert_eq!(store.prune_unreviewed_except(&[active.id]).unwrap(), 0);
+        assert_eq!(store.count().unwrap(), 2);
+
+        let mut disposable = candidate();
+        disposable.locations[0].start_line = 11;
+        disposable.locations[0].end_line = 11;
+        disposable.recompute_scores(&BrsWeights::default());
+        store.upsert_observation(&disposable).unwrap();
+        assert_eq!(store.prune_unreviewed_except(&[active.id]).unwrap(), 1);
+        assert_eq!(store.count().unwrap(), 2);
+
+        drop(store);
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn sarif_includes_rule_metadata_and_locations() {
+        let (store, path) = test_store();
+        let finding = candidate();
+        store.upsert_observation(&finding).unwrap();
+
+        let sarif = store.export_sarif().unwrap();
+        let run = &sarif["runs"][0];
+        assert_eq!(sarif["version"], "2.1.0");
+        assert_eq!(run["tool"]["driver"]["rules"].as_array().unwrap().len(), 1);
+        assert_eq!(
+            run["tool"]["driver"]["rules"][0]["shortDescription"]["text"],
+            "Unsafe evaluation"
+        );
+        assert_eq!(run["results"][0]["ruleId"], "python.eval");
+        assert_eq!(
+            run["results"][0]["locations"][0]["physicalLocation"]["region"]["startLine"],
+            9
+        );
+
+        drop(store);
+        std::fs::remove_file(path).unwrap();
     }
 }

@@ -68,6 +68,7 @@ impl HuntCampaign {
         let mut auto_confirmed = 0usize;
         let mut human_queue = 0usize;
         let mut dropped = 0usize;
+        let mut observed_ids = Vec::new();
 
         // Optional LLM adversarial review when a model is configured
         let gateway = if self.use_llm_review {
@@ -122,13 +123,16 @@ impl HuntCampaign {
             }
 
             f.recompute_scores(&self.config.brs_weights);
-            store.upsert(f)?;
+            store.upsert_observation(f)?;
+            observed_ids.push(f.id);
         }
+
+        store.prune_unreviewed_except(&observed_ids)?;
 
         let report = HuntReport {
             root: self.root.display().to_string(),
             files_indexed: index.file_count(),
-            findings: store.count()?,
+            findings: observed_ids.len(),
             auto_confirmed,
             human_queue,
             dropped,
