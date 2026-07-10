@@ -39,7 +39,7 @@ enum Commands {
     Connect {
         /// Provider id (e.g. xai, deepseek, openai, ollama, or custom)
         provider: Option<String>,
-        /// API key (prefer env vars in enterprise)
+        /// API key to store in the OS keychain (never written to bugbee.toml)
         #[arg(long)]
         api_key: Option<String>,
         /// Custom OpenAI-compatible base URL
@@ -228,9 +228,6 @@ fn cmd_connect(
     if let Some(u) = base_url {
         entry.base_url = u;
     }
-    if let Some(k) = api_key {
-        entry.api_key = Some(k);
-    }
     if let Some(m) = model {
         cfg.inference.hunt = Some(format!("{pid}/{m}"));
         cfg.inference.scout = Some(format!("{pid}/{m}"));
@@ -240,6 +237,9 @@ fn cmd_connect(
         if !entry.models.contains(&m) {
             entry.models.push(m);
         }
+    }
+    if let Some(k) = api_key {
+        cfg.store_api_key(&pid, &k)?;
     }
     cfg.save(&cfg_path)?;
     println!(
@@ -476,11 +476,11 @@ fn cmd_doctor(root: &std::path::Path) -> Result<()> {
             continue;
         }
 
-        if provider.api_key.is_some() && provider.api_key_env.is_some() {
+        if provider.api_key.is_some() {
             warnings += 1;
             warn(
                 &format!("{role} provider"),
-                "inline API key is configured; prefer the configured environment variable",
+                "legacy inline API key is configured; migrate it to the OS keychain",
             );
         }
 

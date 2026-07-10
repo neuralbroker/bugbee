@@ -44,6 +44,10 @@ bugbee tui
 bugbee report --output findings.sarif.json
 ```
 
+Keys passed to `bugbee connect --api-key` are stored in the local OS keychain;
+they are not written to `bugbee.toml`. Environment variables remain supported
+for CI and headless environments.
+
 ### Demo fixtures
 
 ```bash
