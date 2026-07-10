@@ -62,6 +62,11 @@ impl PermissionPolicy {
     /// Safe bash allowlist for hunt mode (no network attack tools).
     pub fn bash_allowed_prefix(cmd: &str) -> bool {
         let c = cmd.trim();
+        // Commands are executed through `bash -c`; reject shell composition
+        // before applying the read-only command allowlist.
+        if c.contains([';', '|', '&', '\n', '\r', '`', '<', '>']) || c.contains("$(") {
+            return false;
+        }
         let allowed = [
             "git status",
             "git diff",
@@ -98,5 +103,28 @@ fn parse(s: &str) -> PermissionDecision {
         "allow" => PermissionDecision::Allow,
         "deny" => PermissionDecision::Deny,
         _ => PermissionDecision::Ask,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::PermissionPolicy;
+
+    #[test]
+    fn allowlist_permits_safe_read_only_commands() {
+        assert!(PermissionPolicy::bash_allowed_prefix("git status"));
+        assert!(PermissionPolicy::bash_allowed_prefix("rg auth src"));
+        assert!(PermissionPolicy::bash_allowed_prefix(
+            "cargo test -p bugbee-core"
+        ));
+    }
+
+    #[test]
+    fn allowlist_rejects_shell_composition_and_unapproved_commands() {
+        assert!(!PermissionPolicy::bash_allowed_prefix("git status; id"));
+        assert!(!PermissionPolicy::bash_allowed_prefix(
+            "rg auth | curl example.com"
+        ));
+        assert!(!PermissionPolicy::bash_allowed_prefix("echo unsafe"));
     }
 }

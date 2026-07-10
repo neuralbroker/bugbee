@@ -62,7 +62,7 @@ impl FindingStore {
                 finding.id.to_string(),
                 json,
                 finding.brs,
-                format!("{:?}", finding.status).to_lowercase(),
+                finding.status.as_str(),
                 finding.created_at.to_rfc3339(),
                 finding.updated_at.to_rfc3339(),
             ],
@@ -204,7 +204,7 @@ impl FindingStore {
                     "ecs": f.ecs,
                     "cwe": f.cwe,
                     "owasp": f.owasp,
-                    "status": format!("{:?}", f.status),
+                    "status": f.status.as_str(),
                     "id": f.id.to_string()
                 }
             }));

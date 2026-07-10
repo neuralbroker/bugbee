@@ -7,7 +7,7 @@ pub mod taint;
 use bugbee_core::{BrsWeights, Finding};
 use bugbee_index::RepoIndex;
 
-use crate::rules::{load_rules_dir, RulePack};
+use crate::rules::{builtin_rule_packs, load_rules_dir, RulePack};
 use crate::secrets::scan_secrets;
 use crate::taint::scan_taint_heuristics;
 
@@ -32,9 +32,15 @@ impl HuntEngine {
                 packs.extend(load_rules_dir(d)?);
             }
         }
-        // Dedup packs by name (same rules file resolved via multiple paths)
-        let mut seen_names = std::collections::HashSet::new();
-        packs.retain(|p| seen_names.insert(p.name.clone()));
+        // External files take precedence over the embedded baseline, allowing
+        // enterprises to replace a built-in rule by id without duplicating it.
+        packs.extend(builtin_rule_packs()?);
+        let mut seen_rule_ids = std::collections::HashSet::new();
+        for pack in &mut packs {
+            pack.rules
+                .retain(|rule| seen_rule_ids.insert(rule.id.clone()));
+        }
+        packs.retain(|pack| !pack.rules.is_empty());
         Ok(Self { packs, weights })
     }
 
@@ -99,6 +105,15 @@ mod tests {
             .expect("scan fixture")
     }
 
+    fn scan_builtin_fixture(name: &str) -> Vec<Finding> {
+        let root = workspace_path(&format!("fixtures/{name}"));
+        let index = Indexer::new(root).build().expect("index fixture");
+        HuntEngine::with_rules_dirs(&[], BrsWeights::default())
+            .expect("load built-in rules")
+            .run(&index)
+            .expect("scan fixture")
+    }
+
     fn rule_ids(findings: &[Finding]) -> BTreeSet<String> {
         findings
             .iter()
@@ -152,5 +167,14 @@ mod tests {
     fn separated_python_source_and_sink_do_not_create_a_taint_finding() {
         let findings = scan_fixture("python-safe");
         assert!(!rule_ids(&findings).contains("taint.py-command-injection"));
+    }
+
+    #[test]
+    fn embedded_rule_pack_keeps_release_binaries_useful_without_rule_files() {
+        let findings = scan_builtin_fixture("python-vuln");
+        let ids = rule_ids(&findings);
+        assert!(ids.contains("py-eval-injection"));
+        assert!(ids.contains("py-pickle-load"));
+        assert!(ids.contains("py-flask-debug"));
     }
 }

@@ -104,7 +104,8 @@ pub fn execute_tool(ctx: &ToolContext, name: &str, args: &serde_json::Value) -> 
                 if let Ok(content) = ctx.index.read_file(&f.path) {
                     for (i, line) in content.lines().enumerate() {
                         if re.is_match(line) {
-                            hits.push(format!("{}:{}: {}", f.path, i + 1, line.trim()));
+                            let snippet = Redactor::enterprise().redact(line.trim());
+                            hits.push(format!("{}:{}: {snippet}", f.path, i + 1));
                             if hits.len() >= 50 {
                                 break;
                             }
@@ -198,7 +199,17 @@ fn truncate(s: &str, max: usize) -> String {
     if s.len() <= max {
         s.to_string()
     } else {
-        format!("{}…\n[truncated {} bytes]", &s[..max], s.len() - max)
+        let boundary = s
+            .char_indices()
+            .take_while(|(index, _)| *index <= max)
+            .map(|(index, _)| index)
+            .last()
+            .unwrap_or(0);
+        format!(
+            "{}…\n[truncated {} bytes]",
+            &s[..boundary],
+            s.len() - boundary
+        )
     }
 }
 
@@ -208,9 +219,61 @@ pub fn write_patch_proposal(
     finding_id: &str,
     diff: &str,
 ) -> Result<std::path::PathBuf> {
+    if finding_id.is_empty()
+        || !finding_id
+            .chars()
+            .all(|character| character.is_ascii_hexdigit() || character == '-')
+    {
+        return Err(BugbeeError::Other(
+            "patch proposal id must be a UUID-like identifier".into(),
+        ));
+    }
     let dir = root.join(".bugbee").join("patches");
     fs::create_dir_all(&dir)?;
     let path = dir.join(format!("{finding_id}.diff"));
     fs::write(&path, diff)?;
     Ok(path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{execute_tool, truncate, write_patch_proposal, ToolContext};
+    use crate::permissions::PermissionPolicy;
+    use bugbee_index::Indexer;
+    use serde_json::json;
+
+    #[test]
+    fn truncation_preserves_utf8_boundaries() {
+        let output = truncate("αβγ", 3);
+        assert!(output.starts_with('α'));
+        assert!(output.contains("truncated"));
+    }
+
+    #[test]
+    fn patch_proposal_rejects_path_traversal() {
+        let root = std::env::temp_dir().join("bugbee-patch-test");
+        assert!(write_patch_proposal(&root, "../../escape", "diff").is_err());
+    }
+
+    #[test]
+    fn grep_redacts_secret_like_matches_before_returning_them() {
+        let root = std::env::temp_dir().join(format!("bugbee-grep-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&root).unwrap();
+        let token = "github_pat_abcdefghijklmnopqrstuvwxyz_1234567890";
+        std::fs::write(root.join("app.py"), format!("token = '{token}'\n")).unwrap();
+        let index = Indexer::new(&root).build().unwrap();
+        let policy = PermissionPolicy::hunt_default();
+        let context = ToolContext {
+            index: &index,
+            policy: &policy,
+            auto_approve: false,
+        };
+
+        let output = execute_tool(&context, "grep", &json!({"pattern": "github_pat"}))
+            .expect("grep succeeds");
+        assert!(!output.contains(token));
+        assert!(output.contains("REDACTED"));
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
 }

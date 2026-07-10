@@ -305,10 +305,11 @@ fn cmd_findings(root: &std::path::Path, limit: usize) -> Result<()> {
             .map(|l| format!("{}:{}", l.file, l.start_line))
             .unwrap_or_else(|| "-".into());
         println!(
-            "{} BRS={:5.1} ECS={:.2} {}  {}  {}",
+            "{} BRS={:5.1} ECS={:.2} status={} id={}  {}  {}",
             sev,
             f.brs,
             f.ecs,
+            f.status.as_str(),
             &f.id.to_string()[..8],
             loc,
             f.title

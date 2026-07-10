@@ -6,6 +6,9 @@ use bugbee_index::{Lang, RepoIndex};
 use regex::Regex;
 use serde::Deserialize;
 
+const BUILTIN_OWASP_2025_RULES: &str =
+    include_str!("../../../rules/owasp-2025/injection-crypto-misconfig.yaml");
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Rule {
     pub id: String,
@@ -120,6 +123,18 @@ pub fn load_rules_dir(dir: &Path) -> anyhow::Result<Vec<RulePack>> {
         });
     }
     Ok(packs)
+}
+
+/// The default defensive rule pack is embedded in every Bugbee binary so a
+/// downloaded release has the same baseline coverage as a source checkout.
+/// Filesystem rule packs remain supported for organization-specific rules.
+pub fn builtin_rule_packs() -> anyhow::Result<Vec<RulePack>> {
+    let rules: Vec<Rule> = serde_yaml::from_str(BUILTIN_OWASP_2025_RULES)
+        .map_err(|error| anyhow::anyhow!("invalid embedded OWASP 2025 rule pack: {error}"))?;
+    Ok(vec![RulePack {
+        name: "builtin-owasp-2025".into(),
+        rules,
+    }])
 }
 
 fn parse_severity(s: &str) -> Severity {
