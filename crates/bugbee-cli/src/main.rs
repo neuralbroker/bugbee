@@ -39,7 +39,7 @@ enum Commands {
     Connect {
         /// Provider id (e.g. xai, deepseek, openai, ollama, or custom)
         provider: Option<String>,
-        /// API key (prefer env vars in enterprise)
+        /// API key to store in the OS keychain (never written to bugbee.toml)
         #[arg(long)]
         api_key: Option<String>,
         /// Custom OpenAI-compatible base URL
@@ -85,6 +85,8 @@ enum Commands {
     },
     /// List configured providers and models
     Models { provider: Option<String> },
+    /// Check local configuration, model routing, and safe defaults without making network calls
+    Doctor,
     /// Launch terminal UI
     Tui,
 }
@@ -126,6 +128,7 @@ async fn main() -> Result<()> {
         Commands::Report { output } => cmd_report(&root, &output)?,
         Commands::Ask { question, role } => cmd_ask(&root, &question, &role).await?,
         Commands::Models { provider } => cmd_models(&root, provider.as_deref()).await?,
+        Commands::Doctor => cmd_doctor(&root)?,
         Commands::Tui => tui::run(&root)?,
     }
     Ok(())
@@ -168,6 +171,7 @@ python, javascript, typescript, go
     println!("{} {}", "initialized".green().bold(), cfg_path.display());
     println!("  store: {}", store_path(root).display());
     println!("  next:  bugbee connect --provider xai --model grok-4.5");
+    println!("         bugbee doctor");
     println!("         bugbee hunt");
     Ok(())
 }
@@ -224,9 +228,6 @@ fn cmd_connect(
     if let Some(u) = base_url {
         entry.base_url = u;
     }
-    if let Some(k) = api_key {
-        entry.api_key = Some(k);
-    }
     if let Some(m) = model {
         cfg.inference.hunt = Some(format!("{pid}/{m}"));
         cfg.inference.scout = Some(format!("{pid}/{m}"));
@@ -236,6 +237,9 @@ fn cmd_connect(
         if !entry.models.contains(&m) {
             entry.models.push(m);
         }
+    }
+    if let Some(k) = api_key {
+        cfg.store_api_key(&pid, &k)?;
     }
     cfg.save(&cfg_path)?;
     println!(
@@ -389,4 +393,141 @@ async fn cmd_models(root: &std::path::Path, provider: Option<&str>) -> Result<()
         );
     }
     Ok(())
+}
+
+fn cmd_doctor(root: &std::path::Path) -> Result<()> {
+    let config_path = BugbeeConfig::project_config_path(root);
+    let cfg = BugbeeConfig::load_layered(Some(root))?;
+    let mut warnings = 0usize;
+
+    println!("{}", "Bugbee doctor".bold());
+    println!("  root: {}", root.display());
+
+    if config_path.exists() {
+        pass("project configuration", &config_path.display().to_string());
+    } else {
+        warnings += 1;
+        warn("project configuration", "missing — run `bugbee init`");
+    }
+
+    if cfg.permissions.network.eq_ignore_ascii_case("deny") {
+        pass("agent network policy", "deny by default");
+    } else {
+        warnings += 1;
+        warn(
+            "agent network policy",
+            "not set to deny; review [permissions].network",
+        );
+    }
+
+    if cfg
+        .permissions
+        .external_directory
+        .eq_ignore_ascii_case("deny")
+    {
+        pass("external directory policy", "deny by default");
+    } else {
+        warnings += 1;
+        warn(
+            "external directory policy",
+            "not set to deny; review [permissions].external_directory",
+        );
+    }
+
+    for (role, model_ref) in [
+        ("hunt", cfg.inference.hunt.as_deref()),
+        ("scout", cfg.inference.scout.as_deref()),
+        ("review", cfg.inference.review.as_deref()),
+        ("patch", cfg.inference.patch.as_deref()),
+    ] {
+        let Some(model_ref) = model_ref else {
+            warnings += 1;
+            warn(&format!("{role} model"), "not configured");
+            continue;
+        };
+
+        let (provider_id, model_id) = match cfg.parse_model_ref(model_ref) {
+            Ok(reference) => reference,
+            Err(error) => {
+                warnings += 1;
+                warn(&format!("{role} model"), &error.to_string());
+                continue;
+            }
+        };
+
+        let Some(provider) = cfg.providers.get(&provider_id) else {
+            warnings += 1;
+            warn(
+                &format!("{role} model"),
+                &format!("provider `{provider_id}` is not configured"),
+            );
+            continue;
+        };
+
+        if provider.protocol != "openai_compat" {
+            warnings += 1;
+            warn(
+                &format!("{role} model"),
+                &format!(
+                    "`{provider_id}` uses `{}`; this native adapter is not implemented yet",
+                    provider.protocol
+                ),
+            );
+            continue;
+        }
+
+        if provider.api_key.is_some() {
+            warnings += 1;
+            warn(
+                &format!("{role} provider"),
+                "legacy inline API key is configured; migrate it to the OS keychain",
+            );
+        }
+
+        match cfg.resolve_api_key(&provider_id) {
+            Ok(_) => pass(
+                &format!("{role} model"),
+                &format!("{provider_id}/{model_id} is ready"),
+            ),
+            Err(_) => {
+                warnings += 1;
+                let source = provider
+                    .api_key_env
+                    .as_deref()
+                    .unwrap_or("a local provider key");
+                warn(
+                    &format!("{role} model"),
+                    &format!("{provider_id}/{model_id} needs {source}"),
+                );
+            }
+        }
+    }
+
+    if store_path(root).exists() {
+        pass("finding store", "ready");
+    } else {
+        println!(
+            "  {} finding store: created on the first hunt",
+            "•".dimmed()
+        );
+    }
+
+    if warnings == 0 {
+        println!("\n{}", "No issues found.".green().bold());
+    } else {
+        println!(
+            "\n{} {} item(s) need attention before model-backed workflows.",
+            "Review:".yellow().bold(),
+            warnings
+        );
+    }
+    Ok(())
+}
+
+fn pass(label: &str, detail: &str) {
+    println!("  {} {}: {}", "✓".green().bold(), label, detail);
+}
+
+fn warn(label: &str, detail: &str) {
+    println!("  {} {}: {}", "!".yellow().bold(), label, detail);
 }

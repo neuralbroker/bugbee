@@ -3,6 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use directories::ProjectDirs;
+use keyring::Entry;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{BugbeeError, Result};
@@ -15,7 +16,9 @@ pub struct ProviderConfig {
     pub base_url: String,
     /// Environment variable holding the API key (preferred for enterprise).
     pub api_key_env: Option<String>,
-    /// Inline key only for local dev; prefer keyring / env.
+    /// Deprecated compatibility field. New credentials are stored in the OS keychain.
+    /// Existing values are read only as a migration path and should be removed.
+    #[serde(default)]
     pub api_key: Option<String>,
     /// Free-form model ids available on this endpoint (not an allowlist for the platform).
     #[serde(default)]
@@ -167,6 +170,8 @@ pub struct BugbeeConfig {
 }
 
 impl BugbeeConfig {
+    const KEYRING_SERVICE: &'static str = "bugbee";
+
     pub fn default_project() -> Self {
         let mut providers = HashMap::new();
         providers.insert(
@@ -289,14 +294,55 @@ impl BugbeeConfig {
                 }
             }
         }
+        if let Some(key) = self.load_keyring_api_key(provider_id)? {
+            return Ok(key);
+        }
         if let Some(k) = &p.api_key {
             if !k.is_empty() {
                 return Ok(k.clone());
             }
         }
         Err(BugbeeError::Config(format!(
-            "no API key for provider '{provider_id}' (set env or /connect)"
+            "no API key for provider '{provider_id}' (set an environment variable or run /connect)"
         )))
+    }
+
+    /// Store a provider credential in the user's OS keychain. The value is never
+    /// persisted in `bugbee.toml`.
+    pub fn store_api_key(&mut self, provider_id: &str, api_key: &str) -> Result<()> {
+        if api_key.is_empty() {
+            return Err(BugbeeError::Config("API key cannot be empty".into()));
+        }
+        if !self.providers.contains_key(provider_id) {
+            return Err(BugbeeError::NotFound(format!("provider '{provider_id}'")));
+        }
+
+        self.keyring_entry(provider_id)?
+            .set_password(api_key)
+            .map_err(|e| {
+                BugbeeError::Config(format!("could not store provider key in OS keychain: {e}"))
+            })?;
+
+        if let Some(provider) = self.providers.get_mut(provider_id) {
+            provider.api_key = None;
+        }
+        Ok(())
+    }
+
+    fn load_keyring_api_key(&self, provider_id: &str) -> Result<Option<String>> {
+        match self.keyring_entry(provider_id)?.get_password() {
+            Ok(key) if !key.is_empty() => Ok(Some(key)),
+            Ok(_) => Ok(None),
+            Err(keyring::Error::NoEntry) => Ok(None),
+            Err(error) => Err(BugbeeError::Config(format!(
+                "could not access OS keychain for provider '{provider_id}': {error}"
+            ))),
+        }
+    }
+
+    fn keyring_entry(&self, provider_id: &str) -> Result<Entry> {
+        Entry::new(Self::KEYRING_SERVICE, &format!("provider:{provider_id}"))
+            .map_err(|e| BugbeeError::Config(format!("could not open OS keychain: {e}")))
     }
 
     /// Parse "provider/model" or use default_provider + bare model.

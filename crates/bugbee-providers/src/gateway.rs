@@ -35,14 +35,18 @@ impl InferenceGateway {
                     }
                 }
             };
-            match pcfg.protocol.as_str() {
-                "openai_compat" | "anthropic" | _ => {
-                    // Anthropic also often proxied; native path can be added later.
-                    // Primary path: OpenAI-compatible (covers xAI, DeepSeek, Qwen, Kimi, GLM, Ollama, OpenRouter, custom).
-                    let client = OpenAiCompatProvider::new(pcfg, key)?;
-                    clients.insert(id.clone(), Arc::new(client));
-                }
+            if pcfg.protocol != "openai_compat" {
+                tracing::warn!(
+                    provider = %id,
+                    protocol = %pcfg.protocol,
+                    "provider skipped: native protocol adapter is not implemented"
+                );
+                continue;
             }
+
+            // Covers xAI, DeepSeek, Qwen, Kimi, GLM, Ollama, OpenRouter, and custom gateways.
+            let client = OpenAiCompatProvider::new(pcfg, key)?;
+            clients.insert(id.clone(), Arc::new(client));
         }
         Ok(Self { config, clients })
     }

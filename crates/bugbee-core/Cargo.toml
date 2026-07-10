@@ -21,3 +21,4 @@ rusqlite = { workspace = true }
 tracing = { workspace = true }
 indexmap = { workspace = true }
 once_cell = { workspace = true }
+keyring = { workspace = true }

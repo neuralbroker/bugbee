@@ -52,17 +52,37 @@ fn run_loop(
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([
-                    Constraint::Length(3),
+                    Constraint::Length(4),
                     Constraint::Percentage(45),
                     Constraint::Percentage(55),
                 ])
                 .split(f.area());
 
+            let indigo = Color::Rgb(108, 124, 255);
+            let charcoal = Color::Rgb(17, 19, 24);
+            let muted = Color::Rgb(189, 193, 198);
             let header = Paragraph::new(Line::from(vec![
-                Span::styled(" BUGBEE ", Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD)),
-                Span::raw(" findings · j/k move · enter detail · q quit"),
+                Span::styled(
+                    " ◈ ",
+                    Style::default().fg(indigo).add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    "BUGBEE",
+                    Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
+                ),
+                Span::styled("  /  SECURITY CONSOLE", Style::default().fg(indigo)),
+                Span::styled(
+                    "    findings · j/k move · q quit",
+                    Style::default().fg(muted),
+                ),
             ]))
-            .block(Block::default().borders(Borders::ALL).title("Hunt"));
+            .style(Style::default().bg(charcoal))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(indigo))
+                    .title(Span::styled(" BUG HUNT ", Style::default().fg(indigo))),
+            );
             f.render_widget(header, chunks[0]);
 
             let items: Vec<ListItem> = findings

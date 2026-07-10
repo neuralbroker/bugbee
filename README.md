@@ -1,8 +1,16 @@
-# Bugbee
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/bugbee-mark-light.png">
+    <img src="assets/brand/bugbee-mark-v2.png" width="144" alt="Bugbee logo — an abstract geometric signal-path mark">
+  </picture>
+</p>
 
-**Terminal-first agentic IDE for bug fixing and vulnerability hunting.**
+<h1 align="center">Bugbee</h1>
 
-Lightweight TUI/CLI · heavy local analysis · model-agnostic BYOK · human + auto review.
+<p align="center">
+  <strong>Terminal-first agentic IDE for bug fixing and vulnerability hunting.</strong><br>
+  Lightweight TUI/CLI · heavy local analysis · model-agnostic BYOK · human + auto review.
+</p>
 
 > Defensive only. No live exploitation. Designed for enterprises and confidential codebases.
 
@@ -28,12 +36,17 @@ bugbee init
 bugbee connect --provider xai --api-key "$XAI_API_KEY" --model grok-4.5
 # or local
 bugbee connect --provider ollama --base-url http://127.0.0.1:11434/v1 --model qwen2.5-coder
+bugbee doctor
 
 bugbee hunt
 bugbee findings
 bugbee tui
 bugbee report --output findings.sarif.json
 ```
+
+Keys passed to `bugbee connect --api-key` are stored in the local OS keychain;
+they are not written to `bugbee.toml`. Environment variables remain supported
+for CI and headless environments.
 
 ### Demo fixtures
 
@@ -55,6 +68,7 @@ bugbee --root fixtures/python-vuln findings
 | `bugbee report` | SARIF export |
 | `bugbee ask "..."` | Chat with configured model about the repo |
 | `bugbee models` | List providers / remote model ids |
+| `bugbee doctor` | Validate configuration and provider readiness without network calls |
 | `bugbee tui` | Terminal UI |
 
 ## Architecture
