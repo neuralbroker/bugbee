@@ -1,0 +1,392 @@
+use std::fs;
+use std::io::{self, Write};
+use std::path::PathBuf;
+
+use anyhow::{Context, Result};
+use clap::{Parser, Subcommand};
+use colored::Colorize;
+use tracing_subscriber::EnvFilter;
+
+use bugbee_core::{BugbeeConfig, FindingStatus, FindingStore};
+use bugbee_harness::HuntCampaign;
+use bugbee_providers::InferenceGateway;
+
+mod tui;
+
+#[derive(Parser, Debug)]
+#[command(
+    name = "bugbee",
+    version,
+    about = "Agentic bug & vulnerability hunting IDE (terminal-first)"
+)]
+struct Cli {
+    /// Project root (default: cwd)
+    #[arg(long, global = true)]
+    root: Option<PathBuf>,
+
+    #[command(subcommand)]
+    cmd: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Initialize bugbee.toml and .bugbee/ in the project
+    Init {
+        #[arg(long)]
+        name: Option<String>,
+    },
+    /// Show how to connect any model provider (BYOK — any model)
+    Connect {
+        /// Provider id (e.g. xai, deepseek, openai, ollama, or custom)
+        provider: Option<String>,
+        /// API key (prefer env vars in enterprise)
+        #[arg(long)]
+        api_key: Option<String>,
+        /// Custom OpenAI-compatible base URL
+        #[arg(long)]
+        base_url: Option<String>,
+        /// Model id to set as default hunt model
+        #[arg(long)]
+        model: Option<String>,
+    },
+    /// Run a deterministic (+ optional LLM review) hunt
+    Hunt {
+        /// Rule pack name under rules/
+        #[arg(long, default_value = "owasp-2025")]
+        pack: String,
+        /// Enable LLM adversarial review (requires configured model)
+        #[arg(long)]
+        llm_review: bool,
+        /// Auto-approve safe permission asks
+        #[arg(long)]
+        auto: bool,
+    },
+    /// List findings sorted by BRS
+    Findings {
+        #[arg(long, default_value = "50")]
+        limit: usize,
+    },
+    /// Review a finding: confirm | fp | fixed
+    Review {
+        id: String,
+        #[arg(value_enum)]
+        verdict: ReviewVerdict,
+    },
+    /// Export SARIF report
+    Report {
+        #[arg(long, default_value = "bugbee.sarif.json")]
+        output: PathBuf,
+    },
+    /// Ask the agent (any configured model) a question about the codebase
+    Ask {
+        question: String,
+        #[arg(long, default_value = "hunt")]
+        role: String,
+    },
+    /// List configured providers and models
+    Models { provider: Option<String> },
+    /// Launch terminal UI
+    Tui,
+}
+
+#[derive(Clone, Debug, clap::ValueEnum)]
+enum ReviewVerdict {
+    Confirm,
+    Fp,
+    Fixed,
+    WontFix,
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env().add_directive("bugbee=info".parse()?))
+        .with_target(false)
+        .init();
+
+    let cli = Cli::parse();
+    let root_arg = cli.root.clone().unwrap_or(std::env::current_dir()?);
+    let root = root_arg.canonicalize().unwrap_or(root_arg);
+
+    match cli.cmd {
+        Commands::Init { name } => cmd_init(&root, name)?,
+        Commands::Connect {
+            provider,
+            api_key,
+            base_url,
+            model,
+        } => cmd_connect(&root, provider, api_key, base_url, model)?,
+        Commands::Hunt {
+            pack,
+            llm_review,
+            auto,
+        } => cmd_hunt(&root, &pack, llm_review, auto).await?,
+        Commands::Findings { limit } => cmd_findings(&root, limit)?,
+        Commands::Review { id, verdict } => cmd_review(&root, &id, verdict)?,
+        Commands::Report { output } => cmd_report(&root, &output)?,
+        Commands::Ask { question, role } => cmd_ask(&root, &question, &role).await?,
+        Commands::Models { provider } => cmd_models(&root, provider.as_deref()).await?,
+        Commands::Tui => tui::run(&root)?,
+    }
+    Ok(())
+}
+
+fn store_path(root: &std::path::Path) -> PathBuf {
+    root.join(".bugbee").join("findings.db")
+}
+
+fn cmd_init(root: &std::path::Path, name: Option<String>) -> Result<()> {
+    let cfg_path = BugbeeConfig::project_config_path(root);
+    let mut cfg = if cfg_path.exists() {
+        BugbeeConfig::load(&cfg_path)?
+    } else {
+        BugbeeConfig::default_project()
+    };
+    cfg.project_name = name.or_else(|| root.file_name().map(|s| s.to_string_lossy().to_string()));
+    cfg.save(&cfg_path)?;
+    fs::create_dir_all(root.join(".bugbee"))?;
+    fs::create_dir_all(root.join(".bugbee").join("patches"))?;
+    let agents = root.join("BUGBEE.md");
+    if !agents.exists() {
+        fs::write(
+            &agents,
+            r#"# Bugbee project guide
+
+## Scope
+Defensive bug fixing and vulnerability hunting only.
+
+## Languages
+python, javascript, typescript, go
+
+## Notes for agents
+- Prefer evidence and tests over speculation
+- Never commit secrets
+- Human review required for production changes
+"#,
+        )?;
+    }
+    println!("{} {}", "initialized".green().bold(), cfg_path.display());
+    println!("  store: {}", store_path(root).display());
+    println!("  next:  bugbee connect --provider xai --model grok-4.5");
+    println!("         bugbee hunt");
+    Ok(())
+}
+
+fn cmd_connect(
+    root: &std::path::Path,
+    provider: Option<String>,
+    api_key: Option<String>,
+    base_url: Option<String>,
+    model: Option<String>,
+) -> Result<()> {
+    let cfg_path = BugbeeConfig::project_config_path(root);
+    let mut cfg = if cfg_path.exists() {
+        BugbeeConfig::load(&cfg_path)?
+    } else {
+        BugbeeConfig::default_project()
+    };
+
+    if provider.is_none() {
+        println!("{}", "Bugbee is model-agnostic — use ANY model.".bold());
+        println!("Providers (examples; add any OpenAI-compatible endpoint):\n");
+        for (id, p) in &cfg.providers {
+            println!(
+                "  {}  {}  ({})",
+                id.cyan(),
+                p.name.clone().unwrap_or_default(),
+                p.base_url
+            );
+        }
+        println!("\n{}", "Examples:".bold());
+        println!("  bugbee connect --provider xai --api-key \"$XAI_API_KEY\" --model grok-4.5");
+        println!("  bugbee connect --provider deepseek --model deepseek-v4-pro");
+        println!("  bugbee connect --provider ollama --base-url http://127.0.0.1:11434/v1 --model qwen2.5-coder");
+        println!("  bugbee connect --provider mygw --base-url https://gateway/v1 --api-key KEY --model any-model-id");
+        println!("\nOr set env vars: XAI_API_KEY, OPENAI_API_KEY, DEEPSEEK_API_KEY, OPENROUTER_API_KEY, …");
+        return Ok(());
+    }
+
+    let pid = provider.unwrap();
+    let entry = cfg
+        .providers
+        .entry(pid.clone())
+        .or_insert_with(|| bugbee_core::ProviderConfig {
+            name: Some(pid.clone()),
+            base_url: base_url
+                .clone()
+                .unwrap_or_else(|| "https://api.openai.com/v1".into()),
+            api_key_env: Some(format!("{}_API_KEY", pid.to_uppercase().replace('-', "_"))),
+            api_key: None,
+            models: vec![],
+            headers: Default::default(),
+            protocol: "openai_compat".into(),
+        });
+    if let Some(u) = base_url {
+        entry.base_url = u;
+    }
+    if let Some(k) = api_key {
+        entry.api_key = Some(k);
+    }
+    if let Some(m) = model {
+        cfg.inference.hunt = Some(format!("{pid}/{m}"));
+        cfg.inference.scout = Some(format!("{pid}/{m}"));
+        cfg.inference.review = Some(format!("{pid}/{m}"));
+        cfg.inference.patch = Some(format!("{pid}/{m}"));
+        cfg.inference.default_provider = Some(pid.clone());
+        if !entry.models.contains(&m) {
+            entry.models.push(m);
+        }
+    }
+    cfg.save(&cfg_path)?;
+    println!(
+        "{} provider `{}` → {}",
+        "connected".green().bold(),
+        pid,
+        cfg_path.display()
+    );
+    if let Some(h) = &cfg.inference.hunt {
+        println!("  default hunt model: {h}");
+    }
+    Ok(())
+}
+
+async fn cmd_hunt(root: &std::path::Path, pack: &str, llm_review: bool, auto: bool) -> Result<()> {
+    let cfg = BugbeeConfig::load_layered(Some(root))?;
+    let store = FindingStore::open(store_path(root))?;
+    let mut campaign = HuntCampaign::new(root, cfg);
+    campaign.use_llm_review = llm_review;
+    campaign.auto_approve = auto;
+    // Prefer pack dir
+    let pack_dir = root.join("rules").join(pack);
+    if pack_dir.exists() {
+        campaign.rules_dirs.insert(0, pack_dir);
+    }
+
+    println!(
+        "{} hunting in {} …",
+        "bugbee".magenta().bold(),
+        root.display()
+    );
+    let report = campaign.run(&store).await?;
+    println!("{}", "── Hunt report ──".bold());
+    println!("  files indexed : {}", report.files_indexed);
+    println!("  findings      : {}", report.findings);
+    println!("  human queue   : {}", report.human_queue);
+    println!("  auto-confirm  : {}", report.auto_confirmed);
+    println!("  dropped       : {}", report.dropped);
+    println!("  duration      : {} ms", report.duration_ms);
+    println!("\n  bugbee findings");
+    println!("  bugbee tui");
+    Ok(())
+}
+
+fn cmd_findings(root: &std::path::Path, limit: usize) -> Result<()> {
+    let store = FindingStore::open(store_path(root))?;
+    let list = store.list_by_brs(limit)?;
+    if list.is_empty() {
+        println!("No findings. Run `bugbee hunt` first.");
+        return Ok(());
+    }
+    for f in list {
+        let sev = match f.severity {
+            bugbee_core::Severity::Critical => "CRIT".red().bold(),
+            bugbee_core::Severity::High => "HIGH".red(),
+            bugbee_core::Severity::Medium => "MED ".yellow(),
+            bugbee_core::Severity::Low => "LOW ".blue(),
+            bugbee_core::Severity::Info => "INFO".normal(),
+        };
+        let loc = f
+            .locations
+            .first()
+            .map(|l| format!("{}:{}", l.file, l.start_line))
+            .unwrap_or_else(|| "-".into());
+        println!(
+            "{} BRS={:5.1} ECS={:.2} {}  {}  {}",
+            sev,
+            f.brs,
+            f.ecs,
+            &f.id.to_string()[..8],
+            loc,
+            f.title
+        );
+    }
+    Ok(())
+}
+
+fn cmd_review(root: &std::path::Path, id: &str, verdict: ReviewVerdict) -> Result<()> {
+    let store = FindingStore::open(store_path(root))?;
+    let all = store.list_all()?;
+    let f = all
+        .iter()
+        .find(|f| f.id.to_string().starts_with(id))
+        .with_context(|| format!("finding not found: {id}"))?;
+    let status = match verdict {
+        ReviewVerdict::Confirm => FindingStatus::Confirmed,
+        ReviewVerdict::Fp => FindingStatus::FalsePositive,
+        ReviewVerdict::Fixed => FindingStatus::Fixed,
+        ReviewVerdict::WontFix => FindingStatus::WontFix,
+    };
+    store.update_status(&f.id, status)?;
+    println!("{} {} → {:?}", "reviewed".green().bold(), f.id, status);
+    Ok(())
+}
+
+fn cmd_report(root: &std::path::Path, output: &std::path::Path) -> Result<()> {
+    let store = FindingStore::open(store_path(root))?;
+    let sarif = store.export_sarif()?;
+    fs::write(output, serde_json::to_string_pretty(&sarif)?)?;
+    println!("{} {}", "wrote".green().bold(), output.display());
+    Ok(())
+}
+
+async fn cmd_ask(root: &std::path::Path, question: &str, role: &str) -> Result<()> {
+    let cfg = BugbeeConfig::load_layered(Some(root))?;
+    let gw = InferenceGateway::from_config(cfg.clone())?;
+    if gw.available_providers().is_empty() {
+        anyhow::bail!("No providers connected. Run `bugbee connect` and set a model.");
+    }
+    let campaign = HuntCampaign::new(root, cfg);
+    print!("{}", "thinking…\n".dimmed());
+    io::stdout().flush()?;
+    let answer = campaign.ask(&gw, question, role).await?;
+    println!("{answer}");
+    Ok(())
+}
+
+async fn cmd_models(root: &std::path::Path, provider: Option<&str>) -> Result<()> {
+    let cfg = BugbeeConfig::load_layered(Some(root))?;
+    if let Some(p) = provider {
+        let gw = InferenceGateway::from_config(cfg)?;
+        match gw.list_models(p).await {
+            Ok(models) => {
+                println!("Models from {p} (any id may still work if not listed):");
+                for m in models {
+                    println!("  {m}");
+                }
+            }
+            Err(e) => {
+                println!("Could not list models: {e}\nYou can still set any model id manually.")
+            }
+        }
+    } else {
+        println!(
+            "{}",
+            "Configured providers (platform accepts ANY model):".bold()
+        );
+        for (id, p) in &cfg.providers {
+            println!(
+                "  {}  base={}  models={:?}",
+                id.cyan(),
+                p.base_url,
+                p.models
+            );
+        }
+        println!(
+            "\nhunt={} scout={} review={}",
+            cfg.inference.hunt.as_deref().unwrap_or("-"),
+            cfg.inference.scout.as_deref().unwrap_or("-"),
+            cfg.inference.review.as_deref().unwrap_or("-"),
+        );
+    }
+    Ok(())
+}

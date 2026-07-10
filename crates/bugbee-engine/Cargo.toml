@@ -1,0 +1,18 @@
+[package]
+name = "bugbee-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Deterministic detection engines: rules, taint, secrets"
+
+[dependencies]
+bugbee-core = { workspace = true }
+bugbee-index = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+regex = { workspace = true }
+tracing = { workspace = true }
+walkdir = { workspace = true }

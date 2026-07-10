@@ -1,0 +1,8 @@
+/target
+**/*.rs.bk
+.bugbee/
+**/.bugbee/
+*.db
+.DS_Store
+fixtures/**/bugbee.toml
+fixtures/**/BUGBEE.md

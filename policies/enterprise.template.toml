@@ -1,0 +1,26 @@
+# Enterprise policy template
+
+```toml
+# Optional: lock which provider *ids* may be used (empty = any)
+provider_allowlist = []
+
+# Models: any string "provider/model" — platform does not restrict model ids
+[inference]
+hunt = "xai/grok-4.5"
+scout = "ollama/qwen2.5-coder"
+review = "anthropic/claude-sonnet-4-20250514"
+patch = "deepseek/deepseek-v4-pro"
+
+[permissions]
+edit = "ask"
+bash = "ask"
+read = "allow"
+network = "deny"
+external_directory = "deny"
+
+[hunt]
+theta_high = 85.0
+theta_low = 30.0
+require_human_for_auto = true
+languages = ["python", "javascript", "typescript", "go"]
+```
