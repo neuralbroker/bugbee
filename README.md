@@ -14,6 +14,8 @@
 
 > Defensive only. No live exploitation. Designed for enterprises and confidential codebases.
 
+Website: [neuralbroker.github.io/bugbee](https://neuralbroker.github.io/bugbee/)
+
 ## Features
 
 - **Any model**: OpenAI-compatible endpoints, xAI Grok, DeepSeek, Qwen, Kimi, GLM, Claude, GPT, Ollama, OpenRouter, custom gateways — you bring the key and model id

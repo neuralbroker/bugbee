@@ -150,7 +150,7 @@ dependencies = [
 
 [[package]]
 name = "bugbee-cli"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 dependencies = [
  "anyhow",
  "bugbee-core",
@@ -177,7 +177,7 @@ dependencies = [
 
 [[package]]
 name = "bugbee-core"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -199,7 +199,7 @@ dependencies = [
 
 [[package]]
 name = "bugbee-engine"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 dependencies = [
  "anyhow",
  "bugbee-core",
@@ -215,7 +215,7 @@ dependencies = [
 
 [[package]]
 name = "bugbee-harness"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -235,7 +235,7 @@ dependencies = [
 
 [[package]]
 name = "bugbee-index"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 dependencies = [
  "anyhow",
  "bugbee-core",
@@ -252,7 +252,7 @@ dependencies = [
 
 [[package]]
 name = "bugbee-providers"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 dependencies = [
  "anyhow",
  "async-trait",
