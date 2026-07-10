@@ -36,6 +36,7 @@ bugbee init
 bugbee connect --provider xai --api-key "$XAI_API_KEY" --model grok-4.5
 # or local
 bugbee connect --provider ollama --base-url http://127.0.0.1:11434/v1 --model qwen2.5-coder
+bugbee doctor
 
 bugbee hunt
 bugbee findings
@@ -63,6 +64,7 @@ bugbee --root fixtures/python-vuln findings
 | `bugbee report` | SARIF export |
 | `bugbee ask "..."` | Chat with configured model about the repo |
 | `bugbee models` | List providers / remote model ids |
+| `bugbee doctor` | Validate configuration and provider readiness without network calls |
 | `bugbee tui` | Terminal UI |
 
 ## Architecture
