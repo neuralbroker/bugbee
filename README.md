@@ -1,8 +1,16 @@
-# Bugbee
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/bugbee-mark-light.png">
+    <img src="assets/brand/bugbee-mark-v2.png" width="144" alt="Bugbee logo — an abstract geometric signal-path mark">
+  </picture>
+</p>
 
-**Terminal-first agentic IDE for bug fixing and vulnerability hunting.**
+<h1 align="center">Bugbee</h1>
 
-Lightweight TUI/CLI · heavy local analysis · model-agnostic BYOK · human + auto review.
+<p align="center">
+  <strong>Terminal-first agentic IDE for bug fixing and vulnerability hunting.</strong><br>
+  Lightweight TUI/CLI · heavy local analysis · model-agnostic BYOK · human + auto review.
+</p>
 
 > Defensive only. No live exploitation. Designed for enterprises and confidential codebases.
 
