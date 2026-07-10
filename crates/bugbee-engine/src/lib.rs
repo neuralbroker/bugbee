@@ -74,3 +74,83 @@ impl HuntEngine {
         Ok(findings)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+    use std::path::PathBuf;
+
+    use super::*;
+    use bugbee_index::Indexer;
+
+    fn workspace_path(relative: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .join(relative)
+    }
+
+    fn scan_fixture(name: &str) -> Vec<Finding> {
+        let root = workspace_path(&format!("fixtures/{name}"));
+        let rules = workspace_path("rules/owasp-2025");
+        let index = Indexer::new(root).build().expect("index fixture");
+        HuntEngine::with_rules_dirs(&[rules], BrsWeights::default())
+            .expect("load rules")
+            .run(&index)
+            .expect("scan fixture")
+    }
+
+    fn rule_ids(findings: &[Finding]) -> BTreeSet<String> {
+        findings
+            .iter()
+            .filter_map(|finding| finding.evidence.rule_id.clone())
+            .collect()
+    }
+
+    #[test]
+    fn python_fixture_has_expected_security_findings_without_duplicates() {
+        let findings = scan_fixture("python-vuln");
+        let expected = BTreeSet::from([
+            "py-eval-injection".into(),
+            "py-flask-debug".into(),
+            "py-pickle-load".into(),
+            "taint.py-command-injection".into(),
+            "taint.py-sql-injection".into(),
+        ]);
+        assert_eq!(rule_ids(&findings), expected);
+
+        let identities = findings
+            .iter()
+            .map(|finding| finding.id)
+            .collect::<BTreeSet<_>>();
+        assert_eq!(identities.len(), findings.len());
+    }
+
+    #[test]
+    fn javascript_fixture_has_expected_security_findings() {
+        let findings = scan_fixture("js-vuln");
+        let expected = BTreeSet::from([
+            "js-disable-tls-verify".into(),
+            "js-eval".into(),
+            "taint.js-sql-injection".into(),
+            "taint.js-xss".into(),
+        ]);
+        assert_eq!(rule_ids(&findings), expected);
+    }
+
+    #[test]
+    fn go_fixture_has_expected_security_findings() {
+        let findings = scan_fixture("go-vuln");
+        let expected = BTreeSet::from([
+            "go-http-listen-all".into(),
+            "go-md5-password".into(),
+            "taint.go-command-injection".into(),
+        ]);
+        assert_eq!(rule_ids(&findings), expected);
+    }
+
+    #[test]
+    fn separated_python_source_and_sink_do_not_create_a_taint_finding() {
+        let findings = scan_fixture("python-safe");
+        assert!(!rule_ids(&findings).contains("taint.py-command-injection"));
+    }
+}

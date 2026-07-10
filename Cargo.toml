@@ -15,7 +15,7 @@ version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
 authors = ["Bugbee Contributors"]
-repository = "https://github.com/bugbee-dev/bugbee"
+repository = "https://github.com/neuralbroker/bugbee"
 description = "Terminal-first agentic IDE for bug fixing and vulnerability hunting"
 
 [workspace.dependencies]
@@ -31,7 +31,7 @@ serde_yaml = "0.9"
 toml = "0.8"
 thiserror = "2"
 anyhow = "1"
-uuid = { version = "1", features = ["v4", "serde"] }
+uuid = { version = "1", features = ["v4", "v5", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1"
 walkdir = "2"

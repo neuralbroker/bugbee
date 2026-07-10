@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::scoring::{score_brs, score_ecs, BrsWeights, EcsInputs};
@@ -176,7 +177,53 @@ impl Finding {
             0.1,
             weights,
         );
+        self.id = Uuid::new_v5(&Uuid::NAMESPACE_URL, self.fingerprint().as_bytes());
         self.updated_at = Utc::now();
+    }
+
+    /// Stable, content-addressed identity for deduplicating a finding across scans.
+    /// It deliberately excludes mutable scores, descriptions, and timestamps.
+    pub fn fingerprint(&self) -> String {
+        let mut locations: Vec<_> = self.locations.iter().collect();
+        locations.sort_by(|left, right| {
+            (
+                &left.file,
+                left.start_line,
+                left.end_line,
+                format!("{:?}", left.role),
+            )
+                .cmp(&(
+                    &right.file,
+                    right.start_line,
+                    right.end_line,
+                    format!("{:?}", right.role),
+                ))
+        });
+
+        let mut hasher = Sha256::new();
+        hasher.update(b"bugbee-finding-v1\0");
+        hasher.update(
+            self.evidence
+                .rule_id
+                .as_deref()
+                .unwrap_or(self.category.as_str())
+                .as_bytes(),
+        );
+        hasher.update(b"\0");
+        hasher.update(self.category.as_bytes());
+        hasher.update(b"\0");
+        hasher.update(self.title.as_bytes());
+        for location in locations {
+            hasher.update(b"\0");
+            hasher.update(location.file.as_bytes());
+            hasher.update(b":");
+            hasher.update(location.start_line.to_be_bytes());
+            hasher.update(b":");
+            hasher.update(location.end_line.to_be_bytes());
+            hasher.update(b":");
+            hasher.update(format!("{:?}", location.role).as_bytes());
+        }
+        hex::encode(hasher.finalize())
     }
 
     pub fn add_location(&mut self, loc: FindingLocation) {
@@ -187,5 +234,46 @@ impl Finding {
             _ => {}
         }
         self.locations.push(loc);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn candidate() -> Finding {
+        let mut finding = Finding::new(
+            "Unsafe dynamic evaluation",
+            "Potential dynamic code execution",
+            Severity::High,
+            "injection",
+        );
+        finding.evidence.rule_id = Some("python.eval".into());
+        finding.add_location(FindingLocation {
+            file: "app.py".into(),
+            start_line: 12,
+            end_line: 12,
+            start_col: None,
+            end_col: None,
+            role: LocationRole::Sink,
+            snippet: None,
+        });
+        finding.recompute_scores(&BrsWeights::default());
+        finding
+    }
+
+    #[test]
+    fn equivalent_findings_keep_the_same_identity() {
+        assert_eq!(candidate().id, candidate().id);
+    }
+
+    #[test]
+    fn changed_location_changes_identity() {
+        let original = candidate();
+        let mut moved = candidate();
+        moved.locations[0].start_line = 13;
+        moved.locations[0].end_line = 13;
+        moved.recompute_scores(&BrsWeights::default());
+        assert_ne!(original.id, moved.id);
     }
 }

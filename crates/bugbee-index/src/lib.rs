@@ -129,10 +129,12 @@ impl Indexer {
             symbol_index: HashMap::new(),
         };
 
+        let root = self.root.clone();
         let walker = WalkBuilder::new(&self.root)
             .hidden(false)
             .git_ignore(true)
             .git_global(true)
+            .filter_entry(move |entry| !is_excluded_path(entry.path(), &root))
             .build();
 
         for entry in walker.flatten() {
@@ -192,6 +194,33 @@ impl Indexer {
         index.files.sort_by(|a, b| a.path.cmp(&b.path));
         Ok(index)
     }
+}
+
+/// Directories that are generated, third-party, or Bugbee's own local state.
+/// These exclusions apply even when a repository has no `.gitignore`, preventing
+/// dependency trees from consuming scan capacity or polluting evidence.
+fn is_excluded_path(path: &Path, root: &Path) -> bool {
+    const EXCLUDED: &[&str] = &[
+        ".bugbee",
+        ".git",
+        ".hg",
+        ".svn",
+        ".venv",
+        "__pycache__",
+        "bower_components",
+        "build",
+        "coverage",
+        "dist",
+        "node_modules",
+        "target",
+        "vendor",
+    ];
+
+    path.strip_prefix(root)
+        .unwrap_or(path)
+        .components()
+        .filter_map(|component| component.as_os_str().to_str())
+        .any(|component| EXCLUDED.contains(&component))
 }
 
 fn extract_symbols_and_imports(
@@ -296,6 +325,34 @@ mod tests {
         let idx = Indexer::new(&dir).build().unwrap();
         assert_eq!(idx.file_count(), 1);
         assert!(idx.files[0].symbols.iter().any(|s| s.name == "hello"));
+    }
+
+    #[test]
+    fn excludes_generated_dependency_and_local_state_directories() {
+        let dir = tempfile_dir();
+        fs::create_dir_all(dir.join("node_modules/pkg")).unwrap();
+        fs::create_dir_all(dir.join(".bugbee/cache")).unwrap();
+        fs::create_dir_all(dir.join("target/generated")).unwrap();
+        fs::write(dir.join("app.py"), "def app():\n    pass\n").unwrap();
+        fs::write(
+            dir.join("node_modules/pkg/index.js"),
+            "function dependency() {}\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.join(".bugbee/cache/agent.py"),
+            "def state():\n    pass\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.join("target/generated/generated.go"),
+            "func generated() {}\n",
+        )
+        .unwrap();
+
+        let idx = Indexer::new(&dir).build().unwrap();
+        assert_eq!(idx.file_count(), 1);
+        assert_eq!(idx.files[0].path, "app.py");
     }
 
     fn tempfile_dir() -> PathBuf {
