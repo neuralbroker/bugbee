@@ -21,7 +21,7 @@ Website: [neuralbroker.github.io/bugbee](https://neuralbroker.github.io/bugbee/)
 One command (macOS / Linux — installs into `~/.local/bin`):
 
 ```bash
-curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/get-bugbee.sh | bash
 ```
 
 Then ensure `~/.local/bin` is on your `PATH` if the installer says so:
@@ -35,7 +35,7 @@ bugbee --version
 
 | Method | Command |
 |--------|---------|
-| Pin a version | `BUGBEE_VERSION=v0.1.0-beta.1 curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install.sh \| bash` |
+| Pin a version | `BUGBEE_VERSION=v0.1.0-beta.1 curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/get-bugbee.sh \| bash` |
 | Custom directory | `BUGBEE_INSTALL=/usr/local/bin curl -fsSL … \| bash` |
 | From source (Cargo) | `cargo install --git https://github.com/neuralbroker/bugbee --locked --bin bugbee` |
 | Windows | Download the `.zip` from [Releases](https://github.com/neuralbroker/bugbee/releases) |
@@ -53,7 +53,7 @@ bugbee --version
 ## Quick start
 
 ```bash
-curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/get-bugbee.sh | bash
 export PATH="$HOME/.local/bin:$PATH"   # if needed
 
 cd /path/to/your/project

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bugbee one-line installer
-#   curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install.sh | bash
+#   curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/get-bugbee.sh | bash
 #
 # Options (env):
 #   BUGBEE_VERSION   Tag to install (default: newest GitHub release, including prereleases)
@@ -110,27 +110,28 @@ main() {
 
   local asset="bugbee-${target}.tar.gz"
   local url="${DOWNLOAD_BASE}/${VERSION}/${asset}"
-  local tmp
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "${tmp}"' EXIT
+  # Keep the cleanup path global: EXIT traps run after `main` returns, so a
+  # `local tmp` would be unbound under `set -u`.
+  BUGBEE_TMP="$(mktemp -d)"
+  trap 'rm -rf "${BUGBEE_TMP:-}"' EXIT
 
   say "installing Bugbee ${VERSION} (${target})"
   say "download ${url}"
-  if ! download "${url}" "${tmp}/${asset}"; then
+  if ! download "${url}" "${BUGBEE_TMP}/${asset}"; then
     err "failed to download ${url}. Is the release published? Fallback: cargo install --git https://github.com/${REPO} --locked --bin bugbee"
   fi
 
-  if download "${url}.sha256" "${tmp}/${asset}.sha256" 2>/dev/null; then
-    verify_sha256 "${tmp}/${asset}" "${tmp}/${asset}.sha256"
+  if download "${url}.sha256" "${BUGBEE_TMP}/${asset}.sha256" 2>/dev/null; then
+    verify_sha256 "${BUGBEE_TMP}/${asset}" "${BUGBEE_TMP}/${asset}.sha256"
   else
     say "checksum not available; continuing"
   fi
 
-  tar -xzf "${tmp}/${asset}" -C "${tmp}"
-  [[ -f "${tmp}/bugbee" ]] || err "archive missing bugbee binary"
+  tar -xzf "${BUGBEE_TMP}/${asset}" -C "${BUGBEE_TMP}"
+  [[ -f "${BUGBEE_TMP}/bugbee" ]] || err "archive missing bugbee binary"
 
   mkdir -p "${INSTALL_DIR}"
-  install -m 755 "${tmp}/bugbee" "${INSTALL_DIR}/bugbee"
+  install -m 755 "${BUGBEE_TMP}/bugbee" "${INSTALL_DIR}/bugbee"
 
   say "installed ${INSTALL_DIR}/bugbee"
   if ! command -v bugbee >/dev/null 2>&1; then

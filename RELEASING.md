@@ -5,7 +5,7 @@ Intel, macOS Apple Silicon, and Windows x86_64 whenever a version tag is
 pushed. Users install with:
 
 ```bash
-curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/get-bugbee.sh | bash
 ```
 
 Before tagging a release, ensure the pull request CI is green and update the
@@ -25,8 +25,9 @@ After the first release lands, smoke-test the installer:
 
 ```bash
 # attach the installer to the release (required for the one-liner)
-gh release upload "v0.1.0-beta.1" scripts/install.sh --clobber
+cp scripts/install.sh /tmp/get-bugbee.sh
+gh release upload "v0.1.0-beta.1" /tmp/get-bugbee.sh --clobber
 
-curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/get-bugbee.sh | bash
 bugbee --version
 ```
