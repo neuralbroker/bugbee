@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use crate::permissions::PermissionPolicy;
-use crate::prompts::{system_for_agent, CONSTITUTION};
+use crate::prompts::system_for_agent;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HuntReport {
@@ -200,11 +200,10 @@ impl HuntCampaign {
             .join("\n");
 
         let sys = format!(
-            "{}\n\nProject root: {}\nRepo map:\n{}\n{}",
-            CONSTITUTION,
+            "{}\n\nProject root: {}\nRepo map:\n{}",
+            system_for_agent(role),
             self.root.display(),
-            map_txt,
-            system_for_agent(role)
+            map_txt
         );
         let resp = gw
             .chat_role(

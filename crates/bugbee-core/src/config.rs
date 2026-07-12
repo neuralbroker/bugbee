@@ -120,7 +120,11 @@ impl Default for HuntConfig {
                 "java".into(),
                 "csharp".into(),
             ],
-            packs: vec!["owasp-2025".into(), "india-appsec".into()],
+            packs: vec![
+                "owasp-2025".into(),
+                "india-appsec".into(),
+                "classics-modern".into(),
+            ],
         }
     }
 }

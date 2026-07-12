@@ -70,6 +70,14 @@ pub fn tool_defs() -> Vec<serde_json::Value> {
                 }
             }
         }),
+        json!({
+            "name": "security_playbook",
+            "description": "Return defensive security technique corpus (era map + CWE-oriented detection guidance). Not for attacking live systems.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }),
     ]
 }
 
@@ -173,6 +181,7 @@ pub fn execute_tool(ctx: &ToolContext, name: &str, args: &serde_json::Value) -> 
             text.push_str(&String::from_utf8_lossy(&output.stderr));
             Ok(truncate(&text, 40_000))
         }
+        "security_playbook" => Ok(truncate(&crate::knowledge::corpus_block(), 20_000)),
         _ => Err(BugbeeError::Other(format!("unknown tool: {name}"))),
     }
 }

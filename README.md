@@ -14,7 +14,8 @@
 
 > Defensive only. No live exploitation. Designed for enterprises and confidential codebases.
 
-Website: [neuralbroker.github.io/bugbee](https://neuralbroker.github.io/bugbee/)
+Website (Vercel): deploy from [`site/`](./site) — SpaceXAI-inspired product landing.  
+Legacy static pages: [`website/`](./website)
 
 ## Install
 

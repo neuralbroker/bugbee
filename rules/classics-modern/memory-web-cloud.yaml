@@ -1,0 +1,146 @@
+# Cross-era defensive rules: classics through cloud-era sinks.
+# Detect only; no exploit generation.
+
+- id: c-gets-unsafe
+  title: Unsafe gets() usage
+  message: "gets() cannot bound input length (classic overflow class)"
+  severity: critical
+  cwe: ["CWE-120"]
+  owasp: ["A05:2025"]
+  category: memory
+  languages: ["other"]
+  pattern: "\\bgets\\s*\\("
+  confidence: 0.9
+  exploitability: 0.85
+
+- id: c-strcpy-unsafe
+  title: Unbounded strcpy/strcat
+  message: "Prefer bounded copies (strlcpy/strncpy with care) or safer APIs"
+  severity: high
+  cwe: ["CWE-120"]
+  owasp: ["A05:2025"]
+  category: memory
+  languages: ["other"]
+  pattern: "\\b(strcpy|strcat|sprintf)\\s*\\("
+  confidence: 0.55
+  exploitability: 0.6
+
+- id: generic-path-traversal
+  title: Possible path traversal
+  message: "User-controlled paths with ../ or path join without root jail"
+  severity: high
+  cwe: ["CWE-22"]
+  owasp: ["A01:2025"]
+  category: access_control
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(\\.\\./|path\\.join\\s*\\(.*req|os\\.path\\.join\\s*\\(.*request|open\\s*\\(.*\\$_(GET|POST))"
+  confidence: 0.45
+  exploitability: 0.55
+
+- id: generic-xxe-parse
+  title: XML parser may allow external entities
+  message: "Disable external entities/DTDs on untrusted XML"
+  severity: high
+  cwe: ["CWE-611"]
+  owasp: ["A05:2025"]
+  category: xxe
+  languages: ["python", "java", "php", "javascript", "typescript", "go"]
+  pattern: "(XMLParser|DocumentBuilderFactory|SAXParser|libxml_disable_entity_loader\\s*\\(\\s*false|lxml\\.etree\\.XMLParser\\s*\\([^)]*resolve_entities\\s*=\\s*True)"
+  confidence: 0.55
+  exploitability: 0.6
+
+- id: generic-ssti
+  title: Possible server-side template injection sink
+  message: "User input flowing into template engines is high risk"
+  severity: high
+  cwe: ["CWE-1336"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["python", "javascript", "typescript", "java", "php", "go"]
+  pattern: "(render_template_string|jinja2\\.Template\\s*\\(|Handlebars\\.compile\\s*\\(|Twig_Environment|Velocity\\.evaluate|new\\s+Function\\s*\\(.*template)"
+  confidence: 0.55
+  exploitability: 0.7
+
+- id: generic-jwt-none
+  title: JWT algorithm none or missing verification
+  message: "Accepting alg=none or skipping verification forges tokens"
+  severity: critical
+  cwe: ["CWE-347"]
+  owasp: ["A07:2025"]
+  category: authn
+  languages: ["python", "javascript", "typescript", "java", "go", "php"]
+  pattern: "(algorithms\\s*=\\s*\\[[^\\]]*none|verify\\s*=\\s*False|jwt\\.decode\\s*\\([^)]*verify_signature\\s*:\\s*False|algorithms:\\s*\\[[^\\]]*['\"]none['\"])"
+  confidence: 0.75
+  exploitability: 0.85
+
+- id: generic-cloud-metadata
+  title: Cloud metadata endpoint referenced
+  message: "SSRF to 169.254.169.254 / metadata.google.internal is a common cloud credential theft path"
+  severity: high
+  cwe: ["CWE-918"]
+  owasp: ["A10:2021"]
+  category: ssrf
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(169\\.254\\.169\\.254|metadata\\.google\\.internal|latest/meta-data|metadata\\.azure)"
+  confidence: 0.7
+  exploitability: 0.75
+
+- id: generic-docker-sock
+  title: Docker socket mounted or referenced
+  message: "docker.sock exposure often equals host compromise"
+  severity: high
+  cwe: ["CWE-250"]
+  owasp: ["A02:2025"]
+  category: misconfig
+  languages: ["python", "javascript", "typescript", "go", "java", "php", "other"]
+  pattern: "docker\\.sock|/var/run/docker\\.sock"
+  confidence: 0.65
+  exploitability: 0.8
+
+- id: generic-sql-like-concat
+  title: SQL-like string concatenation
+  message: "Concatenated SQL fragments remain a dominant bounty class"
+  severity: medium
+  cwe: ["CWE-89"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "([\\\"'].*\\b(SELECT|INSERT|UPDATE|DELETE)\\b.*[\\\"']\\s*\\+|f[\\\"'].*\\b(SELECT|INSERT|UPDATE|DELETE)\\b)"
+  confidence: 0.4
+  exploitability: 0.55
+
+- id: generic-random-insecure
+  title: Insecure randomness for security tokens
+  message: "Use CSPRNG for tokens/sessions (not rand/Math.random)"
+  severity: medium
+  cwe: ["CWE-330"]
+  owasp: ["A02:2025"]
+  category: crypto
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(Math\\.random\\s*\\(|random\\.random\\s*\\(|rand\\s*\\(|rand\\.Intn\\s*\\()"
+  confidence: 0.3
+  exploitability: 0.4
+
+- id: generic-debug-endpoints
+  title: Debug/admin endpoint exposed
+  message: "Debug consoles and unauthenticated admin routes are frequent production leaks"
+  severity: medium
+  cwe: ["CWE-489"]
+  owasp: ["A02:2025"]
+  category: misconfig
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(/debug|/actuator|/phpinfo|django\\.views\\.debug|app\\.use\\(.*errorhandler|/console)"
+  confidence: 0.4
+  exploitability: 0.5
+
+- id: generic-hardcoded-private-key-inline
+  title: Inline private key material
+  message: "Private keys in source must be rotated and vaulted"
+  severity: critical
+  cwe: ["CWE-798"]
+  owasp: ["A07:2025"]
+  category: secrets
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----"
+  confidence: 0.95
+  exploitability: 0.9

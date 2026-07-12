@@ -13,6 +13,8 @@ const BUILTIN_OWASP_CORE: &str =
 const BUILTIN_OWASP_WEB: &str = include_str!("../../../rules/owasp-2025/web-auth-ssrf-xss.yaml");
 const BUILTIN_INDIA_APPSEC: &str =
     include_str!("../../../rules/india-appsec/india-gov-edu-enterprise.yaml");
+const BUILTIN_CLASSICS_MODERN: &str =
+    include_str!("../../../rules/classics-modern/memory-web-cloud.yaml");
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Rule {
@@ -196,6 +198,7 @@ pub fn builtin_rule_packs() -> anyhow::Result<Vec<RulePack>> {
         ("builtin-owasp-2025-core", BUILTIN_OWASP_CORE),
         ("builtin-owasp-2025-web", BUILTIN_OWASP_WEB),
         ("builtin-india-appsec", BUILTIN_INDIA_APPSEC),
+        ("builtin-classics-modern", BUILTIN_CLASSICS_MODERN),
     ] {
         let rules: Vec<Rule> = serde_yaml::from_str(raw)
             .map_err(|error| anyhow::anyhow!("invalid embedded pack {name}: {error}"))?;
