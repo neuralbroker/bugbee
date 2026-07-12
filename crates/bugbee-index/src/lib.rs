@@ -286,13 +286,6 @@ fn extract_symbols_and_imports(
     for (i, line) in content.lines().enumerate() {
         let line_no = (i + 1) as u32;
         if let Some(c) = fn_re.captures(line) {
-            let name = c
-                .get(2)
-                .or_else(|| c.get(1))
-                .or_else(|| c.get(3))
-                .map(|m| m.as_str())
-                .unwrap_or("");
-            // Fix capture groups per language
             let name = match lang {
                 Lang::Python => c.get(2).map(|m| m.as_str()).unwrap_or(""),
                 Lang::JavaScript | Lang::TypeScript => c
@@ -301,7 +294,7 @@ fn extract_symbols_and_imports(
                     .map(|m| m.as_str())
                     .unwrap_or(""),
                 Lang::Go => c.get(1).map(|m| m.as_str()).unwrap_or(""),
-                Lang::Other => name,
+                Lang::Other => "",
             };
             if !name.is_empty() {
                 symbols.push(Symbol {

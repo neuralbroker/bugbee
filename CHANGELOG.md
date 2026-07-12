@@ -10,6 +10,7 @@ First public beta of Bugbee.
 - Embedded OWASP-focused baseline rules, secrets detection, scope-limited taint heuristics, SARIF export, and a local SQLite review queue.
 - Local-first agent safeguards: sensitive-path restrictions, redaction before model-bound content, permission-gated tools, and human review by default.
 - Cross-platform release archives for Linux, macOS (Intel and Apple Silicon), and Windows.
+- Production hardening for beta: precompiled detectors, redacted evidence storage, thread-safe SQLite store with WAL, unambiguous finding-id resolution, and expanded secret patterns.
 
 ### Beta notes
 

@@ -37,10 +37,9 @@ impl HuntEngine {
         packs.extend(builtin_rule_packs()?);
         let mut seen_rule_ids = std::collections::HashSet::new();
         for pack in &mut packs {
-            pack.rules
-                .retain(|rule| seen_rule_ids.insert(rule.id.clone()));
+            pack.dedup_rules(&mut seen_rule_ids);
         }
-        packs.retain(|pack| !pack.rules.is_empty());
+        packs.retain(|pack| !pack.is_empty());
         Ok(Self { packs, weights })
     }
 

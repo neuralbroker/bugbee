@@ -320,11 +320,9 @@ fn cmd_findings(root: &std::path::Path, limit: usize) -> Result<()> {
 
 fn cmd_review(root: &std::path::Path, id: &str, verdict: ReviewVerdict) -> Result<()> {
     let store = FindingStore::open(store_path(root))?;
-    let all = store.list_all()?;
-    let f = all
-        .iter()
-        .find(|f| f.id.to_string().starts_with(id))
-        .with_context(|| format!("finding not found: {id}"))?;
+    let f = store
+        .find_by_prefix(id)
+        .with_context(|| format!("could not resolve finding id: {id}"))?;
     let status = match verdict {
         ReviewVerdict::Confirm => FindingStatus::Confirmed,
         ReviewVerdict::Fp => FindingStatus::FalsePositive,
@@ -477,7 +475,12 @@ fn cmd_doctor(root: &std::path::Path) -> Result<()> {
             continue;
         }
 
-        if provider.api_key.is_some() {
+        // Local OpenAI-compatible stubs (Ollama et al.) use a non-secret placeholder.
+        let is_local_stub = provider.base_url.contains("127.0.0.1")
+            || provider.base_url.contains("localhost")
+            || provider.api_key.as_deref() == Some("ollama")
+            || provider.api_key.as_deref() == Some("local");
+        if provider.api_key.is_some() && !is_local_stub {
             warnings += 1;
             warn(
                 &format!("{role} provider"),
@@ -489,6 +492,10 @@ fn cmd_doctor(root: &std::path::Path) -> Result<()> {
             Ok(_) => pass(
                 &format!("{role} model"),
                 &format!("{provider_id}/{model_id} is ready"),
+            ),
+            Err(_) if is_local_stub => pass(
+                &format!("{role} model"),
+                &format!("{provider_id}/{model_id} local endpoint (no key required)"),
             ),
             Err(_) => {
                 warnings += 1;
