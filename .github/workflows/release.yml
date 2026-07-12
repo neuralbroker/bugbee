@@ -114,6 +114,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      # Needed so `gh release create --verify-tag` can resolve the annotated tag.
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -129,7 +135,10 @@ jobs:
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" release/* --clobber
           elif [[ "$GITHUB_REF_NAME" == *-* ]]; then
-            gh release create "$GITHUB_REF_NAME" release/* --verify-tag --generate-notes --prerelease
+            gh release create "$GITHUB_REF_NAME" release/* --verify-tag --generate-notes --prerelease \
+              --title "Bugbee ${GITHUB_REF_NAME}" \
+              --notes-file CHANGELOG.md
           else
-            gh release create "$GITHUB_REF_NAME" release/* --verify-tag --generate-notes
+            gh release create "$GITHUB_REF_NAME" release/* --verify-tag --generate-notes \
+              --title "Bugbee ${GITHUB_REF_NAME}"
           fi
