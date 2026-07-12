@@ -17,11 +17,12 @@ use crossterm::terminal::{
 };
 use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap};
 use ratatui::Terminal;
+use uuid::Uuid;
 
 use bugbee_core::{BugbeeConfig, Finding, FindingStatus, FindingStore};
 use bugbee_harness::HuntCampaign;
@@ -119,12 +120,6 @@ impl App {
         }
     }
 
-    fn selected_finding(&self) -> Option<&Finding> {
-        self.list_state
-            .selected()
-            .and_then(|i| self.findings.get(i))
-    }
-
     fn filtered_indices(&self) -> Vec<usize> {
         if self.filter.is_empty() {
             return (0..self.findings.len()).collect();
@@ -150,22 +145,48 @@ impl App {
             .map(|(i, _)| i)
             .collect()
     }
+
+    /// Selected finding in the *visible* (filtered) list.
+    fn selected_finding(&self) -> Option<&Finding> {
+        let indices = self.filtered_indices();
+        let sel = self.list_state.selected()?;
+        let idx = *indices.get(sel)?;
+        self.findings.get(idx)
+    }
+}
+
+fn short_id(id: &Uuid) -> String {
+    let s = id.to_string();
+    s.get(..8).unwrap_or(s.as_str()).to_string()
 }
 
 pub fn run(root: &Path) -> Result<()> {
     let root = root.to_path_buf();
+    // If a panic escapes the TUI, restore the terminal so the user's shell remains usable.
+    let prev_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        let _ = disable_raw_mode();
+        let _ = stdout().execute(LeaveAlternateScreen);
+        prev_hook(info);
+    }));
+
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     let mut app = App::new(root);
     let res = event_loop(&mut terminal, &mut app);
-    disable_raw_mode()?;
-    stdout().execute(LeaveAlternateScreen)?;
+    // Always restore the terminal, including on command errors.
+    let _ = disable_raw_mode();
+    let _ = stdout().execute(LeaveAlternateScreen);
+    let _ = std::panic::take_hook();
     res
 }
 
 fn event_loop(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App) -> Result<()> {
     loop {
+        if app.status == "quit" {
+            break;
+        }
         terminal.draw(|f| draw(f, app))?;
 
         if !event::poll(Duration::from_millis(120))? {
@@ -185,7 +206,15 @@ fn event_loop(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut A
                 let cmd = app.input.trim().to_string();
                 app.input.clear();
                 if !cmd.is_empty() {
-                    handle_command(app, &cmd)?;
+                    // Keep the workspace alive on command failures (report in-session).
+                    if let Err(error) = handle_command(app, &cmd) {
+                        if error.to_string() == "quit" {
+                            app.status = "quit".into();
+                            break;
+                        }
+                        app.push(LogKind::Warn, format!("error: {error:#}"));
+                        app.status = "error".into();
+                    }
                 }
             }
             KeyCode::Backspace => {
@@ -216,11 +245,12 @@ fn event_loop(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut A
 }
 
 fn move_sel(app: &mut App, delta: i32) {
-    if app.findings.is_empty() {
+    let visible = app.filtered_indices().len();
+    if visible == 0 {
         return;
     }
     let cur = app.list_state.selected().unwrap_or(0) as i32;
-    let next = (cur + delta).clamp(0, app.findings.len() as i32 - 1) as usize;
+    let next = (cur + delta).clamp(0, visible as i32 - 1) as usize;
     app.list_state.select(Some(next));
 }
 
@@ -233,7 +263,7 @@ fn review_selected(app: &mut App, status: FindingStatus) -> Result<()> {
     store.update_status(&finding.id, status)?;
     app.push(
         LogKind::Ok,
-        format!("reviewed {} → {:?}", &finding.id.to_string()[..8], status),
+        format!("reviewed {} → {:?}", short_id(&finding.id), status),
     );
     app.reload_findings()?;
     Ok(())
@@ -266,12 +296,8 @@ fn handle_command(app: &mut App, raw: &str) -> Result<()> {
         }
         "clear" => app.logs.clear(),
         "quit" | "exit" | "q" => {
-            // Signal by emptying and returning error special? Use std process.
-            // Event loop checks q only when input empty; here force exit via process.
-            // We'll set status and let caller use a flag — use Err with special? cleaner: panic free:
             app.status = "quit".into();
-            // Crossterm cleanup happens when run() returns — throw a soft bail.
-            anyhow::bail!("quit");
+            return Ok(());
         }
         "doctor" => run_doctor(app)?,
         "findings" => {
@@ -294,7 +320,7 @@ fn handle_command(app: &mut App, raw: &str) -> Result<()> {
                         f.severity,
                         loc,
                         f.title,
-                        &f.id.to_string()[..8]
+                        short_id(&f.id)
                     )
                 })
                 .collect();
@@ -341,10 +367,19 @@ fn handle_command(app: &mut App, raw: &str) -> Result<()> {
         }
         "report" => {
             let out = if rest.is_empty() {
-                PathBuf::from("bugbee.sarif.json")
+                app.root.join("bugbee.sarif.json")
             } else {
-                PathBuf::from(rest)
+                let p = PathBuf::from(&rest);
+                if p.is_absolute() {
+                    p
+                } else {
+                    app.root.join(p)
+                }
             };
+            if !app.store_path().exists() {
+                app.push(LogKind::Warn, "no findings yet — run /hunt first");
+                return Ok(());
+            }
             let store = FindingStore::open(app.store_path())?;
             let sarif = store.export_sarif()?;
             std::fs::write(&out, serde_json::to_string_pretty(&sarif)?)?;
@@ -421,8 +456,8 @@ fn run_hunt(app: &mut App, llm_review: bool) -> Result<()> {
     let mut campaign = HuntCampaign::new(&app.root, cfg);
     campaign.use_llm_review = llm_review;
 
-    // Block in async runtime from sync TUI: use current-thread runtime handle if any.
-    let report = tokio::runtime::Builder::new_current_thread()
+    // Dedicated runtime: the TUI is sync and must not nest under another Tokio runtime.
+    let report = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?
         .block_on(campaign.run(&store))?;
@@ -440,6 +475,9 @@ fn run_hunt(app: &mut App, llm_review: bool) -> Result<()> {
         ),
     );
     app.reload_findings()?;
+    if !app.findings.is_empty() && app.list_state.selected().is_none() {
+        app.list_state.select(Some(0));
+    }
     app.status = format!("{} findings", app.findings.len());
     app.busy = false;
     Ok(())
@@ -459,7 +497,7 @@ fn run_ask(app: &mut App, question: &str) -> Result<()> {
     };
     app.push(LogKind::System, "thinking…");
     let campaign = HuntCampaign::new(&app.root, cfg);
-    let answer = tokio::runtime::Builder::new_current_thread()
+    let answer = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?
         .block_on(campaign.ask(&gw, question, "hunt"))?;
@@ -619,7 +657,7 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
         .map(|f| {
             format!(
                 "selected {} · {} · ECS={:.2} · {}",
-                &f.id.to_string()[..8],
+                short_id(&f.id),
                 f.status.as_str(),
                 f.ecs,
                 f.evidence.rule_id.as_deref().unwrap_or("-")
@@ -632,15 +670,9 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
     ))
     .style(Style::default().fg(muted).bg(charcoal));
     f.render_widget(status, chunks[3]);
-
-    // Ensure input cursor area is painted last (already).
-    let _ = Rect::default();
 }
 
-/// Run TUI but treat "quit" bail as clean exit.
+/// Open the interactive security workspace.
 pub fn run_workspace(root: &Path) -> Result<()> {
-    match run(root) {
-        Err(e) if e.to_string() == "quit" => Ok(()),
-        other => other,
-    }
+    run(root)
 }

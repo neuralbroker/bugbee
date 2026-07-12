@@ -55,12 +55,12 @@ enum Commands {
         /// Primary rule pack name under rules/ (additional packs load from config)
         #[arg(long, default_value = "owasp-2025")]
         pack: String,
-        /// Also load India AppSec pack (gov/edu/BFSI/enterprise)
-        #[arg(long, default_value_t = true)]
-        india: bool,
-        /// Maximize finding surface (lower drop threshold, queue more candidates)
-        #[arg(long, default_value_t = true)]
-        aggressive: bool,
+        /// Disable India AppSec pack (enabled by default)
+        #[arg(long = "no-india", default_value_t = false)]
+        no_india: bool,
+        /// Disable aggressive queue mode (enabled by default)
+        #[arg(long = "no-aggressive", default_value_t = false)]
+        no_aggressive: bool,
         /// Enable LLM adversarial review (requires configured model)
         #[arg(long)]
         llm_review: bool,
@@ -106,8 +106,7 @@ enum ReviewVerdict {
     WontFix,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("bugbee=info".parse()?))
         .with_target(false)
@@ -117,6 +116,8 @@ async fn main() -> Result<()> {
     let root_arg = cli.root.clone().unwrap_or(std::env::current_dir()?);
     let root = root_arg.canonicalize().unwrap_or(root_arg);
 
+    // Keep the interactive workspace fully synchronous so TUI hunt/ask can own
+    // their own Tokio runtimes without nesting under #[tokio::main].
     match cli.cmd {
         None | Some(Commands::Tui) => tui::run_workspace(&root)?,
         Some(Commands::Init { name }) => cmd_init(&root, name)?,
@@ -128,16 +129,38 @@ async fn main() -> Result<()> {
         }) => cmd_connect(&root, provider, api_key, base_url, model)?,
         Some(Commands::Hunt {
             pack,
-            india,
-            aggressive,
+            no_india,
+            no_aggressive,
             llm_review,
             auto,
-        }) => cmd_hunt(&root, &pack, india, aggressive, llm_review, auto).await?,
+        }) => {
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()?;
+            rt.block_on(cmd_hunt(
+                &root,
+                &pack,
+                !no_india,
+                !no_aggressive,
+                llm_review,
+                auto,
+            ))?;
+        }
         Some(Commands::Findings { limit }) => cmd_findings(&root, limit)?,
         Some(Commands::Review { id, verdict }) => cmd_review(&root, &id, verdict)?,
         Some(Commands::Report { output }) => cmd_report(&root, &output)?,
-        Some(Commands::Ask { question, role }) => cmd_ask(&root, &question, &role).await?,
-        Some(Commands::Models { provider }) => cmd_models(&root, provider.as_deref()).await?,
+        Some(Commands::Ask { question, role }) => {
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()?;
+            rt.block_on(cmd_ask(&root, &question, &role))?;
+        }
+        Some(Commands::Models { provider }) => {
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()?;
+            rt.block_on(cmd_models(&root, provider.as_deref()))?;
+        }
         Some(Commands::Doctor) => cmd_doctor(&root)?,
     }
     Ok(())
@@ -336,13 +359,15 @@ fn cmd_findings(root: &std::path::Path, limit: usize) -> Result<()> {
             .first()
             .map(|l| format!("{}:{}", l.file, l.start_line))
             .unwrap_or_else(|| "-".into());
+        let id = f.id.to_string();
+        let id_short = id.get(..8).unwrap_or(id.as_str());
         println!(
             "{} BRS={:5.1} ECS={:.2} status={} id={}  {}  {}",
             sev,
             f.brs,
             f.ecs,
             f.status.as_str(),
-            &f.id.to_string()[..8],
+            id_short,
             loc,
             f.title
         );
@@ -367,10 +392,19 @@ fn cmd_review(root: &std::path::Path, id: &str, verdict: ReviewVerdict) -> Resul
 }
 
 fn cmd_report(root: &std::path::Path, output: &std::path::Path) -> Result<()> {
-    let store = FindingStore::open(store_path(root))?;
+    let path = store_path(root);
+    if !path.exists() {
+        anyhow::bail!("No findings yet. Run `bugbee hunt` first.");
+    }
+    let store = FindingStore::open(path)?;
     let sarif = store.export_sarif()?;
-    fs::write(output, serde_json::to_string_pretty(&sarif)?)?;
-    println!("{} {}", "wrote".green().bold(), output.display());
+    let out = if output.is_absolute() {
+        output.to_path_buf()
+    } else {
+        root.join(output)
+    };
+    fs::write(&out, serde_json::to_string_pretty(&sarif)?)?;
+    println!("{} {}", "wrote".green().bold(), out.display());
     Ok(())
 }
 
