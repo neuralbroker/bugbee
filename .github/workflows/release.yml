@@ -37,15 +37,20 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            rust_target: ""
             executable: bugbee
-          - os: macos-13
+          # Cross-compile Intel macOS on Apple Silicon (macos-13 runners are scarce).
+          - os: macos-14
             target: x86_64-apple-darwin
+            rust_target: x86_64-apple-darwin
             executable: bugbee
           - os: macos-14
             target: aarch64-apple-darwin
+            rust_target: ""
             executable: bugbee
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            rust_target: ""
             executable: bugbee.exe
 
     steps:
@@ -54,9 +59,22 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
 
       - name: Build release binary
-        run: cargo build --locked --release -p bugbee-cli
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${{ matrix.rust_target }}" ]]; then
+            cargo build --locked --release -p bugbee-cli --target "${{ matrix.rust_target }}"
+            BIN="target/${{ matrix.rust_target }}/release/${{ matrix.executable }}"
+          else
+            cargo build --locked --release -p bugbee-cli
+            BIN="target/release/${{ matrix.executable }}"
+          fi
+          echo "BIN_PATH=${BIN}" >> "$GITHUB_ENV"
+          test -f "${BIN}"
 
       - name: Package Unix binary
         if: runner.os != 'Windows'
@@ -65,8 +83,10 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           archive="dist/bugbee-${{ matrix.target }}.tar.gz"
-          tar -C target/release -czf "${archive}" "${{ matrix.executable }}"
-          # macOS runners ship shasum; Linux ships sha256sum.
+          # Place the binary at archive root as "bugbee" for the installer.
+          stage="$(mktemp -d)"
+          cp "${BIN_PATH}" "${stage}/bugbee"
+          tar -C "${stage}" -czf "${archive}" bugbee
           if command -v sha256sum >/dev/null 2>&1; then
             sha256sum "${archive}" > "${archive}.sha256"
           else
@@ -78,7 +98,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist
-          Compress-Archive -Path "target/release/${{ matrix.executable }}" -DestinationPath "dist/bugbee-${{ matrix.target }}.zip"
+          Compress-Archive -Path "$env:BIN_PATH" -DestinationPath "dist/bugbee-${{ matrix.target }}.zip"
           $hash = (Get-FileHash "dist/bugbee-${{ matrix.target }}.zip" -Algorithm SHA256).Hash.ToLower()
           "$hash  bugbee-${{ matrix.target }}.zip" | Out-File -Encoding ascii "dist/bugbee-${{ matrix.target }}.zip.sha256"
 
@@ -104,7 +124,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+          set -euo pipefail
+          ls -la release/
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release/* --clobber
+          elif [[ "$GITHUB_REF_NAME" == *-* ]]; then
             gh release create "$GITHUB_REF_NAME" release/* --verify-tag --generate-notes --prerelease
           else
             gh release create "$GITHUB_REF_NAME" release/* --verify-tag --generate-notes
