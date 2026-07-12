@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "website/**"
+      - "scripts/install.sh"
       - "assets/brand/bugbee-mark-v2.png"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -31,6 +32,8 @@ jobs:
           mkdir -p _site/assets
           cp -R website/. _site/
           cp assets/brand/bugbee-mark-v2.png _site/assets/bugbee-mark-v2.png
+          # One-line installer mirrored to Pages for short install URLs.
+          cp scripts/install.sh _site/install.sh
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

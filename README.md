@@ -16,6 +16,30 @@
 
 Website: [neuralbroker.github.io/bugbee](https://neuralbroker.github.io/bugbee/)
 
+## Install
+
+One command (macOS / Linux — installs into `~/.local/bin`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/neuralbroker/bugbee/main/scripts/install.sh | bash
+```
+
+Then ensure `~/.local/bin` is on your `PATH` if the installer says so:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+bugbee --version
+```
+
+### Other install options
+
+| Method | Command |
+|--------|---------|
+| Pin a version | `BUGBEE_VERSION=v0.1.0-beta.1 curl -fsSL https://raw.githubusercontent.com/neuralbroker/bugbee/main/scripts/install.sh \| bash` |
+| Custom directory | `BUGBEE_INSTALL=/usr/local/bin curl -fsSL … \| bash` |
+| From source (Cargo) | `cargo install --git https://github.com/neuralbroker/bugbee --locked --bin bugbee` |
+| Windows | Download the `.zip` from [Releases](https://github.com/neuralbroker/bugbee/releases) |
+
 ## Features
 
 - **Any model**: OpenAI-compatible endpoints, xAI Grok, DeepSeek, Qwen, Kimi, GLM, Claude, GPT, Ollama, OpenRouter, custom gateways — you bring the key and model id
@@ -29,9 +53,8 @@ Website: [neuralbroker.github.io/bugbee](https://neuralbroker.github.io/bugbee/)
 ## Quick start
 
 ```bash
-# from this repo
-cargo build --release -p bugbee-cli
-export PATH="$PWD/target/release:$PATH"
+curl -fsSL https://raw.githubusercontent.com/neuralbroker/bugbee/main/scripts/install.sh | bash
+export PATH="$HOME/.local/bin:$PATH"   # if needed
 
 cd /path/to/your/project
 bugbee init
@@ -45,6 +68,13 @@ bugbee hunt
 bugbee findings
 bugbee tui
 bugbee report --output findings.sarif.json
+```
+
+Developers building from a checkout:
+
+```bash
+cargo build --release -p bugbee-cli
+export PATH="$PWD/target/release:$PATH"
 ```
 
 Keys passed to `bugbee connect --api-key` are stored in the local OS keychain;
