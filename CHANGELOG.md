@@ -11,7 +11,7 @@ First public beta of Bugbee.
 - Local-first agent safeguards: sensitive-path restrictions, redaction before model-bound content, permission-gated tools, and human review by default.
 - Cross-platform release archives for Linux, macOS (Intel and Apple Silicon), and Windows.
 - Production hardening for beta: precompiled detectors, redacted evidence storage, thread-safe SQLite store with WAL, unambiguous finding-id resolution, and expanded secret patterns.
-- One-line installer for macOS/Linux: `curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/get-bugbee.sh | bash`.
+- One-line installer for macOS/Linux: `curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh | bash`.
 
 ### Beta notes
 

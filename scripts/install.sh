@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bugbee one-line installer
-#   curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/get-bugbee.sh | bash
+#   curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh | bash
 #
 # Options (env):
 #   BUGBEE_VERSION   Tag to install (default: newest GitHub release, including prereleases)
