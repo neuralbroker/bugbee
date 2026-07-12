@@ -5,7 +5,7 @@ Intel, macOS Apple Silicon, and Windows x86_64 whenever a version tag is
 pushed. Users install with:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/neuralbroker/bugbee/main/scripts/install.sh | bash
+curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install.sh | bash
 ```
 
 Before tagging a release, ensure the pull request CI is green and update the
@@ -24,6 +24,9 @@ Hyphenated tags (e.g. `beta`) are published as GitHub prereleases.
 After the first release lands, smoke-test the installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/neuralbroker/bugbee/main/scripts/install.sh | bash
+# attach the installer to the release (required for the one-liner)
+gh release upload "v0.1.0-beta.1" scripts/install.sh --clobber
+
+curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install.sh | bash
 bugbee --version
 ```
