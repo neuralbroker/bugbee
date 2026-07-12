@@ -239,3 +239,35 @@ impl LlmProvider for OpenAiCompatProvider {
         Ok(parsed.data.into_iter().map(|m| m.id).collect())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::ChatMessage;
+    use bugbee_core::ProviderConfig;
+    use std::collections::HashMap;
+
+    fn provider() -> OpenAiCompatProvider {
+        let cfg = ProviderConfig {
+            name: Some("test".into()),
+            base_url: "https://example.test/v1".into(),
+            api_key_env: None,
+            api_key: None,
+            models: vec![],
+            headers: HashMap::new(),
+            protocol: "openai_compat".into(),
+        };
+        OpenAiCompatProvider::new(&cfg, "test-key".into()).expect("provider")
+    }
+
+    #[test]
+    fn redacts_secrets_before_provider_payload() {
+        let p = provider();
+        let messages = vec![ChatMessage::user(
+            "token=github_pat_abcdefghijklmnopqrstuvwxyz_1234567890",
+        )];
+        let redacted = p.redact_messages(&messages);
+        assert!(!redacted[0].content.contains("github_pat_abc"));
+        assert!(redacted[0].content.contains("REDACTED"));
+    }
+}

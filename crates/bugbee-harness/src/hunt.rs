@@ -144,9 +144,23 @@ impl HuntCampaign {
         f: &Finding,
     ) -> bugbee_core::Result<String> {
         let sys = system_for_agent("review");
+        // Locations/snippets are already redacted at detection time; keep the
+        // payload minimal so model-bound content never includes raw secrets.
+        let locations: Vec<String> = f
+            .locations
+            .iter()
+            .map(|l| format!("{}:{}-{} ({:?})", l.file, l.start_line, l.end_line, l.role))
+            .collect();
         let user = format!(
-            "Finding to review:\nTitle: {}\nSeverity: {:?}\nBRS: {:.1} ECS: {:.2}\nDesc: {}\nEvidence: {:?}\nLocations: {:?}\n\nFalsify or say stands.",
-            f.title, f.severity, f.brs, f.ecs, f.description, f.evidence.traces, f.locations
+            "Finding to review:\nTitle: {}\nSeverity: {:?}\nBRS: {:.1} ECS: {:.2}\nDesc: {}\nRule: {}\nTraces: {}\nLocations: {}\n\nFalsify or say stands.",
+            f.title,
+            f.severity,
+            f.brs,
+            f.ecs,
+            f.description,
+            f.evidence.rule_id.as_deref().unwrap_or("-"),
+            f.evidence.traces.join(" | "),
+            locations.join("; ")
         );
         let resp = gw
             .chat_role(

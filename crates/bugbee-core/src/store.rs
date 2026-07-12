@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
 use rusqlite::{params, Connection};
 use uuid::Uuid;
@@ -7,9 +8,11 @@ use uuid::Uuid;
 use crate::error::{BugbeeError, Result};
 use crate::finding::{Finding, FindingStatus};
 
+/// SQLite-backed finding store. A mutex guards the connection so the store can
+/// be shared across threads without requiring callers to serialize access.
 pub struct FindingStore {
     path: PathBuf,
-    conn: Connection,
+    conn: Mutex<Connection>,
 }
 
 impl FindingStore {
@@ -19,7 +22,14 @@ impl FindingStore {
             std::fs::create_dir_all(parent)?;
         }
         let conn = Connection::open(&path)?;
-        let store = Self { path, conn };
+        // Busy timeout avoids immediate failures when two hunts/reviews overlap.
+        conn.busy_timeout(std::time::Duration::from_secs(5))?;
+        // WAL improves concurrent readers (findings/TUI) while a hunt writes.
+        let _ = conn.pragma_update(None, "journal_mode", "WAL");
+        let store = Self {
+            path,
+            conn: Mutex::new(conn),
+        };
         store.init()?;
         Ok(store)
     }
@@ -28,46 +38,58 @@ impl FindingStore {
         &self.path
     }
 
+    fn with_conn<T>(&self, f: impl FnOnce(&Connection) -> Result<T>) -> Result<T> {
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|_| BugbeeError::Db("finding store lock poisoned".into()))?;
+        f(&conn)
+    }
+
     fn init(&self) -> Result<()> {
-        self.conn.execute_batch(
-            r#"
-            CREATE TABLE IF NOT EXISTS findings (
-                id TEXT PRIMARY KEY,
-                json TEXT NOT NULL,
-                brs REAL NOT NULL,
-                status TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            );
-            CREATE INDEX IF NOT EXISTS idx_findings_brs ON findings(brs DESC);
-            CREATE INDEX IF NOT EXISTS idx_findings_status ON findings(status);
-            "#,
-        )?;
-        Ok(())
+        self.with_conn(|conn| {
+            conn.execute_batch(
+                r#"
+                CREATE TABLE IF NOT EXISTS findings (
+                    id TEXT PRIMARY KEY,
+                    json TEXT NOT NULL,
+                    brs REAL NOT NULL,
+                    status TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_findings_brs ON findings(brs DESC);
+                CREATE INDEX IF NOT EXISTS idx_findings_status ON findings(status);
+                "#,
+            )?;
+            Ok(())
+        })
     }
 
     pub fn upsert(&self, finding: &Finding) -> Result<()> {
         let json = serde_json::to_string(finding)?;
-        self.conn.execute(
-            r#"
-            INSERT INTO findings (id, json, brs, status, created_at, updated_at)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-            ON CONFLICT(id) DO UPDATE SET
-                json=excluded.json,
-                brs=excluded.brs,
-                status=excluded.status,
-                updated_at=excluded.updated_at
-            "#,
-            params![
-                finding.id.to_string(),
-                json,
-                finding.brs,
-                finding.status.as_str(),
-                finding.created_at.to_rfc3339(),
-                finding.updated_at.to_rfc3339(),
-            ],
-        )?;
-        Ok(())
+        self.with_conn(|conn| {
+            conn.execute(
+                r#"
+                INSERT INTO findings (id, json, brs, status, created_at, updated_at)
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+                ON CONFLICT(id) DO UPDATE SET
+                    json=excluded.json,
+                    brs=excluded.brs,
+                    status=excluded.status,
+                    updated_at=excluded.updated_at
+                "#,
+                params![
+                    finding.id.to_string(),
+                    json,
+                    finding.brs,
+                    finding.status.as_str(),
+                    finding.created_at.to_rfc3339(),
+                    finding.updated_at.to_rfc3339(),
+                ],
+            )?;
+            Ok(())
+        })
     }
 
     /// Record the latest observation of a detector finding while preserving
@@ -92,53 +114,98 @@ impl FindingStore {
     /// Confirmed, false-positive, fixed, and won't-fix findings remain as history.
     pub fn prune_unreviewed_except(&self, observed_ids: &[Uuid]) -> Result<usize> {
         let statuses = "'new', 'triaged'";
-        if observed_ids.is_empty() {
-            return Ok(self.conn.execute(
-                &format!("DELETE FROM findings WHERE status IN ({statuses})"),
-                [],
-            )?);
-        }
+        self.with_conn(|conn| {
+            if observed_ids.is_empty() {
+                return Ok(conn.execute(
+                    &format!("DELETE FROM findings WHERE status IN ({statuses})"),
+                    [],
+                )?);
+            }
 
-        let placeholders = std::iter::repeat_n("?", observed_ids.len())
-            .collect::<Vec<_>>()
-            .join(", ");
-        let query = format!(
-            "DELETE FROM findings WHERE status IN ({statuses}) AND id NOT IN ({placeholders})"
-        );
-        let ids = observed_ids.iter().map(Uuid::to_string).collect::<Vec<_>>();
-        Ok(self.conn.execute(&query, rusqlite::params_from_iter(ids))?)
+            let placeholders = std::iter::repeat_n("?", observed_ids.len())
+                .collect::<Vec<_>>()
+                .join(", ");
+            let query = format!(
+                "DELETE FROM findings WHERE status IN ({statuses}) AND id NOT IN ({placeholders})"
+            );
+            let ids = observed_ids.iter().map(Uuid::to_string).collect::<Vec<_>>();
+            Ok(conn.execute(&query, rusqlite::params_from_iter(ids))?)
+        })
     }
 
     pub fn get(&self, id: &Uuid) -> Result<Finding> {
-        let json: String = self
-            .conn
-            .query_row(
-                "SELECT json FROM findings WHERE id = ?1",
-                params![id.to_string()],
-                |row| row.get(0),
-            )
-            .map_err(|_| BugbeeError::NotFound(format!("finding {id}")))?;
-        Ok(serde_json::from_str(&json)?)
+        self.with_conn(|conn| {
+            let json: String = conn
+                .query_row(
+                    "SELECT json FROM findings WHERE id = ?1",
+                    params![id.to_string()],
+                    |row| row.get(0),
+                )
+                .map_err(|_| BugbeeError::NotFound(format!("finding {id}")))?;
+            Ok(serde_json::from_str(&json)?)
+        })
+    }
+
+    /// Resolve a unique finding by full UUID or unambiguous prefix.
+    pub fn find_by_prefix(&self, prefix: &str) -> Result<Finding> {
+        if prefix.is_empty() {
+            return Err(BugbeeError::NotFound("empty finding id".into()));
+        }
+        // Fast path for full UUID.
+        if let Ok(id) = Uuid::parse_str(prefix) {
+            return self.get(&id);
+        }
+        let matches = self.with_conn(|conn| {
+            let mut stmt = conn.prepare("SELECT json FROM findings WHERE id LIKE ?1 || '%'")?;
+            let rows = stmt.query_map(params![prefix], |row| {
+                let json: String = row.get(0)?;
+                Ok(json)
+            })?;
+            let mut out = Vec::new();
+            for r in rows {
+                out.push(serde_json::from_str::<Finding>(&r?)?);
+            }
+            Ok(out)
+        })?;
+        match matches.as_slice() {
+            [] => Err(BugbeeError::NotFound(format!("finding {prefix}"))),
+            [only] => Ok(only.clone()),
+            many => Err(BugbeeError::Other(format!(
+                "ambiguous finding id `{prefix}` matches {} findings; use a longer prefix",
+                many.len()
+            ))),
+        }
     }
 
     pub fn list_by_brs(&self, limit: usize) -> Result<Vec<Finding>> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT json FROM findings ORDER BY brs DESC LIMIT ?1")?;
-        let rows = stmt.query_map(params![limit as i64], |row| {
-            let json: String = row.get(0)?;
-            Ok(json)
-        })?;
-        let mut out = Vec::new();
-        for r in rows {
-            let json = r?;
-            out.push(serde_json::from_str(&json)?);
-        }
-        Ok(out)
+        self.with_conn(|conn| {
+            let mut stmt = conn.prepare("SELECT json FROM findings ORDER BY brs DESC LIMIT ?1")?;
+            let rows = stmt.query_map(params![limit as i64], |row| {
+                let json: String = row.get(0)?;
+                Ok(json)
+            })?;
+            let mut out = Vec::new();
+            for r in rows {
+                let json = r?;
+                out.push(serde_json::from_str(&json)?);
+            }
+            Ok(out)
+        })
     }
 
     pub fn list_all(&self) -> Result<Vec<Finding>> {
-        self.list_by_brs(10_000)
+        self.with_conn(|conn| {
+            let mut stmt = conn.prepare("SELECT json FROM findings ORDER BY brs DESC")?;
+            let rows = stmt.query_map([], |row| {
+                let json: String = row.get(0)?;
+                Ok(json)
+            })?;
+            let mut out = Vec::new();
+            for r in rows {
+                out.push(serde_json::from_str(&r?)?);
+            }
+            Ok(out)
+        })
     }
 
     pub fn update_status(&self, id: &Uuid, status: FindingStatus) -> Result<()> {
@@ -149,10 +216,10 @@ impl FindingStore {
     }
 
     pub fn count(&self) -> Result<usize> {
-        let n: i64 = self
-            .conn
-            .query_row("SELECT COUNT(*) FROM findings", [], |row| row.get(0))?;
-        Ok(n as usize)
+        self.with_conn(|conn| {
+            let n: i64 = conn.query_row("SELECT COUNT(*) FROM findings", [], |row| row.get(0))?;
+            Ok(n as usize)
+        })
     }
 
     pub fn export_sarif(&self) -> Result<serde_json::Value> {
@@ -328,6 +395,19 @@ mod tests {
             run["results"][0]["locations"][0]["physicalLocation"]["region"]["startLine"],
             9
         );
+
+        drop(store);
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn find_by_prefix_requires_unique_match() {
+        let (store, path) = test_store();
+        let finding = candidate();
+        store.upsert_observation(&finding).unwrap();
+        let prefix = &finding.id.to_string()[..8];
+        assert_eq!(store.find_by_prefix(prefix).unwrap().id, finding.id);
+        assert!(store.find_by_prefix("deadbeef").is_err());
 
         drop(store);
         std::fs::remove_file(path).unwrap();

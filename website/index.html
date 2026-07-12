@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Bugbee is a local-first terminal workspace for evidence-led bug fixing and defensive security reviews."
+    />
+    <meta name="theme-color" content="#0b0d12" />
+    <title>Bugbee — Find the signal</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <nav aria-label="Primary navigation">
+        <a class="brand" href="#top" aria-label="Bugbee home">
+          <img src="assets/bugbee-mark-v2.png" alt="" width="30" height="30" />
+          <span>bugbee</span>
+        </a>
+        <div class="nav-links">
+          <a href="#workflow">Workflow</a>
+          <a href="https://github.com/neuralbroker/bugbee">GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+      </nav>
+
+      <section class="hero" id="top">
+        <p class="eyebrow"><span></span> Private beta</p>
+        <h1>Find the signal.<br /><em>Fix with evidence.</em></h1>
+        <p class="lede">
+          A terminal-first workspace for defensive bug fixing and vulnerability hunting.
+          Local analysis, reviewable evidence, and human-controlled remediation.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="#install">Install in one command</a>
+          <a class="button secondary" href="https://github.com/neuralbroker/bugbee">View source <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="terminal" aria-label="Bugbee terminal example">
+          <div class="terminal-bar"><span></span><span></span><span></span><code>~/project</code></div>
+          <pre><span class="prompt">$</span> bugbee hunt
+
+<span class="muted">  indexed</span>  214 files
+<span class="critical">  critical</span>  Unsafe pickle deserialization <span class="muted">app.py:30</span>
+<span class="high">  high</span>      Possible SQL injection <span class="muted">app.py:13</span>
+
+<span class="prompt">$</span> bugbee review aa8f074f confirm
+<span class="success">  confirmed</span>  Evidence preserved. Human review recorded.</pre>
+        </div>
+      </section>
+
+      <section class="principles" id="workflow" aria-label="Product principles">
+        <article>
+          <p class="number">01</p>
+          <h2>Local by default</h2>
+          <p>Index and deterministic detection stay in the repository. Sensitive paths are blocked and model-bound content is redacted.</p>
+        </article>
+        <article>
+          <p class="number">02</p>
+          <h2>Evidence before action</h2>
+          <p>Every finding carries location, source/sink context, confidence, risk scoring, and a reviewable SARIF export.</p>
+        </article>
+        <article>
+          <p class="number">03</p>
+          <h2>Humans hold the keys</h2>
+          <p>Bugbee proposes and records. Your team confirms findings and controls every production change.</p>
+        </article>
+      </section>
+
+      <section class="install" id="install" aria-label="Install">
+        <div>
+          <p class="eyebrow"><span></span> One command</p>
+          <h2>Install the terminal IDE.<br />Hunt in minutes.</h2>
+        </div>
+        <div class="code-block">
+          <code><span class="muted"># macOS / Linux</span><br />curl -fsSL https://raw.githubusercontent.com/neuralbroker/bugbee/main/scripts/install.sh | bash<br /><br /><span class="muted"># then in your project</span><br />bugbee init &amp;&amp; bugbee hunt &amp;&amp; bugbee findings</code>
+          <a href="https://github.com/neuralbroker/bugbee#install">Full install options <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>© 2026 Bugbee</span>
+      <span>Defensive security tooling. Apache-2.0.</span>
+    </footer>
+  </body>
+</html>

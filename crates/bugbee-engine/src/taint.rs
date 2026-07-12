@@ -1,7 +1,10 @@
-//! Lightweight taint heuristics: sources and sinks co-located or same function body.
+//! Lightweight taint heuristics: sources and sinks co-located in the same scope.
 
-use bugbee_core::{BrsWeights, Evidence, Finding, FindingLocation, LocationRole, Severity};
+use bugbee_core::{
+    BrsWeights, Evidence, Finding, FindingLocation, LocationRole, Redactor, Severity,
+};
 use bugbee_index::{Lang, RepoIndex};
+use once_cell::sync::Lazy;
 use regex::Regex;
 
 #[derive(Debug)]
@@ -21,22 +24,19 @@ struct TaintPair {
     severity: Severity,
 }
 
-pub fn scan_taint_heuristics(
-    index: &RepoIndex,
-    weights: &BrsWeights,
-) -> anyhow::Result<Vec<Finding>> {
-    let pairs = vec![
+static PAIRS: Lazy<Vec<TaintPair>> = Lazy::new(|| {
+    vec![
         TaintPair {
             id: "py-sql-injection",
             title: "Possible SQL injection (user input → query)",
             source: Regex::new(
                 r"request\.(args|form|json|get_json|values)|input\(|os\.environ|sys\.argv",
             )
-            .unwrap(),
+            .expect("valid taint regex"),
             sink: Regex::new(
                 r#"(execute|executemany|raw)\s*\(|cursor\.execute|f["'].*SELECT|["'].*SELECT.*\+|query\s*=\s*f["']"#,
             )
-            .unwrap(),
+            .expect("valid taint regex"),
             languages: &["python"],
             cwe: "CWE-89",
             owasp: "A05:2025",
@@ -45,8 +45,10 @@ pub fn scan_taint_heuristics(
         TaintPair {
             id: "py-command-injection",
             title: "Possible command injection",
-            source: Regex::new(r"request\.(args|form|json)|input\(|sys\.argv").unwrap(),
-            sink: Regex::new(r"os\.system|subprocess\.(call|run|Popen)|os\.popen").unwrap(),
+            source: Regex::new(r"request\.(args|form|json)|input\(|sys\.argv")
+                .expect("valid taint regex"),
+            sink: Regex::new(r"os\.system|subprocess\.(call|run|Popen)|os\.popen")
+                .expect("valid taint regex"),
             languages: &["python"],
             cwe: "CWE-78",
             owasp: "A05:2025",
@@ -55,8 +57,10 @@ pub fn scan_taint_heuristics(
         TaintPair {
             id: "js-sql-injection",
             title: "Possible SQL injection (JS/TS)",
-            source: Regex::new(r"req\.(query|body|params)|request\.(query|body)").unwrap(),
-            sink: Regex::new(r"query\s*\(|\.query\s*\(|execute\s*\(.*\+|`.*SELECT.*\$\{").unwrap(),
+            source: Regex::new(r"req\.(query|body|params)|request\.(query|body)")
+                .expect("valid taint regex"),
+            sink: Regex::new(r"query\s*\(|\.query\s*\(|execute\s*\(.*\+|`.*SELECT.*\$\{")
+                .expect("valid taint regex"),
             languages: &["javascript", "typescript"],
             cwe: "CWE-89",
             owasp: "A05:2025",
@@ -65,8 +69,9 @@ pub fn scan_taint_heuristics(
         TaintPair {
             id: "js-xss",
             title: "Possible XSS sink",
-            source: Regex::new(r"req\.(query|body|params)").unwrap(),
-            sink: Regex::new(r"innerHTML\s*=|dangerouslySetInnerHTML|document\.write").unwrap(),
+            source: Regex::new(r"req\.(query|body|params)").expect("valid taint regex"),
+            sink: Regex::new(r"innerHTML\s*=|dangerouslySetInnerHTML|document\.write")
+                .expect("valid taint regex"),
             languages: &["javascript", "typescript"],
             cwe: "CWE-79",
             owasp: "A05:2025",
@@ -75,8 +80,10 @@ pub fn scan_taint_heuristics(
         TaintPair {
             id: "go-sql-injection",
             title: "Possible SQL injection (Go string concat/format)",
-            source: Regex::new(r"r\.(URL\.Query|FormValue|PathValue)|os\.Args").unwrap(),
-            sink: Regex::new(r"Query\s*\(.*\+|Exec\s*\(.*\+|fmt\.Sprintf\s*\(.*SELECT").unwrap(),
+            source: Regex::new(r"r\.(URL\.Query|FormValue|PathValue)|os\.Args")
+                .expect("valid taint regex"),
+            sink: Regex::new(r"Query\s*\(.*\+|Exec\s*\(.*\+|fmt\.Sprintf\s*\(.*SELECT")
+                .expect("valid taint regex"),
             languages: &["go"],
             cwe: "CWE-89",
             owasp: "A05:2025",
@@ -85,15 +92,21 @@ pub fn scan_taint_heuristics(
         TaintPair {
             id: "go-command-injection",
             title: "Possible command injection (Go)",
-            source: Regex::new(r"r\.(URL\.Query|FormValue)|os\.Args").unwrap(),
-            sink: Regex::new(r"exec\.Command\(|syscall\.Exec").unwrap(),
+            source: Regex::new(r"r\.(URL\.Query|FormValue)|os\.Args").expect("valid taint regex"),
+            sink: Regex::new(r"exec\.Command\(|syscall\.Exec").expect("valid taint regex"),
             languages: &["go"],
             cwe: "CWE-78",
             owasp: "A05:2025",
             severity: Severity::Critical,
         },
-    ];
+    ]
+});
 
+pub fn scan_taint_heuristics(
+    index: &RepoIndex,
+    weights: &BrsWeights,
+) -> anyhow::Result<Vec<Finding>> {
+    let redactor = Redactor::enterprise();
     let mut out = Vec::new();
     for file in &index.files {
         if file.lang == Lang::Other {
@@ -105,23 +118,23 @@ pub fn scan_taint_heuristics(
             Err(_) => continue,
         };
 
-        for pair in &pairs {
+        for pair in PAIRS.iter() {
             if !pair.languages.contains(&lang) {
                 continue;
             }
             for scope in scopes_for(file.lang, &content) {
                 let mut sources = Vec::new();
                 let mut sinks = Vec::new();
-                for (index, line) in content.lines().enumerate() {
-                    let line_number = (index + 1) as u32;
+                for (line_index, line) in content.lines().enumerate() {
+                    let line_number = (line_index + 1) as u32;
                     if line_number < scope.start_line || line_number > scope.end_line {
                         continue;
                     }
                     if pair.source.is_match(line) {
-                        sources.push((line_number, line.trim().to_string()));
+                        sources.push((line_number, redactor.redact(line.trim())));
                     }
                     if pair.sink.is_match(line) {
-                        sinks.push((line_number, line.trim().to_string()));
+                        sinks.push((line_number, redactor.redact(line.trim())));
                     }
                 }
                 if sources.is_empty() || sinks.is_empty() {
