@@ -99,6 +99,51 @@ static PAIRS: Lazy<Vec<TaintPair>> = Lazy::new(|| {
             owasp: "A05:2025",
             severity: Severity::Critical,
         },
+        TaintPair {
+            id: "php-sql-injection",
+            title: "Possible SQL injection (PHP)",
+            source: Regex::new(r"\$_(GET|POST|REQUEST|COOKIE)\b").expect("valid taint regex"),
+            sink: Regex::new(r"mysqli_query\s*\(|mysql_query\s*\(|->query\s*\(|pg_query\s*\(")
+                .expect("valid taint regex"),
+            languages: &["php"],
+            cwe: "CWE-89",
+            owasp: "A05:2025",
+            severity: Severity::High,
+        },
+        TaintPair {
+            id: "php-command-injection",
+            title: "Possible command injection (PHP)",
+            source: Regex::new(r"\$_(GET|POST|REQUEST)\b").expect("valid taint regex"),
+            sink: Regex::new(r"\b(shell_exec|system|passthru|exec|popen)\s*\(")
+                .expect("valid taint regex"),
+            languages: &["php"],
+            cwe: "CWE-78",
+            owasp: "A05:2025",
+            severity: Severity::Critical,
+        },
+        TaintPair {
+            id: "java-sql-injection",
+            title: "Possible SQL injection (Java)",
+            source: Regex::new(r"request\.getParameter|@RequestParam|@PathVariable")
+                .expect("valid taint regex"),
+            sink: Regex::new(r"createStatement\s*\(|\.execute(Query)?\s*\(.*\+")
+                .expect("valid taint regex"),
+            languages: &["java"],
+            cwe: "CWE-89",
+            owasp: "A05:2025",
+            severity: Severity::High,
+        },
+        TaintPair {
+            id: "java-command-injection",
+            title: "Possible command injection (Java)",
+            source: Regex::new(r"request\.getParameter|@RequestParam").expect("valid taint regex"),
+            sink: Regex::new(r"Runtime\.getRuntime\(\)\.exec|new\s+ProcessBuilder")
+                .expect("valid taint regex"),
+            languages: &["java"],
+            cwe: "CWE-78",
+            owasp: "A05:2025",
+            severity: Severity::Critical,
+        },
     ]
 });
 
@@ -220,6 +265,16 @@ fn scopes_for(lang: Lang, content: &str) -> Vec<CodeScope> {
         Lang::JavaScript | Lang::TypeScript => Some(
             Regex::new(
                 r"^(?:\s*app\.(?:get|post|put|patch|delete|use)\s*\(|\s*(?:export\s+)?(?:async\s+)?function\s+\w+|\s*(?:export\s+)?(?:const|let)\s+\w+\s*=\s*(?:async\s*)?(?:\([^)]*\)|\w+)\s*=>)",
+            )
+            .expect("valid regex"),
+        ),
+        Lang::Php => Some(
+            Regex::new(r"^(?:public|private|protected|static|\s)*function\s+\w+\s*\(")
+                .expect("valid regex"),
+        ),
+        Lang::Java | Lang::CSharp => Some(
+            Regex::new(
+                r"^(?:public|private|protected|static|internal|\s)+(?:[\w<>\[\]]+\s+)+\w+\s*\(",
             )
             .expect("valid regex"),
         ),

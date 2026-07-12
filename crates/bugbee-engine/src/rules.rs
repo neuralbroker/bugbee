@@ -8,8 +8,11 @@ use bugbee_index::{Lang, RepoIndex};
 use regex::Regex;
 use serde::Deserialize;
 
-const BUILTIN_OWASP_2025_RULES: &str =
+const BUILTIN_OWASP_CORE: &str =
     include_str!("../../../rules/owasp-2025/injection-crypto-misconfig.yaml");
+const BUILTIN_OWASP_WEB: &str = include_str!("../../../rules/owasp-2025/web-auth-ssrf-xss.yaml");
+const BUILTIN_INDIA_APPSEC: &str =
+    include_str!("../../../rules/india-appsec/india-gov-edu-enterprise.yaml");
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Rule {
@@ -181,13 +184,24 @@ pub fn load_rules_dir(dir: &Path) -> anyhow::Result<Vec<RulePack>> {
     Ok(packs)
 }
 
-/// The default defensive rule pack is embedded in every Bugbee binary so a
-/// downloaded release has the same baseline coverage as a source checkout.
+/// Embedded baselines ship inside every release binary:
+///
+/// - OWASP-focused core + web rules
+/// - India AppSec pack (gov / edu / BFSI / enterprise hygiene, CERT-In oriented)
+///
 /// Filesystem rule packs remain supported for organization-specific rules.
 pub fn builtin_rule_packs() -> anyhow::Result<Vec<RulePack>> {
-    let rules: Vec<Rule> = serde_yaml::from_str(BUILTIN_OWASP_2025_RULES)
-        .map_err(|error| anyhow::anyhow!("invalid embedded OWASP 2025 rule pack: {error}"))?;
-    Ok(vec![RulePack::from_rules("builtin-owasp-2025", rules)?])
+    let mut packs = Vec::new();
+    for (name, raw) in [
+        ("builtin-owasp-2025-core", BUILTIN_OWASP_CORE),
+        ("builtin-owasp-2025-web", BUILTIN_OWASP_WEB),
+        ("builtin-india-appsec", BUILTIN_INDIA_APPSEC),
+    ] {
+        let rules: Vec<Rule> = serde_yaml::from_str(raw)
+            .map_err(|error| anyhow::anyhow!("invalid embedded pack {name}: {error}"))?;
+        packs.push(RulePack::from_rules(name, rules)?);
+    }
+    Ok(packs)
 }
 
 fn parse_severity(s: &str) -> Severity {

@@ -38,10 +38,22 @@ impl HuntCampaign {
     pub fn new(root: impl AsRef<Path>, config: BugbeeConfig) -> Self {
         let root = root.as_ref().to_path_buf();
         let mut rules_dirs = vec![root.join("rules")];
-        // Also permit a workspace-level custom rules directory in source use.
-        // The maintained baseline is embedded in the engine for release builds.
+        // Prefer configured packs under rules/<pack> when present.
+        for pack in &config.hunt.packs {
+            let dir = root.join("rules").join(pack);
+            if dir.exists() {
+                rules_dirs.push(dir);
+            }
+        }
+        // Workspace checkout packs (development / monorepo use).
         if let Ok(cwd) = std::env::current_dir() {
             rules_dirs.push(cwd.join("rules"));
+            for pack in &config.hunt.packs {
+                let dir = cwd.join("rules").join(pack);
+                if dir.exists() {
+                    rules_dirs.push(dir);
+                }
+            }
         }
         Self {
             root,
@@ -74,9 +86,10 @@ impl HuntCampaign {
             None
         };
 
+        let (theta_high, theta_low) = self.config.hunt.effective_thresholds();
+
         for f in &mut findings {
-            let mut auto_ok =
-                f.ecs >= 0.75 && f.confidence >= 0.8 && f.brs >= self.config.hunt.theta_high;
+            let mut auto_ok = f.ecs >= 0.75 && f.confidence >= 0.8 && f.brs >= theta_high;
 
             if let Some(gw) = &gateway {
                 if let Ok(review_text) = self.llm_adversarial_review(gw, f).await {
@@ -100,8 +113,8 @@ impl HuntCampaign {
                 auto_ok && !self.config.hunt.require_human_for_auto,
                 f.brs,
                 f.ecs,
-                self.config.hunt.theta_high,
-                self.config.hunt.theta_low,
+                theta_high,
+                theta_low,
             );
 
             match decision {

@@ -81,6 +81,12 @@ pub struct HuntConfig {
     pub theta_low: f64,
     #[serde(default = "default_true")]
     pub require_human_for_auto: bool,
+    /// Maximize finding surface (lower drop threshold, queue more candidates).
+    #[serde(default = "default_true")]
+    pub aggressive: bool,
+    /// Emphasize India gov/edu/BFSI/enterprise rule packs and language surface.
+    #[serde(default = "default_true")]
+    pub india_profile: bool,
     #[serde(default)]
     pub languages: Vec<String>,
     #[serde(default)]
@@ -103,13 +109,30 @@ impl Default for HuntConfig {
             theta_high: default_theta_high(),
             theta_low: default_theta_low(),
             require_human_for_auto: true,
+            aggressive: true,
+            india_profile: true,
             languages: vec![
                 "python".into(),
                 "javascript".into(),
                 "typescript".into(),
                 "go".into(),
+                "php".into(),
+                "java".into(),
+                "csharp".into(),
             ],
-            packs: vec!["owasp-2025".into()],
+            packs: vec!["owasp-2025".into(), "india-appsec".into()],
+        }
+    }
+}
+
+impl HuntConfig {
+    /// Thresholds used during dual-review gating.
+    pub fn effective_thresholds(&self) -> (f64, f64) {
+        if self.aggressive {
+            // Keep more candidates in the human queue; still never auto-confirm without gates.
+            (self.theta_high.max(85.0), self.theta_low.min(12.0))
+        } else {
+            (self.theta_high, self.theta_low)
         }
     }
 }

@@ -1,0 +1,121 @@
+# Additional aggressive baseline rules for higher finding coverage.
+
+- id: py-yaml-load
+  title: Unsafe yaml.load
+  message: "yaml.load without SafeLoader can execute arbitrary constructors"
+  severity: high
+  cwe: ["CWE-502"]
+  owasp: ["A08:2025"]
+  category: integrity
+  languages: ["python"]
+  pattern: "yaml\\.load\\s*\\("
+  confidence: 0.7
+  exploitability: 0.75
+
+- id: py-subprocess-shell-true
+  title: subprocess with shell=True
+  message: "shell=True enables command injection when args include untrusted input"
+  severity: high
+  cwe: ["CWE-78"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["python"]
+  pattern: "subprocess\\.(run|call|Popen)\\s*\\([^)]*shell\\s*=\\s*True"
+  confidence: 0.75
+  exploitability: 0.8
+
+- id: py-requests-verify-false
+  title: TLS verification disabled (requests)
+  message: "verify=False disables certificate validation"
+  severity: high
+  cwe: ["CWE-295"]
+  owasp: ["A02:2025"]
+  category: misconfig
+  languages: ["python"]
+  pattern: "verify\\s*=\\s*False"
+  confidence: 0.7
+  exploitability: 0.6
+
+- id: py-flask-secret-key
+  title: Hardcoded Flask secret key
+  message: "Hardcoded session secret enables session forgery"
+  severity: high
+  cwe: ["CWE-798"]
+  owasp: ["A07:2025"]
+  category: secrets
+  languages: ["python"]
+  pattern: "app\\.secret_key\\s*=\\s*['\"][^'\"]+['\"]|SECRET_KEY\\s*=\\s*['\"][^'\"]+['\"]"
+  confidence: 0.7
+  exploitability: 0.65
+
+- id: js-new-function
+  title: Dynamic Function constructor
+  message: "new Function() is eval-equivalent"
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["javascript", "typescript"]
+  pattern: "new\\s+Function\\s*\\("
+  confidence: 0.7
+  exploitability: 0.75
+
+- id: js-dangerously-set-html
+  title: React dangerouslySetInnerHTML
+  message: "Unsanitized HTML injection vector"
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["javascript", "typescript"]
+  pattern: "dangerouslySetInnerHTML"
+  confidence: 0.65
+  exploitability: 0.7
+
+- id: js-localstorage-token
+  title: Auth token stored in localStorage
+  message: "Tokens in localStorage are XSS-exfiltratable; prefer httpOnly cookies"
+  severity: medium
+  cwe: ["CWE-922"]
+  owasp: ["A07:2025"]
+  category: authn
+  languages: ["javascript", "typescript"]
+  pattern: "localStorage\\.(setItem|set)\\s*\\(\\s*['\"][^'\"]*(token|jwt|session|auth)"
+  confidence: 0.55
+  exploitability: 0.5
+
+- id: go-sql-fmt-sprintf
+  title: SQL built with fmt.Sprintf
+  message: "Prefer parameterized queries; fmt.Sprintf SQL is injection-prone"
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["go"]
+  pattern: "fmt\\.Sprintf\\s*\\(\\s*[\"'].*(SELECT|INSERT|UPDATE|DELETE)"
+  confidence: 0.65
+  exploitability: 0.7
+
+- id: generic-hardcoded-password
+  title: Hardcoded password assignment
+  message: "Literal passwords in source should be vaulted"
+  severity: high
+  cwe: ["CWE-798"]
+  owasp: ["A07:2025"]
+  category: secrets
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)(password|passwd|db_password|db_pass)\\s*[=:]\\s*['\"][^'\"]{4,}['\"]"
+  confidence: 0.55
+  exploitability: 0.6
+
+- id: generic-http-url-api
+  title: Cleartext HTTP API endpoint
+  message: "Prefer HTTPS for API base URLs (CERT-In crypto hygiene)"
+  severity: low
+  cwe: ["CWE-319"]
+  owasp: ["A02:2025"]
+  category: misconfig
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "['\"]http://[A-Za-z0-9._/-]+['\"]"
+  confidence: 0.4
+  exploitability: 0.35

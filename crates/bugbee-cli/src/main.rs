@@ -17,15 +17,16 @@ mod tui;
 #[command(
     name = "bugbee",
     version,
-    about = "Agentic bug & vulnerability hunting IDE (terminal-first)"
+    about = "Agentic bug & vulnerability hunting IDE (terminal-first, OpenCode-style UX)"
 )]
 struct Cli {
     /// Project root (default: cwd)
     #[arg(long, global = true)]
     root: Option<PathBuf>,
 
+    /// Subcommand. When omitted, opens the interactive workspace (OpenCode-style).
     #[command(subcommand)]
-    cmd: Commands,
+    cmd: Option<Commands>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -51,9 +52,15 @@ enum Commands {
     },
     /// Run a deterministic (+ optional LLM review) hunt
     Hunt {
-        /// Rule pack name under rules/
+        /// Primary rule pack name under rules/ (additional packs load from config)
         #[arg(long, default_value = "owasp-2025")]
         pack: String,
+        /// Also load India AppSec pack (gov/edu/BFSI/enterprise)
+        #[arg(long, default_value_t = true)]
+        india: bool,
+        /// Maximize finding surface (lower drop threshold, queue more candidates)
+        #[arg(long, default_value_t = true)]
+        aggressive: bool,
         /// Enable LLM adversarial review (requires configured model)
         #[arg(long)]
         llm_review: bool,
@@ -111,25 +118,27 @@ async fn main() -> Result<()> {
     let root = root_arg.canonicalize().unwrap_or(root_arg);
 
     match cli.cmd {
-        Commands::Init { name } => cmd_init(&root, name)?,
-        Commands::Connect {
+        None | Some(Commands::Tui) => tui::run_workspace(&root)?,
+        Some(Commands::Init { name }) => cmd_init(&root, name)?,
+        Some(Commands::Connect {
             provider,
             api_key,
             base_url,
             model,
-        } => cmd_connect(&root, provider, api_key, base_url, model)?,
-        Commands::Hunt {
+        }) => cmd_connect(&root, provider, api_key, base_url, model)?,
+        Some(Commands::Hunt {
             pack,
+            india,
+            aggressive,
             llm_review,
             auto,
-        } => cmd_hunt(&root, &pack, llm_review, auto).await?,
-        Commands::Findings { limit } => cmd_findings(&root, limit)?,
-        Commands::Review { id, verdict } => cmd_review(&root, &id, verdict)?,
-        Commands::Report { output } => cmd_report(&root, &output)?,
-        Commands::Ask { question, role } => cmd_ask(&root, &question, &role).await?,
-        Commands::Models { provider } => cmd_models(&root, provider.as_deref()).await?,
-        Commands::Doctor => cmd_doctor(&root)?,
-        Commands::Tui => tui::run(&root)?,
+        }) => cmd_hunt(&root, &pack, india, aggressive, llm_review, auto).await?,
+        Some(Commands::Findings { limit }) => cmd_findings(&root, limit)?,
+        Some(Commands::Review { id, verdict }) => cmd_review(&root, &id, verdict)?,
+        Some(Commands::Report { output }) => cmd_report(&root, &output)?,
+        Some(Commands::Ask { question, role }) => cmd_ask(&root, &question, &role).await?,
+        Some(Commands::Models { provider }) => cmd_models(&root, provider.as_deref()).await?,
+        Some(Commands::Doctor) => cmd_doctor(&root)?,
     }
     Ok(())
 }
@@ -170,9 +179,9 @@ python, javascript, typescript, go
     }
     println!("{} {}", "initialized".green().bold(), cfg_path.display());
     println!("  store: {}", store_path(root).display());
-    println!("  next:  bugbee connect --provider xai --model grok-4.5");
-    println!("         bugbee doctor");
-    println!("         bugbee hunt");
+    println!("  next:  bugbee                  # OpenCode-style workspace");
+    println!("         bugbee hunt             # aggressive + India packs");
+    println!("         bugbee connect --provider xai --model grok-4.5");
     Ok(())
 }
 
@@ -254,22 +263,45 @@ fn cmd_connect(
     Ok(())
 }
 
-async fn cmd_hunt(root: &std::path::Path, pack: &str, llm_review: bool, auto: bool) -> Result<()> {
-    let cfg = BugbeeConfig::load_layered(Some(root))?;
+async fn cmd_hunt(
+    root: &std::path::Path,
+    pack: &str,
+    india: bool,
+    aggressive: bool,
+    llm_review: bool,
+    auto: bool,
+) -> Result<()> {
+    let mut cfg = BugbeeConfig::load_layered(Some(root))?;
+    cfg.hunt.aggressive = aggressive;
+    cfg.hunt.india_profile = india;
+    if india && !cfg.hunt.packs.iter().any(|p| p == "india-appsec") {
+        cfg.hunt.packs.push("india-appsec".into());
+    }
+    if !cfg.hunt.packs.iter().any(|p| p == pack) {
+        cfg.hunt.packs.insert(0, pack.to_string());
+    }
+
     let store = FindingStore::open(store_path(root))?;
     let mut campaign = HuntCampaign::new(root, cfg);
     campaign.use_llm_review = llm_review;
     campaign.auto_approve = auto;
-    // Prefer pack dir
     let pack_dir = root.join("rules").join(pack);
     if pack_dir.exists() {
         campaign.rules_dirs.insert(0, pack_dir);
     }
+    if india {
+        let india_dir = root.join("rules").join("india-appsec");
+        if india_dir.exists() {
+            campaign.rules_dirs.insert(0, india_dir);
+        }
+    }
 
     println!(
-        "{} hunting in {} …",
+        "{} hunting in {}  (aggressive={} india={}) …",
         "bugbee".magenta().bold(),
-        root.display()
+        root.display(),
+        aggressive,
+        india
     );
     let report = campaign.run(&store).await?;
     println!("{}", "── Hunt report ──".bold());
@@ -280,7 +312,7 @@ async fn cmd_hunt(root: &std::path::Path, pack: &str, llm_review: bool, auto: bo
     println!("  dropped       : {}", report.dropped);
     println!("  duration      : {} ms", report.duration_ms);
     println!("\n  bugbee findings");
-    println!("  bugbee tui");
+    println!("  bugbee            # OpenCode-style workspace");
     Ok(())
 }
 

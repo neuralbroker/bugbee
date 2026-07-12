@@ -2,6 +2,13 @@
 
 All notable changes are documented here.
 
+## Unreleased
+
+- OpenCode-style interactive workspace: `bugbee` (no args) with slash commands (`/hunt`, `/findings`, `/review`, `/doctor`, `/ask`).
+- India AppSec rule pack for gov/edu/BFSI/enterprise hygiene (CERT-In oriented), plus expanded OWASP web rules.
+- Aggressive hunt mode (default): lower drop threshold, multi-pack loading, PHP/Java indexing and taint.
+- Secrets coverage for India payment-gateway style credentials (redacted evidence only).
+
 ## 0.1.0-beta.1 — 2026-07-10
 
 First public beta of Bugbee.

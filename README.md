@@ -43,7 +43,8 @@ bugbee --version
 ## Features
 
 - **Any model**: OpenAI-compatible endpoints, xAI Grok, DeepSeek, Qwen, Kimi, GLM, Claude, GPT, Ollama, OpenRouter, custom gateways — you bring the key and model id
-- **Deterministic engines**: embedded OWASP baseline rules, secrets, taint heuristics (Python / JS / TS / Go)
+- **Deterministic engines**: embedded OWASP + **India AppSec** packs (gov/edu/BFSI/enterprise, CERT-In oriented), secrets, taint (Python / JS / TS / Go / **PHP / Java**)
+- **Aggressive by default**: wider human queue, multi-pack hunts, OpenCode-style interactive workspace
 - **Repository-safe indexing**: honors Git ignores and excludes generated, dependency, and local-state directories by default
 - **Scoring**: Bugbee Risk Score (BRS) + Evidence Completeness (ECS) + dual-review gates
 - **Review queue**: confirm / false-positive / fixed with SARIF export
@@ -58,16 +59,33 @@ export PATH="$HOME/.local/bin:$PATH"   # if needed
 
 cd /path/to/your/project
 bugbee init
-# optional: any provider + any model
+bugbee                  # OpenCode-style workspace (slash commands)
+# or headless:
+bugbee hunt            # aggressive + India AppSec + OWASP packs
+bugbee findings
+bugbee report --output findings.sarif.json
+```
+
+### OpenCode-style workspace
+
+Running `bugbee` with no subcommand opens an interactive security IDE:
+
+| Command | Action |
+|---------|--------|
+| `/hunt` | Aggressive local hunt (OWASP + India packs) |
+| `/findings` | List / filter findings |
+| `/review <id> confirm\|fp\|fixed` | Human review |
+| `/doctor` | Config readiness |
+| `/ask …` | Chat with your connected model about this repo |
+| `/report` | SARIF export |
+| `c` / `f` / `x` | Confirm / false-positive / fixed selected finding |
+
+Optional model (BYOK):
+
+```bash
 bugbee connect --provider xai --api-key "$XAI_API_KEY" --model grok-4.5
 # or local
 bugbee connect --provider ollama --base-url http://127.0.0.1:11434/v1 --model qwen2.5-coder
-bugbee doctor
-
-bugbee hunt
-bugbee findings
-bugbee tui
-bugbee report --output findings.sarif.json
 ```
 
 Developers building from a checkout:

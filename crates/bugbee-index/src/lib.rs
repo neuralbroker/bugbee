@@ -18,6 +18,9 @@ pub enum Lang {
     JavaScript,
     TypeScript,
     Go,
+    Php,
+    Java,
+    CSharp,
     Other,
 }
 
@@ -34,6 +37,9 @@ impl Lang {
             "js" | "jsx" | "mjs" | "cjs" => Lang::JavaScript,
             "ts" | "tsx" => Lang::TypeScript,
             "go" => Lang::Go,
+            "php" => Lang::Php,
+            "java" => Lang::Java,
+            "cs" => Lang::CSharp,
             _ => Lang::Other,
         }
     }
@@ -44,6 +50,9 @@ impl Lang {
             Lang::JavaScript => "javascript",
             Lang::TypeScript => "typescript",
             Lang::Go => "go",
+            Lang::Php => "php",
+            Lang::Java => "java",
+            Lang::CSharp => "csharp",
             Lang::Other => "other",
         }
     }
@@ -280,6 +289,24 @@ fn extract_symbols_and_imports(
             Regex::new(r"(?m)^func\s+(?:\([^)]+\)\s+)?(\w+)\s*\(").unwrap(),
             vec![Regex::new(r#"(?m)^\s*"([^"]+)"\s*$"#).unwrap()],
         ),
+        Lang::Php => (
+            Regex::new(r"(?m)^(?:public|private|protected|static|\s)*function\s+(\w+)\s*\(")
+                .unwrap(),
+            vec![
+                Regex::new(r#"(?m)^(?:use|require|include|require_once|include_once)\s+['"]?([^;'"]+)"#)
+                    .unwrap(),
+            ],
+        ),
+        Lang::Java | Lang::CSharp => (
+            Regex::new(
+                r"(?m)^(?:public|private|protected|static|internal|\s)+(?:[\w<>\[\]]+\s+)+(\w+)\s*\(",
+            )
+            .unwrap(),
+            vec![
+                Regex::new(r"(?m)^import\s+([\w\.]+);").unwrap(),
+                Regex::new(r"(?m)^using\s+([\w\.]+);").unwrap(),
+            ],
+        ),
         Lang::Other => return (symbols, imports),
     };
 
@@ -293,7 +320,9 @@ fn extract_symbols_and_imports(
                     .or_else(|| c.get(2))
                     .map(|m| m.as_str())
                     .unwrap_or(""),
-                Lang::Go => c.get(1).map(|m| m.as_str()).unwrap_or(""),
+                Lang::Go | Lang::Php | Lang::Java | Lang::CSharp => {
+                    c.get(1).map(|m| m.as_str()).unwrap_or("")
+                }
                 Lang::Other => "",
             };
             if !name.is_empty() {

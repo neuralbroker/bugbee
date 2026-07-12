@@ -1,0 +1,315 @@
+# India-focused defensive AppSec baselines for government, education,
+# BFSI, and enterprise stacks (CERT-In / MeitY-oriented hygiene).
+# Defensive detection only — no live targeting of third-party systems.
+
+- id: php-mysqli-sqli
+  title: Possible SQL injection via mysqli query concatenation
+  message: "String-built SQL in PHP is a common CMS/portal issue; use prepared statements"
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["php"]
+  pattern: "mysqli_(query|real_query)\\s*\\(\\s*\\$.*\\."
+  confidence: 0.7
+  exploitability: 0.75
+
+- id: php-mysql-query-concat
+  title: Legacy mysql_query with dynamic SQL
+  message: "Deprecated mysql_* APIs with concatenation are high-risk on legacy portals"
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["php"]
+  pattern: "mysql_query\\s*\\("
+  confidence: 0.8
+  exploitability: 0.85
+
+- id: php-eval
+  title: Use of eval in PHP
+  message: "eval() enables remote code execution on user-controlled input"
+  severity: critical
+  cwe: ["CWE-95"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["php"]
+  pattern: "\\beval\\s*\\("
+  confidence: 0.85
+  exploitability: 0.9
+
+- id: php-unserialize
+  title: Unsafe unserialize
+  message: "unserialize of untrusted data is a common RCE class in PHP apps"
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: ["A08:2025"]
+  category: integrity
+  languages: ["php"]
+  pattern: "\\bunserialize\\s*\\("
+  confidence: 0.75
+  exploitability: 0.85
+
+- id: php-shell-exec
+  title: Shell execution from PHP
+  message: "shell_exec/system/passthru/exec are command-injection sinks"
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["php"]
+  pattern: "\\b(shell_exec|passthru|system|popen|proc_open)\\s*\\("
+  confidence: 0.8
+  exploitability: 0.85
+
+- id: php-display-errors
+  title: PHP display_errors enabled
+  message: "Error display leaks paths and stack data — common on shared hosting and campus portals"
+  severity: medium
+  cwe: ["CWE-209"]
+  owasp: ["A02:2025"]
+  category: misconfig
+  languages: ["php"]
+  pattern: "(?i)display_errors\\s*[=,]\\s*(On|1|true)|ini_set\\s*\\(\\s*['\"]display_errors['\"]"
+  confidence: 0.65
+  exploitability: 0.4
+
+- id: java-sql-concat
+  title: Java SQL string concatenation
+  message: "Prefer PreparedStatement; concat SQL is common in bank/ERP integrations"
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["java"]
+  pattern: "(Statement\\s+\\w+|createStatement\\s*\\().*(execute|executeQuery)\\s*\\(\\s*\".*\\+"
+  confidence: 0.55
+  exploitability: 0.7
+
+- id: java-runtime-exec
+  title: Runtime.exec / ProcessBuilder shell risk
+  message: "Process launch from app code needs strict allowlists"
+  severity: high
+  cwe: ["CWE-78"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["java"]
+  pattern: "Runtime\\.getRuntime\\(\\)\\.exec\\s*\\(|new\\s+ProcessBuilder\\s*\\("
+  confidence: 0.7
+  exploitability: 0.75
+
+- id: java-md5-password
+  title: Weak password hashing (MD5/SHA1) in Java
+  message: "Use bcrypt/Argon2/scrypt; MD5/SHA1 remain widespread in legacy India enterprise code"
+  severity: high
+  cwe: ["CWE-328"]
+  owasp: ["A04:2025"]
+  category: crypto
+  languages: ["java"]
+  pattern: "MessageDigest\\.getInstance\\s*\\(\\s*\"(MD5|SHA-?1)\""
+  confidence: 0.7
+  exploitability: 0.55
+
+- id: java-trust-all-certs
+  title: Trust-all TLS / HostnameVerifier
+  message: "Disabling certificate validation breaks MITM protections for payment/API clients"
+  severity: critical
+  cwe: ["CWE-295"]
+  owasp: ["A02:2025"]
+  category: misconfig
+  languages: ["java"]
+  pattern: "TrustAll|trustAllCerts|ALLOW_ALL_HOSTNAME|HostnameVerifier\\s*\\{[^}]*return\\s+true"
+  confidence: 0.75
+  exploitability: 0.8
+
+- id: py-django-debug
+  title: Django DEBUG True
+  message: "Django debug mode leaks settings and stack — frequent in edu/campus deploys"
+  severity: high
+  cwe: ["CWE-489"]
+  owasp: ["A02:2025"]
+  category: misconfig
+  languages: ["python"]
+  pattern: "(?i)^\\s*DEBUG\\s*=\\s*True\\b"
+  confidence: 0.85
+  exploitability: 0.65
+
+- id: py-django-secret-key-hardcoded
+  title: Hardcoded Django SECRET_KEY
+  message: "Hardcoded secret keys appear in many India SaaS and gov microservice templates"
+  severity: critical
+  cwe: ["CWE-798"]
+  owasp: ["A07:2025"]
+  category: secrets
+  languages: ["python"]
+  pattern: "(?i)SECRET_KEY\\s*=\\s*['\"][^'\"]{8,}['\"]"
+  confidence: 0.75
+  exploitability: 0.7
+
+- id: py-cors-wildcard
+  title: CORS allow-all origins
+  message: "Wildcard CORS with credentials is a common SPA misconfig"
+  severity: high
+  cwe: ["CWE-942"]
+  owasp: ["A01:2025"]
+  category: misconfig
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)Access-Control-Allow-Origin['\"\\s:=]+\\*|CORS_ALLOW_ALL_ORIGINS\\s*=\\s*True|cors\\(\\s*\\{|origin:\\s*true"
+  confidence: 0.55
+  exploitability: 0.55
+
+- id: js-innerhtml-assign
+  title: DOM XSS via innerHTML assignment
+  message: "innerHTML sinks are frequent on India portal frontends and LMS UIs"
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: ["A05:2025"]
+  category: injection
+  languages: ["javascript", "typescript"]
+  pattern: "\\.innerHTML\\s*="
+  confidence: 0.55
+  exploitability: 0.65
+
+- id: js-document-cookie
+  title: Direct document.cookie usage
+  message: "Review cookie flags (Secure, HttpOnly, SameSite) for session cookies"
+  severity: medium
+  cwe: ["CWE-1004"]
+  owasp: ["A07:2025"]
+  category: authn
+  languages: ["javascript", "typescript"]
+  pattern: "document\\.cookie\\s*="
+  confidence: 0.45
+  exploitability: 0.45
+
+- id: generic-hardcoded-jwt-secret
+  title: Hardcoded JWT/HMAC secret
+  message: "Hardcoded JWT secrets break token integrity across microservices"
+  severity: critical
+  cwe: ["CWE-798"]
+  owasp: ["A07:2025"]
+  category: secrets
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)(jwt[_-]?secret|hmac[_-]?secret|token[_-]?secret)\\s*[=:]\\s*['\"][^'\"]{8,}['\"]"
+  confidence: 0.8
+  exploitability: 0.75
+
+- id: generic-payment-key-hardcoded
+  title: Hardcoded payment gateway credential
+  message: "Razorpay/PayU/Paytm/Cashfree keys must live in vaults/secret managers — never source"
+  severity: critical
+  cwe: ["CWE-798"]
+  owasp: ["A07:2025"]
+  category: secrets
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)(razorpay|payu|paytm|cashfree|phonepe|ccavenue).{0,40}(key|secret|salt|api[_-]?key)\\s*[=:]\\s*['\"][A-Za-z0-9_\\-]{8,}['\"]"
+  confidence: 0.85
+  exploitability: 0.85
+
+- id: generic-aadhaar-in-log
+  title: Possible Aadhaar/PII in logs or code
+  message: "UIDAI guidance: never log full Aadhaar; mask and minimize retention (DPDP Act)"
+  severity: high
+  cwe: ["CWE-532"]
+  owasp: ["A09:2025"]
+  category: privacy
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)(aadhaar|aadhar|uidai).{0,40}(log|print|console\\.|logger|System\\.out)"
+  confidence: 0.6
+  exploitability: 0.4
+
+- id: generic-pan-storage
+  title: Possible PAN storage without masking
+  message: "PAN (permanent account number) is sensitive financial PII under Indian privacy expectations"
+  severity: medium
+  cwe: ["CWE-359"]
+  owasp: ["A04:2025"]
+  category: privacy
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)(pan[_-]?(number|no|card)|permanent_account).{0,30}(=|:)"
+  confidence: 0.45
+  exploitability: 0.35
+
+- id: generic-insecure-cookie-flags
+  title: Cookie missing Secure/HttpOnly flags
+  message: "Session cookies without Secure/HttpOnly fail basic web hardening checks"
+  severity: medium
+  cwe: ["CWE-614", "CWE-1004"]
+  owasp: ["A02:2025"]
+  category: misconfig
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)set[_-]?cookie\\s*\\([^)]*\\)|Set-Cookie:"
+  confidence: 0.35
+  exploitability: 0.4
+
+- id: generic-open-redirect
+  title: Possible open redirect
+  message: "Unvalidated redirect targets enable phishing on gov/edu login flows"
+  severity: medium
+  cwe: ["CWE-601"]
+  owasp: ["A01:2025"]
+  category: access_control
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)(redirect|Redirect|sendRedirect|header\\s*\\(\\s*['\"]Location)\\s*[=(].*(request|req\\.|params|query|GET|POST)"
+  confidence: 0.45
+  exploitability: 0.5
+
+- id: generic-ssrf-url-fetch
+  title: Possible SSRF via user-controlled URL fetch
+  message: "Server-side fetches of user URLs are common in KYC/document upload integrations"
+  severity: high
+  cwe: ["CWE-918"]
+  owasp: ["A10:2021"]
+  category: ssrf
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)(requests\\.(get|post)|axios\\.(get|post)|fetch\\s*\\(|http\\.Get\\s*\\(|HttpURLConnection|file_get_contents\\s*\\().{0,60}(request\\.|req\\.|params|query|body|input)"
+  confidence: 0.45
+  exploitability: 0.6
+
+- id: generic-weak-tls-version
+  title: Weak TLS version configured
+  message: "TLS 1.0/1.1 remains on some legacy India gateway integrations"
+  severity: medium
+  cwe: ["CWE-326"]
+  owasp: ["A02:2025"]
+  category: crypto
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)TLSv?1(\\.[01])?\\b|sslv3|SSL_OP_NO_TLSv1"
+  confidence: 0.5
+  exploitability: 0.45
+
+- id: generic-default-admin-password
+  title: Default/admin password pattern
+  message: "Default credentials appear frequently in campus and small-org deployments"
+  severity: high
+  cwe: ["CWE-798"]
+  owasp: ["A07:2025"]
+  category: secrets
+  languages: ["python", "javascript", "typescript", "go", "java", "php"]
+  pattern: "(?i)(password|passwd|pwd)\\s*[=:]\\s*['\"](admin|password|123456|passw0rd|admin@123|Admin@123)['\"]"
+  confidence: 0.8
+  exploitability: 0.85
+
+- id: generic-csrf-disabled
+  title: CSRF protection disabled
+  message: "Disabling CSRF is a recurring anti-pattern in internal admin panels"
+  severity: high
+  cwe: ["CWE-352"]
+  owasp: ["A01:2025"]
+  category: access_control
+  languages: ["python", "javascript", "typescript", "php", "java"]
+  pattern: "(?i)csrf(_protect)?\\s*=\\s*False|CSRF_COOKIE_SECURE\\s*=\\s*False|csrf\\.disable|@csrf_exempt|csrfprotection\\s*=\\s*false"
+  confidence: 0.75
+  exploitability: 0.65
+
+- id: go-insecure-skip-verify
+  title: TLS InsecureSkipVerify enabled
+  message: "InsecureSkipVerify disables certificate validation"
+  severity: high
+  cwe: ["CWE-295"]
+  owasp: ["A02:2025"]
+  category: misconfig
+  languages: ["go"]
+  pattern: "InsecureSkipVerify\\s*:\\s*true"
+  confidence: 0.85
+  exploitability: 0.7

@@ -48,6 +48,26 @@ static PATTERNS: Lazy<Vec<SecretPattern>> = Lazy::new(|| {
                 .expect("valid secrets regex"),
             severity: Severity::Critical,
         },
+        // India payment / gateway style secrets (defensive detection, never store raw values)
+        SecretPattern {
+            id: "razorpay-key",
+            re: Regex::new(r"\brzp_(?:live|test)_[A-Za-z0-9]{10,}\b").expect("valid secrets regex"),
+            severity: Severity::Critical,
+        },
+        SecretPattern {
+            id: "india-payment-secret",
+            re: Regex::new(
+                r#"(?i)(razorpay|payu|paytm|cashfree|phonepe).{0,32}(secret|key|salt)\s*[=:]\s*['"][A-Za-z0-9_\-]{12,}['"]"#,
+            )
+            .expect("valid secrets regex"),
+            severity: Severity::Critical,
+        },
+        SecretPattern {
+            id: "slack-or-discord-webhook",
+            re: Regex::new(r"https://hooks\.slack\.com/services/[A-Za-z0-9/_-]+")
+                .expect("valid secrets regex"),
+            severity: Severity::High,
+        },
     ]
 });
 
