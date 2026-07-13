@@ -4,6 +4,9 @@ All notable changes are documented here.
 
 ## Unreleased
 
+- Reworked the product site for private-beta positioning, removed public
+  repository and release links, and added a bespoke product-workspace hero.
+
 ## 0.1.0-beta.2 — 2026-07-13
 
 - OpenCode-style interactive workspace: `bugbee` (no args) with slash commands (`/hunt`, `/findings`, `/review`, `/doctor`, `/ask`).

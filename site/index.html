@@ -14,26 +14,18 @@
   <body>
     <header class="nav-wrap"><nav class="shell nav" aria-label="Main navigation">
       <a class="brand" href="#top" aria-label="Bugbee home"><img src="bugbee-mark-v2.png" alt="" /> <span>bugbee</span></a>
-      <div class="nav-links"><a href="#how-it-works">How it works</a><a href="#principles">Principles</a><a href="https://github.com/neuralbroker/bugbee">GitHub</a><a class="nav-button" href="#install">Get the beta</a></div>
+      <div class="nav-links"><a href="#how-it-works">How it works</a><a href="#principles">Principles</a><a href="#access">Early access</a><a class="nav-button" href="#access">Request access</a></div>
     </nav></header>
     <main id="top">
       <section class="hero shell">
         <div class="hero-copy">
-          <p class="kicker"><span></span> Early access · local-first AppSec</p>
-          <h1>A calmer way to<br /><em>handle security findings.</em></h1>
-          <p class="hero-lede">Bugbee helps engineering teams investigate application risk without turning every alert into a fire drill. It runs close to your code, keeps the evidence with the finding, and leaves the final call with people.</p>
-          <div class="actions"><a class="button primary" href="#install">Try the beta <b>→</b></a><a class="button quiet" href="https://github.com/neuralbroker/bugbee">See how it works <b>↗</b></a></div>
+          <p class="kicker"><span></span> Private beta · local-first AppSec</p>
+          <h1>Make room for<br /><em>better security work.</em></h1>
+          <p class="hero-lede">Bugbee gives engineering teams a quieter place to investigate application risk. It runs close to your code, keeps the evidence with the finding, and leaves the decision with people who know the system.</p>
+          <div class="actions"><a class="button primary" href="#access">About the private beta <b>↓</b></a><a class="button quiet" href="#how-it-works">How it works <b>↓</b></a></div>
           <p class="fine-print">For repositories you are authorized to assess. Bugbee does not exploit systems or apply changes on its own.</p>
         </div>
-        <aside class="terminal" aria-label="Example Bugbee hunt output"><div class="terminal-bar"><span class="dots"><i></i><i></i><i></i></span><span>~/payments-api</span><span>bugbee</span></div><pre><span class="prompt">$</span> bugbee hunt
-
-<span class="muted">indexed</span>   1,284 files · 5 languages
-<span class="critical">critical</span> unsafe deserialization · loader.py:41
-<span class="critical">critical</span> payment credential · config/pay.php:12
-<span class="high">high</span>     SQL injection · search.php:88
-
-<span class="prompt">$</span> bugbee review a8f3c1e2 confirm
-<span class="confirmed">confirmed</span> evidence preserved · SARIF ready</pre></aside>
+        <figure class="hero-photo"><img src="bugbee-hero-workspace.png" alt="A calm engineering workspace with a security analysis interface on a laptop." /><figcaption>Designed for focused investigation, not alert fatigue.</figcaption></figure>
       </section>
       <section class="proof"><div class="shell proof-grid"><p>Security analysis that stays close to the code.</p><div><strong>Local by default</strong><span>Indexing and deterministic checks run in your workspace.</span></div><div><strong>Evidence alongside alerts</strong><span>Locations, traces, scores, and review state stay together.</span></div><div><strong>AI when you choose it</strong><span>Bring a provider only when another perspective is useful.</span></div></div></section>
       <section class="shell section" id="how-it-works">
@@ -41,13 +33,8 @@
         <div class="steps"><article><p class="step-number">01</p><h3>Map the repository</h3><p>Build a repository-aware index while respecting Git ignores and excluding generated, dependency, and local-state files.</p></article><article><p class="step-number">02</p><h3>Hunt for evidence</h3><p>Run deterministic rules, secrets detection, and scoped taint analysis across Python, JavaScript, TypeScript, Go, PHP, and Java.</p></article><article><p class="step-number">03</p><h3>Review deliberately</h3><p>Score findings, keep a local review queue, and export confirmed work as SARIF for the systems your team already uses.</p></article></div>
       </section>
       <section class="feature-band" id="principles"><div class="shell split"><div><p class="kicker"><span></span> Built for real repositories</p><h2>Good security tooling knows its limits.</h2></div><div class="principles"><article><h3>Keep sensitive context contained</h3><p>Bugbee redacts secrets before preparing model-bound content and blocks sensitive paths by policy.</p></article><article><h3>Use models with intent</h3><p>Bring an OpenAI-compatible endpoint, Ollama, or Anthropic API for optional review—not as a substitute for local analysis.</p></article><article><h3>Leave a useful trail</h3><p>Risk and evidence scores, review status, and stable finding identities help teams revisit decisions with context.</p></article></div></div></section>
-      <section class="shell install" id="install"><div><p class="kicker"><span></span> Start with your codebase</p><h2>Give it a repository you know.</h2><p>Bugbee is available for macOS and Linux. Windows archives are available from GitHub Releases.</p></div><div class="install-card"><pre><span># Install</span>
-curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh | bash
-
-<span># In your repository</span>
-bugbee init
-bugbee hunt</pre><a class="button primary" href="https://github.com/neuralbroker/bugbee/releases">View releases <b>↗</b></a></div></section>
+      <section class="shell install" id="access"><div><p class="kicker"><span></span> Private beta</p><h2>Start with a repository you know.</h2><p>We are opening access gradually with teams who want a thoughtful, local-first security workflow. The beta is intentionally small while we learn where the product is most useful.</p></div><div class="install-card"><p class="access-label">WHAT TO EXPECT</p><ul><li>A short conversation about your team and codebase.</li><li>Guided setup for your environment.</li><li>A clear path for feedback during the beta.</li></ul><p class="access-note">Access is currently by invitation.</p></div></section>
     </main>
-    <footer class="shell footer"><a class="brand" href="#top"><img src="bugbee-mark-v2.png" alt="" /><span>bugbee</span></a><span>Defensive security tooling · Apache-2.0</span><a href="https://github.com/neuralbroker/bugbee">GitHub ↗</a></footer>
+    <footer class="shell footer"><a class="brand" href="#top"><img src="bugbee-mark-v2.png" alt="" /><span>bugbee</span></a><span>Private beta · Defensive security tooling</span></footer>
   </body>
 </html>
