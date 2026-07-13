@@ -4,13 +4,19 @@ All notable changes are documented here.
 
 ## Unreleased
 
+## 0.1.0-beta.2 — 2026-07-13
+
 - OpenCode-style interactive workspace: `bugbee` (no args) with slash commands (`/hunt`, `/findings`, `/review`, `/doctor`, `/ask`).
 - India AppSec rule pack for gov/edu/BFSI/enterprise hygiene (CERT-In oriented), plus expanded OWASP web rules.
 - Aggressive hunt mode (default): lower drop threshold, multi-pack loading, PHP/Java indexing and taint.
 - Secrets coverage for India payment-gateway style credentials (redacted evidence only).
-- SpaceXAI-inspired product site under `site/` (Next.js, Vercel-ready).
+- SpaceXAI-inspired static product site under `site/` (Vercel-ready).
 - Harness security corpus (1980s→2026 defensive technique map) + classics/modern rule pack + `security_playbook` tool.
 - Readiness fixes: TUI nested-runtime panic, `--no-india`/`--no-aggressive`, terminal restore on panic.
+- Consolidated production-site configuration at the repository root so Vercel
+  deploys `site/` when the project root is the repository.
+- Added the native Anthropic Messages API adapter; Anthropic provider entries
+  are no longer skipped by the inference gateway.
 
 ## 0.1.0-beta.1 — 2026-07-10
 

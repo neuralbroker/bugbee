@@ -2,7 +2,12 @@
 
 SpaceXAI/x.ai–inspired dark product landing for Bugbee.
 
-Static HTML/CSS — deploys on Vercel with **Root Directory = `site`**.
+Static HTML/CSS. The checked-in Vercel configuration supports either setup:
+
+- Preferred: use the repository root; root [`vercel.json`](../vercel.json)
+  deploys this directory as the output.
+- Existing project setup: use **Root Directory = `site`**; this directory's
+  [`vercel.json`](./vercel.json) applies the same security headers.
 
 ## Local preview
 

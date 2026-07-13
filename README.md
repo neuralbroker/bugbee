@@ -14,8 +14,9 @@
 
 > Defensive only. No live exploitation. Designed for enterprises and confidential codebases.
 
-Website (Vercel): deploy from [`site/`](./site) — SpaceXAI-inspired product landing.  
-Legacy static pages: [`website/`](./website)
+Website (Vercel): [`site/`](./site) is the static product landing. The root
+[`vercel.json`](./vercel.json) deploys it when the Vercel project root is this
+repository.
 
 ## Install
 
@@ -36,7 +37,7 @@ bugbee --version
 
 | Method | Command |
 |--------|---------|
-| Pin a version | `BUGBEE_VERSION=v0.1.0-beta.1 curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh \| bash` |
+| Pin a version | `BUGBEE_VERSION=v0.1.0-beta.2 curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh \| bash` |
 | Custom directory | `BUGBEE_INSTALL=/usr/local/bin curl -fsSL … \| bash` |
 | From source (Cargo) | `cargo install --git https://github.com/neuralbroker/bugbee --locked --bin bugbee` |
 | Windows | Download the `.zip` from [Releases](https://github.com/neuralbroker/bugbee/releases) |

@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use bugbee_core::{BugbeeConfig, BugbeeError, Result};
 
+use crate::anthropic::AnthropicProvider;
 use crate::openai_compat::{LlmProvider, OpenAiCompatProvider};
 use crate::types::{ChatMessage, ChatRequest, ChatResponse};
 
@@ -35,18 +36,15 @@ impl InferenceGateway {
                     }
                 }
             };
-            if pcfg.protocol != "openai_compat" {
-                tracing::warn!(
-                    provider = %id,
-                    protocol = %pcfg.protocol,
-                    "provider skipped: native protocol adapter is not implemented"
-                );
-                continue;
-            }
-
-            // Covers xAI, DeepSeek, Qwen, Kimi, GLM, Ollama, OpenRouter, and custom gateways.
-            let client = OpenAiCompatProvider::new(pcfg, key)?;
-            clients.insert(id.clone(), Arc::new(client));
+            let client: Arc<dyn LlmProvider> = match pcfg.protocol.as_str() {
+                "openai_compat" => Arc::new(OpenAiCompatProvider::new(pcfg, key)?),
+                "anthropic" => Arc::new(AnthropicProvider::new(pcfg, key)?),
+                _ => {
+                    tracing::warn!(provider = %id, protocol = %pcfg.protocol, "provider skipped: unsupported protocol");
+                    continue;
+                }
+            };
+            clients.insert(id.clone(), client);
         }
         Ok(Self { config, clients })
     }
