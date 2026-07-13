@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Bugbee is a local-first security workbench for finding, reviewing, and fixing application risk with evidence." />
-    <meta name="theme-color" content="#fffdf8" />
-    <title>Bugbee — Security work with evidence</title>
+    <meta name="description" content="Bugbee helps engineering teams investigate application risk locally and make better-informed security decisions." />
+    <meta name="theme-color" content="#f7f8fc" />
+    <title>Bugbee — A calmer security workflow</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -19,11 +19,11 @@
     <main id="top">
       <section class="hero shell">
         <div class="hero-copy">
-          <p class="kicker"><span></span> Private beta · local-first AppSec</p>
-          <h1>Know what to fix.<br /><em>Know why.</em></h1>
-          <p class="hero-lede">Bugbee is a terminal-first security workbench for engineering teams. It finds application risk locally, preserves the evidence, and keeps the decision to fix in human hands.</p>
-          <div class="actions"><a class="button primary" href="#install">Install Bugbee <b>→</b></a><a class="button quiet" href="https://github.com/neuralbroker/bugbee">Read the source <b>↗</b></a></div>
-          <p class="fine-print">Built for authorized repositories. No live exploitation. No automatic patches.</p>
+          <p class="kicker"><span></span> Early access · local-first AppSec</p>
+          <h1>A calmer way to<br /><em>handle security findings.</em></h1>
+          <p class="hero-lede">Bugbee helps engineering teams investigate application risk without turning every alert into a fire drill. It runs close to your code, keeps the evidence with the finding, and leaves the final call with people.</p>
+          <div class="actions"><a class="button primary" href="#install">Try the beta <b>→</b></a><a class="button quiet" href="https://github.com/neuralbroker/bugbee">See how it works <b>↗</b></a></div>
+          <p class="fine-print">For repositories you are authorized to assess. Bugbee does not exploit systems or apply changes on its own.</p>
         </div>
         <aside class="terminal" aria-label="Example Bugbee hunt output"><div class="terminal-bar"><span class="dots"><i></i><i></i><i></i></span><span>~/payments-api</span><span>bugbee</span></div><pre><span class="prompt">$</span> bugbee hunt
 
@@ -35,13 +35,13 @@
 <span class="prompt">$</span> bugbee review a8f3c1e2 confirm
 <span class="confirmed">confirmed</span> evidence preserved · SARIF ready</pre></aside>
       </section>
-      <section class="proof"><div class="shell proof-grid"><p>Security analysis that stays close to the code.</p><div><strong>Local by default</strong><span>Indexing and deterministic detection run in your workspace.</span></div><div><strong>Evidence first</strong><span>Every finding carries location, trace, score, and review state.</span></div><div><strong>Model optional</strong><span>Use your provider only when an additional review is useful.</span></div></div></section>
+      <section class="proof"><div class="shell proof-grid"><p>Security analysis that stays close to the code.</p><div><strong>Local by default</strong><span>Indexing and deterministic checks run in your workspace.</span></div><div><strong>Evidence alongside alerts</strong><span>Locations, traces, scores, and review state stay together.</span></div><div><strong>AI when you choose it</strong><span>Bring a provider only when another perspective is useful.</span></div></div></section>
       <section class="shell section" id="how-it-works">
-        <p class="kicker"><span></span> A practical loop</p><div class="section-heading"><h2>From signal to a defensible decision.</h2><p>Bugbee combines local analysis with a focused review workflow. It is designed to reduce noisy queues, not manufacture certainty.</p></div>
+        <p class="kicker"><span></span> A practical loop</p><div class="section-heading"><h2>Less noise. Better context.</h2><p>Bugbee combines local analysis with a focused review workflow. It will not make security effortless, but it can make the next decision clearer.</p></div>
         <div class="steps"><article><p class="step-number">01</p><h3>Map the repository</h3><p>Build a repository-aware index while respecting Git ignores and excluding generated, dependency, and local-state files.</p></article><article><p class="step-number">02</p><h3>Hunt for evidence</h3><p>Run deterministic rules, secrets detection, and scoped taint analysis across Python, JavaScript, TypeScript, Go, PHP, and Java.</p></article><article><p class="step-number">03</p><h3>Review deliberately</h3><p>Score findings, keep a local review queue, and export confirmed work as SARIF for the systems your team already uses.</p></article></div>
       </section>
-      <section class="feature-band" id="principles"><div class="shell split"><div><p class="kicker"><span></span> Built for real repositories</p><h2>Useful security tooling respects constraints.</h2></div><div class="principles"><article><h3>Keep sensitive context contained</h3><p>Secrets are redacted before model-bound content is prepared. Sensitive paths are blocked by policy.</p></article><article><h3>Use the model where it adds judgment</h3><p>Bring your own OpenAI-compatible endpoint, Ollama, or Anthropic API for optional review—not as a replacement for local analysis.</p></article><article><h3>Make review auditable</h3><p>Risk and evidence scores, review status, and stable finding identities make a team’s decisions easier to revisit.</p></article></div></div></section>
-      <section class="shell install" id="install"><div><p class="kicker"><span></span> Start with your codebase</p><h2>Run a first hunt in minutes.</h2><p>Bugbee is available for macOS and Linux. Windows archives are available from GitHub Releases.</p></div><div class="install-card"><pre><span># Install</span>
+      <section class="feature-band" id="principles"><div class="shell split"><div><p class="kicker"><span></span> Built for real repositories</p><h2>Good security tooling knows its limits.</h2></div><div class="principles"><article><h3>Keep sensitive context contained</h3><p>Bugbee redacts secrets before preparing model-bound content and blocks sensitive paths by policy.</p></article><article><h3>Use models with intent</h3><p>Bring an OpenAI-compatible endpoint, Ollama, or Anthropic API for optional review—not as a substitute for local analysis.</p></article><article><h3>Leave a useful trail</h3><p>Risk and evidence scores, review status, and stable finding identities help teams revisit decisions with context.</p></article></div></div></section>
+      <section class="shell install" id="install"><div><p class="kicker"><span></span> Start with your codebase</p><h2>Give it a repository you know.</h2><p>Bugbee is available for macOS and Linux. Windows archives are available from GitHub Releases.</p></div><div class="install-card"><pre><span># Install</span>
 curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh | bash
 
 <span># In your repository</span>
