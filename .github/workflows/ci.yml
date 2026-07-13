@@ -36,3 +36,6 @@ jobs:
 
       - name: Build release binary
         run: cargo build --release -p bugbee-cli
+
+      - name: Smoke-test release binary against bundled fixtures
+        run: bash scripts/smoke-fixtures.sh target/release/bugbee

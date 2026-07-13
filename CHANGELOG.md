@@ -4,9 +4,6 @@ All notable changes are documented here.
 
 ## Unreleased
 
-- Redesigned the Vercel product site with clearer product positioning, a
-  responsive engineering-focused layout, and the bundled Bugbee brand mark.
-
 ## 0.1.0-beta.2 — 2026-07-13
 
 - OpenCode-style interactive workspace: `bugbee` (no args) with slash commands (`/hunt`, `/findings`, `/review`, `/doctor`, `/ask`).
@@ -20,6 +17,10 @@ All notable changes are documented here.
   deploys `site/` when the project root is the repository.
 - Added the native Anthropic Messages API adapter; Anthropic provider entries
   are no longer skipped by the inference gateway.
+- Redesigned the Vercel product site with clearer product positioning, a
+  responsive engineering-focused layout, and the bundled Bugbee brand mark.
+- Added release-binary fixture smoke tests to CI and a scheduled RustSec
+  dependency advisory audit.
 
 ## 0.1.0-beta.1 — 2026-07-10
 
