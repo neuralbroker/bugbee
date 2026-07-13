@@ -3,109 +3,51 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Bugbee — terminal-first agentic IDE for defensive bug fixing and vulnerability hunting." />
-    <meta name="theme-color" content="#000000" />
-    <title>Bugbee — Find the signal. Fix with evidence.</title>
+    <meta name="description" content="Bugbee is a local-first security workbench for finding, reviewing, and fixing application risk with evidence." />
+    <meta name="theme-color" content="#fffdf8" />
+    <title>Bugbee — Security work with evidence</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="shell nav">
-      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>bugbee</a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="#product">Product</a>
-        <a href="#training">Training</a>
-        <a href="#install">Install</a>
-        <a href="https://github.com/neuralbroker/bugbee">GitHub</a>
-        <a class="nav-cta" href="#install">Get beta</a>
-      </nav>
-    </header>
-    <main>
-      <section class="shell hero" id="top">
-        <p class="eyebrow"><i></i> Private beta · local-first AppSec</p>
-        <h1>Find the signal.<br /><em>Fix with evidence.</em></h1>
-        <p class="lede">Terminal-first security IDE for defensive bug hunting. Deterministic engines, multi-agent harness, and human review — trained from classic software defects through modern AI-era application risk.</p>
-        <div class="actions">
-          <a class="btn btn-primary" href="#install">Install in one command</a>
-          <a class="btn btn-ghost" href="https://github.com/neuralbroker/bugbee">View source ↗</a>
+    <header class="nav-wrap"><nav class="shell nav" aria-label="Main navigation">
+      <a class="brand" href="#top" aria-label="Bugbee home"><img src="bugbee-mark-v2.png" alt="" /> <span>bugbee</span></a>
+      <div class="nav-links"><a href="#how-it-works">How it works</a><a href="#principles">Principles</a><a href="https://github.com/neuralbroker/bugbee">GitHub</a><a class="nav-button" href="#install">Get the beta</a></div>
+    </nav></header>
+    <main id="top">
+      <section class="hero shell">
+        <div class="hero-copy">
+          <p class="kicker"><span></span> Private beta · local-first AppSec</p>
+          <h1>Know what to fix.<br /><em>Know why.</em></h1>
+          <p class="hero-lede">Bugbee is a terminal-first security workbench for engineering teams. It finds application risk locally, preserves the evidence, and keeps the decision to fix in human hands.</p>
+          <div class="actions"><a class="button primary" href="#install">Install Bugbee <b>→</b></a><a class="button quiet" href="https://github.com/neuralbroker/bugbee">Read the source <b>↗</b></a></div>
+          <p class="fine-print">Built for authorized repositories. No live exploitation. No automatic patches.</p>
         </div>
-        <div class="demo-grid" id="product">
-          <div class="card">
-            <div class="card-head"><span>~/your-repo · bugbee</span><span>OpenCode-style workspace</span></div>
-            <div class="card-body">
-              <pre class="term"><span class="p">$</span> bugbee hunt
+        <aside class="terminal" aria-label="Example Bugbee hunt output"><div class="terminal-bar"><span class="dots"><i></i><i></i><i></i></span><span>~/payments-api</span><span>bugbee</span></div><pre><span class="prompt">$</span> bugbee hunt
 
-<span class="m">  indexed</span>   1,284 files · py/js/go/php/java
-<span class="c">  critical</span>  pickle RCE · app/loader.py:41
-<span class="c">  critical</span>  razorpay secret · config/pay.php:12
-<span class="h">  high</span>      SQL injection · search.php:88
-<span class="h">  high</span>      CSRF disabled · settings.py:19
+<span class="muted">indexed</span>   1,284 files · 5 languages
+<span class="critical">critical</span> unsafe deserialization · loader.py:41
+<span class="critical">critical</span> payment credential · config/pay.php:12
+<span class="high">high</span>     SQL injection · search.php:88
 
-<span class="p">$</span> bugbee review a8f3c1e2 confirm
-<span class="o">  confirmed</span>  Evidence preserved · SARIF ready
-
-<span class="p">/</span>ask prioritize payment and auth findings</pre>
-            </div>
-          </div>
-          <div class="stack-list">
-            <div class="stack-item"><strong>Local by default</strong><span>Index and engines stay on disk. Secrets redacted before any model call.</span></div>
-            <div class="stack-item"><strong>Any model (BYOK)</strong><span>OpenAI-compatible, Ollama, Grok/SpaceXAI API, OpenRouter — your keys.</span></div>
-            <div class="stack-item"><strong>India + global packs</strong><span>OWASP, classics→cloud, CERT-In oriented payment/PII hygiene.</span></div>
-            <div class="stack-item"><strong>Human holds the keys</strong><span>Review queue, dual-review gates, SARIF export. Defensive only.</span></div>
-          </div>
-        </div>
+<span class="prompt">$</span> bugbee review a8f3c1e2 confirm
+<span class="confirmed">confirmed</span> evidence preserved · SARIF ready</pre></aside>
       </section>
-      <section class="shell section" id="training">
-        <p class="eyebrow"><i></i> Training corpus · defensive only</p>
-        <h2>Decades of bug discovery, encoded as detection skill.</h2>
-        <p class="sub">The harness encodes attacker techniques for defense — not live targeting. Classic memory safety through modern LLM-assisted hunting.</p>
-        <div class="era">
-          <article><div class="y">1980s–1990s</div><h3>Foundations</h3><p>Buffer overflows, format strings, races, privilege boundaries — unsafe APIs and classic systems failure modes.</p></article>
-          <article><div class="y">2000s–2010s</div><h3>Web era</h3><p>Injection, XSS, CSRF, authn/session flaws, insecure crypto — the spine of modern bounty programs and OWASP lineages.</p></article>
-          <article><div class="y">2015–2022</div><h3>Cloud &amp; supply chain</h3><p>SSRF, cloud metadata, JWT misuse, deserialization RCE, secret sprawl, dependency risk.</p></article>
-          <article><div class="y">2023–2026</div><h3>AI-assisted hunting</h3><p>Multi-agent review, dual-model consensus, evidence scoring, redacted LLM context — human-in-the-loop by design.</p></article>
-        </div>
-        <div class="features" style="margin-top:28px">
-          <article class="feature"><div class="n">01 · white hat</div><h3>Authorized defense</h3><p>Scoped to your repository. Evidence-first findings. Patch proposals never auto-apply.</p></article>
-          <article class="feature"><div class="n">02 · grey hat lens</div><h3>Attacker modeling</h3><p>Agents model hostile input and weak trust boundaries — then stop at detection and safe fix guidance.</p></article>
-          <article class="feature"><div class="n">03 · black hat awareness</div><h3>Know the technique</h3><p>Understand injection chains and auth bypass patterns so detectors catch them. Defense only.</p></article>
-        </div>
-        <div class="stats">
-          <div class="stat"><b>4</b><span>embedded rule packs</span></div>
-          <div class="stat"><b>7</b><span>languages indexed</span></div>
-          <div class="stat"><b>BRS+ECS</b><span>risk &amp; evidence scores</span></div>
-          <div class="stat"><b>SARIF</b><span>CI-ready export</span></div>
-        </div>
+      <section class="proof"><div class="shell proof-grid"><p>Security analysis that stays close to the code.</p><div><strong>Local by default</strong><span>Indexing and deterministic detection run in your workspace.</span></div><div><strong>Evidence first</strong><span>Every finding carries location, trace, score, and review state.</span></div><div><strong>Model optional</strong><span>Use your provider only when an additional review is useful.</span></div></div></section>
+      <section class="shell section" id="how-it-works">
+        <p class="kicker"><span></span> A practical loop</p><div class="section-heading"><h2>From signal to a defensible decision.</h2><p>Bugbee combines local analysis with a focused review workflow. It is designed to reduce noisy queues, not manufacture certainty.</p></div>
+        <div class="steps"><article><p class="step-number">01</p><h3>Map the repository</h3><p>Build a repository-aware index while respecting Git ignores and excluding generated, dependency, and local-state files.</p></article><article><p class="step-number">02</p><h3>Hunt for evidence</h3><p>Run deterministic rules, secrets detection, and scoped taint analysis across Python, JavaScript, TypeScript, Go, PHP, and Java.</p></article><article><p class="step-number">03</p><h3>Review deliberately</h3><p>Score findings, keep a local review queue, and export confirmed work as SARIF for the systems your team already uses.</p></article></div>
       </section>
-      <section class="shell section" id="install">
-        <div class="install-grid">
-          <div>
-            <p class="eyebrow"><i></i> One command</p>
-            <h2>Install the IDE. Hunt tonight.</h2>
-            <p class="sub" style="margin-bottom:24px">macOS and Linux binaries from GitHub Releases. Deploy this site on Vercel; the product runs where your code lives.</p>
-            <div class="actions" style="margin:0">
-              <a class="btn btn-primary" href="https://github.com/neuralbroker/bugbee/releases">Releases ↗</a>
-              <a class="btn btn-ghost" href="https://github.com/neuralbroker/bugbee#quick-start">Docs ↗</a>
-            </div>
-          </div>
-          <div class="code">
-            <div class="code-bar"><i></i><i></i><i></i></div>
-            <pre><span class="muted"># install</span>
+      <section class="feature-band" id="principles"><div class="shell split"><div><p class="kicker"><span></span> Built for real repositories</p><h2>Useful security tooling respects constraints.</h2></div><div class="principles"><article><h3>Keep sensitive context contained</h3><p>Secrets are redacted before model-bound content is prepared. Sensitive paths are blocked by policy.</p></article><article><h3>Use the model where it adds judgment</h3><p>Bring your own OpenAI-compatible endpoint, Ollama, or Anthropic API for optional review—not as a replacement for local analysis.</p></article><article><h3>Make review auditable</h3><p>Risk and evidence scores, review status, and stable finding identities make a team’s decisions easier to revisit.</p></article></div></div></section>
+      <section class="shell install" id="install"><div><p class="kicker"><span></span> Start with your codebase</p><h2>Run a first hunt in minutes.</h2><p>Bugbee is available for macOS and Linux. Windows archives are available from GitHub Releases.</p></div><div class="install-card"><pre><span># Install</span>
 curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh | bash
 
-<span class="muted"># in your project</span>
+<span># In your repository</span>
 bugbee init
-bugbee
-<span class="muted"># then /hunt · /findings · c to confirm</span></pre>
-          </div>
-        </div>
-      </section>
+bugbee hunt</pre><a class="button primary" href="https://github.com/neuralbroker/bugbee/releases">View releases <b>↗</b></a></div></section>
     </main>
-    <footer class="shell footer">
-      <span>© 2026 Bugbee · Neuralbroker</span>
-      <span>Defensive security tooling · Apache-2.0 · Inspired by SpaceXAI/x.ai aesthetics; not affiliated</span>
-    </footer>
+    <footer class="shell footer"><a class="brand" href="#top"><img src="bugbee-mark-v2.png" alt="" /><span>bugbee</span></a><span>Defensive security tooling · Apache-2.0</span><a href="https://github.com/neuralbroker/bugbee">GitHub ↗</a></footer>
   </body>
 </html>

@@ -4,6 +4,9 @@ All notable changes are documented here.
 
 ## Unreleased
 
+- Redesigned the Vercel product site with clearer product positioning, a
+  responsive engineering-focused layout, and the bundled Bugbee brand mark.
+
 ## 0.1.0-beta.2 — 2026-07-13
 
 - OpenCode-style interactive workspace: `bugbee` (no args) with slash commands (`/hunt`, `/findings`, `/review`, `/doctor`, `/ask`).
