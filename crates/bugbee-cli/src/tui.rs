@@ -66,12 +66,12 @@ impl App {
                 },
                 LogLine {
                     kind: LogKind::System,
-                    text: "Commands: /hunt  /findings  /review <id> confirm|fp|fixed  /doctor  /ask …  /report  /help  /quit"
+                    text: "Commands: /hunt [--llm]  /findings  /details  /related  /history  /review  /ask …  /report  /help  /quit"
                         .into(),
                 },
                 LogLine {
                     kind: LogKind::System,
-                    text: "Tips: Enter runs command · ↑/↓ or j/k move findings · c confirm · f false-positive · q quit"
+                    text: "Tips: Enter runs command · ↑/↓ or j/k move findings · d details · r related · c confirm · f false-positive · x fixed · q quit"
                         .into(),
                 },
             ],
@@ -235,12 +235,80 @@ fn event_loop(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut A
             KeyCode::Char('x') if app.input.is_empty() => {
                 review_selected(app, FindingStatus::Fixed)?;
             }
+            KeyCode::Char('d') if app.input.is_empty() => show_selected_details(app),
+            KeyCode::Char('r') if app.input.is_empty() => show_related(app)?,
             KeyCode::Char(ch) if !key.modifiers.contains(KeyModifiers::CONTROL) => {
                 app.input.push(ch);
             }
             _ => {}
         }
     }
+    Ok(())
+}
+
+fn show_selected_details(app: &mut App) {
+    let Some(finding) = app.selected_finding() else {
+        app.push(LogKind::Warn, "No finding selected.");
+        return;
+    };
+    let evidence = finding
+        .locations
+        .iter()
+        .map(|location| format!("{}:{}", location.file, location.start_line))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let summary = finding
+        .ai_review
+        .summary
+        .as_deref()
+        .unwrap_or(&finding.description);
+    app.push(
+        LogKind::Agent,
+        format!(
+            "{} [{}] BRS={:.1} ECS={:.2}\nWhy: {}\nEvidence: {}\nRoot cause: {}\nSuggested fix: {}",
+            finding.title,
+            finding.status.as_str(),
+            finding.brs,
+            finding.ecs,
+            summary,
+            evidence,
+            finding
+                .ai_review
+                .root_cause
+                .as_deref()
+                .unwrap_or("Run /hunt --llm for an evidence-bound AI review."),
+            finding
+                .ai_review
+                .suggested_fix
+                .as_deref()
+                .unwrap_or("Use /patch <id> to request a review-only proposal.")
+        ),
+    );
+}
+
+fn show_related(app: &mut App) -> Result<()> {
+    let Some(finding) = app.selected_finding().cloned() else {
+        app.push(LogKind::Warn, "No finding selected.");
+        return Ok(());
+    };
+    let related: Vec<_> = app
+        .findings
+        .iter()
+        .filter(|other| other.id != finding.id && other.category == finding.category)
+        .map(|other| format!("{} ({})", other.title, short_id(&other.id)))
+        .collect();
+    app.push(
+        LogKind::Agent,
+        if related.is_empty() {
+            "No related findings in the current review queue.".into()
+        } else {
+            format!(
+                "Related findings ({}): {}",
+                related.len(),
+                related.join(" · ")
+            )
+        },
+    );
     Ok(())
 }
 
@@ -291,7 +359,7 @@ fn handle_command(app: &mut App, raw: &str) -> Result<()> {
         "help" | "h" | "?" => {
             app.push(
                 LogKind::Agent,
-                "Slash commands:\n  /hunt [--llm]     aggressive local hunt (India + OWASP packs)\n  /findings [q]     list / filter findings\n  /review id verdict\n  /doctor           config readiness\n  /ask question     model chat about this repo\n  /report [path]    SARIF export\n  /connect …        show connect help\n  /quit              clear log\n  /quit             leave workspace",
+                "Slash commands:\n  /hunt [--llm]     deterministic hunt, optional evidence-bound AI enrichment\n  /findings [q]     list / filter findings\n  /details          explain selected finding and evidence\n  /related          cluster selected finding by category\n  /history          show human review memory\n  /review id verdict\n  /ask question     model chat about this repo\n  /report [path]    SARIF export\n  /quit             leave workspace",
             );
         }
         "clear" => app.logs.clear(),
@@ -335,6 +403,27 @@ fn handle_command(app: &mut App, raw: &str) -> Result<()> {
         "hunt" => {
             let llm = rest.contains("--llm");
             run_hunt(app, llm)?;
+        }
+        "details" | "detail" => show_selected_details(app),
+        "related" => show_related(app)?,
+        "history" => {
+            let Some(finding) = app.selected_finding() else {
+                app.push(LogKind::Warn, "No finding selected.");
+                return Ok(());
+            };
+            let history = finding
+                .reviews
+                .iter()
+                .map(|review| format!("{} {} ({:?})", review.ts, review.verdict, review.by))
+                .collect::<Vec<_>>();
+            app.push(
+                LogKind::Agent,
+                if history.is_empty() {
+                    "No human review history yet.".into()
+                } else {
+                    history.join("\n")
+                },
+            );
         }
         "review" => {
             let mut parts = rest.split_whitespace();
@@ -633,7 +722,7 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
             Style::default().fg(indigo).add_modifier(Modifier::BOLD),
         ),
         Span::raw(if app.input.is_empty() {
-            "hunt | findings | review | doctor | ask …".into()
+            "hunt | details | related | review | ask …".into()
         } else {
             app.input.clone()
         }),
@@ -665,7 +754,7 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
         })
         .unwrap_or_else(|| "no selection".into());
     let status = Paragraph::new(format!(
-        " {}  ·  {}  ·  c confirm · f fp · x fixed · q quit",
+        " {}  ·  {}  ·  d details · r related · c confirm · f fp · x fixed · q quit",
         app.status, detail
     ))
     .style(Style::default().fg(muted).bg(charcoal));

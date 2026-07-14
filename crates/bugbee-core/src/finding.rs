@@ -110,6 +110,23 @@ pub struct Review {
     pub ts: DateTime<Utc>,
 }
 
+/// Model-assisted explanation of a detector finding. Every field is optional:
+/// deterministic engines remain useful without a configured model, and old
+/// stores deserialize safely as this surface evolves.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct AiReview {
+    pub summary: Option<String>,
+    pub root_cause: Option<String>,
+    pub attack_scenario: Option<String>,
+    pub why_it_matters: Option<String>,
+    pub suggested_fix: Option<String>,
+    pub alternative_fixes: Vec<String>,
+    pub related_finding_ids: Vec<Uuid>,
+    pub model_confidence: Option<f64>,
+    pub model: Option<String>,
+    pub reviewed_at: Option<DateTime<Utc>>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Finding {
     pub id: Uuid,
@@ -129,6 +146,8 @@ pub struct Finding {
     pub status: FindingStatus,
     pub reviews: Vec<Review>,
     pub patch_diff: Option<String>,
+    #[serde(default)]
+    pub ai_review: AiReview,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -159,6 +178,7 @@ impl Finding {
             status: FindingStatus::New,
             reviews: Vec::new(),
             patch_diff: None,
+            ai_review: AiReview::default(),
             created_at: now,
             updated_at: now,
         };
@@ -247,6 +267,16 @@ impl Finding {
             _ => {}
         }
         self.locations.push(loc);
+    }
+
+    pub fn add_human_review(&mut self, verdict: impl Into<String>, rationale: impl Into<String>) {
+        self.reviews.push(Review {
+            by: ReviewBy::Human,
+            verdict: verdict.into(),
+            rationale: rationale.into(),
+            ts: Utc::now(),
+        });
+        self.updated_at = Utc::now();
     }
 }
 

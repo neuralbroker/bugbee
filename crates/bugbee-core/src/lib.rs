@@ -10,7 +10,8 @@ pub mod store;
 pub use config::{BugbeeConfig, HuntConfig, InferenceConfig, PermissionConfig, ProviderConfig};
 pub use error::{BugbeeError, Result};
 pub use finding::{
-    Evidence, Finding, FindingLocation, FindingStatus, LocationRole, Review, ReviewBy, Severity,
+    AiReview, Evidence, Finding, FindingLocation, FindingStatus, LocationRole, Review, ReviewBy,
+    Severity,
 };
 pub use redact::Redactor;
 pub use scoring::{

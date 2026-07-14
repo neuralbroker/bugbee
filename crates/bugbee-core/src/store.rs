@@ -100,6 +100,11 @@ impl FindingStore {
             merged.created_at = existing.created_at;
             merged.reviews = existing.reviews;
             merged.patch_diff = existing.patch_diff;
+            // Preserve prior enrichment when a local-only hunt runs, but let a
+            // newly completed evidence-bound AI review replace stale context.
+            if merged.ai_review.reviewed_at.is_none() {
+                merged.ai_review = existing.ai_review;
+            }
             merged.status = match existing.status {
                 // A finding marked fixed that is still detected has regressed.
                 FindingStatus::Fixed => FindingStatus::New,
@@ -211,6 +216,18 @@ impl FindingStore {
     pub fn update_status(&self, id: &Uuid, status: FindingStatus) -> Result<()> {
         let mut f = self.get(id)?;
         f.status = status;
+        f.add_human_review(
+            status.as_str(),
+            "Analyst decision recorded in Bugbee review queue.",
+        );
+        self.upsert(&f)
+    }
+
+    /// Persist a human-reviewable patch proposal. This never writes to the
+    /// repository; applying any change remains an explicit engineer action.
+    pub fn save_patch_proposal(&self, id: &Uuid, patch_diff: String) -> Result<()> {
+        let mut f = self.get(id)?;
+        f.patch_diff = Some(patch_diff);
         f.updated_at = chrono::Utc::now();
         self.upsert(&f)
     }
@@ -408,6 +425,30 @@ mod tests {
         let prefix = &finding.id.to_string()[..8];
         assert_eq!(store.find_by_prefix(prefix).unwrap().id, finding.id);
         assert!(store.find_by_prefix("deadbeef").is_err());
+
+        drop(store);
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn review_history_and_patch_proposals_are_durable() {
+        let (store, path) = test_store();
+        let finding = candidate();
+        store.upsert_observation(&finding).unwrap();
+        store
+            .update_status(&finding.id, FindingStatus::FalsePositive)
+            .unwrap();
+        store
+            .save_patch_proposal(&finding.id, "--- a/app.py\n+++ b/app.py".into())
+            .unwrap();
+
+        let stored = store.get(&finding.id).unwrap();
+        assert_eq!(stored.reviews.len(), 1);
+        assert_eq!(stored.reviews[0].verdict, "false_positive");
+        assert_eq!(
+            stored.patch_diff.as_deref(),
+            Some("--- a/app.py\n+++ b/app.py")
+        );
 
         drop(store);
         std::fs::remove_file(path).unwrap();

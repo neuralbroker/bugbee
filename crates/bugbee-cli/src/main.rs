@@ -79,6 +79,18 @@ enum Commands {
         #[arg(value_enum)]
         verdict: ReviewVerdict,
     },
+    /// Show the evidence-backed security review for a finding
+    Details { id: String },
+    /// Ask the configured model a question about one finding
+    Explain { id: String, question: String },
+    /// Generate and save a review-only patch proposal (never applies code)
+    Patch { id: String },
+    /// Show related findings sharing a category or source file
+    Related { id: String },
+    /// Show the durable review timeline for a finding
+    History { id: String },
+    /// Summarize repository security health and review queue status
+    Dashboard,
     /// Export SARIF report
     Report {
         #[arg(long, default_value = "bugbee.sarif.json")]
@@ -148,6 +160,22 @@ fn main() -> Result<()> {
         }
         Some(Commands::Findings { limit }) => cmd_findings(&root, limit)?,
         Some(Commands::Review { id, verdict }) => cmd_review(&root, &id, verdict)?,
+        Some(Commands::Details { id }) => cmd_details(&root, &id)?,
+        Some(Commands::Explain { id, question }) => {
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()?;
+            rt.block_on(cmd_explain(&root, &id, &question))?;
+        }
+        Some(Commands::Patch { id }) => {
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()?;
+            rt.block_on(cmd_patch(&root, &id))?;
+        }
+        Some(Commands::Related { id }) => cmd_related(&root, &id)?,
+        Some(Commands::History { id }) => cmd_history(&root, &id)?,
+        Some(Commands::Dashboard) => cmd_dashboard(&root)?,
         Some(Commands::Report { output }) => cmd_report(&root, &output)?,
         Some(Commands::Ask { question, role }) => {
             let rt = tokio::runtime::Builder::new_multi_thread()
@@ -388,6 +416,175 @@ fn cmd_review(root: &std::path::Path, id: &str, verdict: ReviewVerdict) -> Resul
     };
     store.update_status(&f.id, status)?;
     println!("{} {} → {:?}", "reviewed".green().bold(), f.id, status);
+    Ok(())
+}
+
+fn cmd_details(root: &std::path::Path, id: &str) -> Result<()> {
+    let store = FindingStore::open(store_path(root))?;
+    let f = store.find_by_prefix(id)?;
+    println!("{}  {}", f.severity.as_str().to_uppercase(), f.title.bold());
+    println!(
+        "BRS {:.1} · ECS {:.2} · confidence {:.0}% · {}",
+        f.brs,
+        f.ecs,
+        f.confidence * 100.0,
+        f.status.as_str()
+    );
+    println!("\n{}", "Why Bugbee thinks this is vulnerable".bold());
+    println!(
+        "{}",
+        f.ai_review.summary.as_deref().unwrap_or(&f.description)
+    );
+    println!("\n{}", "Observed evidence".bold());
+    for location in &f.locations {
+        println!(
+            "  {}:{}-{} ({:?})",
+            location.file, location.start_line, location.end_line, location.role
+        );
+    }
+    for trace in &f.evidence.traces {
+        println!("  {trace}");
+    }
+    if let Some(root_cause) = &f.ai_review.root_cause {
+        println!("\n{}\\n{}", "Root cause".bold(), root_cause);
+    }
+    if let Some(scenario) = &f.ai_review.attack_scenario {
+        println!("\n{}\\n{}", "Attack scenario".bold(), scenario);
+    }
+    if let Some(fix) = &f.ai_review.suggested_fix {
+        println!("\n{}\\n{}", "Recommended fix".bold(), fix);
+    }
+    if let Some(patch) = &f.patch_diff {
+        println!(
+            "\n{}\\n{}",
+            "Saved patch proposal (not applied)".bold(),
+            patch
+        );
+    }
+    Ok(())
+}
+
+async fn cmd_explain(root: &std::path::Path, id: &str, question: &str) -> Result<()> {
+    let cfg = BugbeeConfig::load_layered(Some(root))?;
+    let store = FindingStore::open(store_path(root))?;
+    let finding = store.find_by_prefix(id)?;
+    let gateway = InferenceGateway::from_config(cfg.clone())?;
+    let campaign = HuntCampaign::new(root, cfg);
+    println!(
+        "{}",
+        campaign.ask_finding(&gateway, &finding, question).await?
+    );
+    Ok(())
+}
+
+async fn cmd_patch(root: &std::path::Path, id: &str) -> Result<()> {
+    let cfg = BugbeeConfig::load_layered(Some(root))?;
+    let store = FindingStore::open(store_path(root))?;
+    let finding = store.find_by_prefix(id)?;
+    let gateway = InferenceGateway::from_config(cfg.clone())?;
+    let campaign = HuntCampaign::new(root, cfg);
+    let proposal = campaign.propose_patch(&gateway, &finding).await?;
+    store.save_patch_proposal(&finding.id, proposal.clone())?;
+    println!(
+        "{} patch proposal saved for review; no code was changed.",
+        "ready".green().bold()
+    );
+    println!("{proposal}");
+    Ok(())
+}
+
+fn cmd_related(root: &std::path::Path, id: &str) -> Result<()> {
+    let store = FindingStore::open(store_path(root))?;
+    let finding = store.find_by_prefix(id)?;
+    let files: Vec<_> = finding
+        .locations
+        .iter()
+        .map(|location| location.file.as_str())
+        .collect();
+    let related: Vec<_> = store
+        .list_all()?
+        .into_iter()
+        .filter(|other| {
+            other.id != finding.id
+                && (other.category == finding.category
+                    || other
+                        .locations
+                        .iter()
+                        .any(|location| files.contains(&location.file.as_str())))
+        })
+        .collect();
+    println!(
+        "{} related finding(s) for {}",
+        related.len(),
+        finding.title.bold()
+    );
+    for other in related {
+        println!(
+            "  [{:.1}] {}  {}",
+            other.brs,
+            other.id.to_string().get(..8).unwrap_or("-"),
+            other.title
+        );
+    }
+    Ok(())
+}
+
+fn cmd_history(root: &std::path::Path, id: &str) -> Result<()> {
+    let store = FindingStore::open(store_path(root))?;
+    let finding = store.find_by_prefix(id)?;
+    println!("{} — {}", finding.title.bold(), finding.status.as_str());
+    println!("Detected  {}", finding.created_at);
+    for review in finding.reviews {
+        println!("{:?}  {}  {}", review.by, review.verdict, review.ts);
+    }
+    Ok(())
+}
+
+fn cmd_dashboard(root: &std::path::Path) -> Result<()> {
+    let store = FindingStore::open(store_path(root))?;
+    let findings = store.list_all()?;
+    let reviewed = findings
+        .iter()
+        .filter(|f| !matches!(f.status, FindingStatus::New | FindingStatus::Triaged))
+        .count();
+    let resolved = findings
+        .iter()
+        .filter(|f| matches!(f.status, FindingStatus::Fixed))
+        .count();
+    let high = findings
+        .iter()
+        .filter(|f| {
+            matches!(
+                f.severity,
+                bugbee_core::Severity::Critical | bugbee_core::Severity::High
+            )
+        })
+        .count();
+    let confidence = if findings.is_empty() {
+        0.0
+    } else {
+        findings.iter().map(|f| f.confidence).sum::<f64>() / findings.len() as f64 * 100.0
+    };
+    println!("{}", "Repository Health".bold());
+    println!("  Findings      {}", findings.len());
+    println!("  High / critical {}", high);
+    println!(
+        "  Human reviewed {:.0}%",
+        if findings.is_empty() {
+            0.0
+        } else {
+            reviewed as f64 / findings.len() as f64 * 100.0
+        }
+    );
+    println!(
+        "  Resolved      {:.0}%",
+        if findings.is_empty() {
+            0.0
+        } else {
+            resolved as f64 / findings.len() as f64 * 100.0
+        }
+    );
+    println!("  AI confidence {:.0}%", confidence);
     Ok(())
 }
 

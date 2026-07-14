@@ -1,8 +1,8 @@
-# Bugbee product site (Vercel)
+# Bugbee product site (Next.js + Vercel)
 
-SpaceXAI/x.ai–inspired dark product landing for Bugbee.
+Cinematic, motion-driven Next.js landing page for Bugbee.
 
-Static HTML/CSS. The checked-in Vercel configuration supports either setup:
+The checked-in Vercel configuration supports either setup:
 
 - Preferred: use the repository root; root [`vercel.json`](../vercel.json)
   deploys this directory as the output.
@@ -13,8 +13,9 @@ Static HTML/CSS. The checked-in Vercel configuration supports either setup:
 
 ```bash
 cd site
-python3 -m http.server 4173
-# open http://127.0.0.1:4173
+npm install
+npm run dev
+# open http://localhost:3000
 ```
 
 ## Deploy
