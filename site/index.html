@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Bugbee helps engineering teams investigate application risk locally and make better-informed security decisions." />
-    <meta name="theme-color" content="#f7f8fc" />
-    <title>Bugbee — A calmer security workflow</title>
+    <meta name="theme-color" content="#f5f2eb" />
+    <title>Bugbee — Security, considered.</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -19,20 +19,20 @@
     <main id="top">
       <section class="hero shell">
         <div class="hero-copy">
-          <p class="kicker"><span></span> Private beta · local-first AppSec</p>
-          <h1>Make room for<br /><em>better security work.</em></h1>
-          <p class="hero-lede">Bugbee gives engineering teams a quieter place to investigate application risk. It runs close to your code, keeps the evidence with the finding, and leaves the decision with people who know the system.</p>
-          <div class="actions"><a class="button primary" href="#access">About the private beta <b>↓</b></a><a class="button quiet" href="#how-it-works">How it works <b>↓</b></a></div>
+          <p class="kicker"><span></span> Private beta / local-first AppSec</p>
+          <h1>Security,<br /><em>considered.</em></h1>
+          <p class="hero-lede">Bugbee gives engineering teams a quieter place to investigate application risk. It stays close to your code, keeps evidence with every finding, and leaves the decision with the people who know the system.</p>
+          <div class="actions"><a class="button primary" href="#access">Request private access <b>↗</b></a><a class="button quiet" href="#how-it-works">Discover the workflow <b>↓</b></a></div>
           <p class="fine-print">For repositories you are authorized to assess. Bugbee does not exploit systems or apply changes on its own.</p>
         </div>
-        <figure class="hero-photo"><img src="bugbee-hero-workspace.png" alt="A calm engineering workspace with a security analysis interface on a laptop." /><figcaption>Designed for focused investigation, not alert fatigue.</figcaption></figure>
+        <figure class="hero-photo"><img src="bugbee-hero-workspace.png" alt="A calm engineering workspace with a security analysis interface on a laptop." /><div class="photo-mark">B</div><figcaption>Designed for focused investigation, not alert fatigue.</figcaption></figure>
       </section>
-      <section class="proof"><div class="shell proof-grid"><p>Security analysis that stays close to the code.</p><div><strong>Local by default</strong><span>Indexing and deterministic checks run in your workspace.</span></div><div><strong>Evidence alongside alerts</strong><span>Locations, traces, scores, and review state stay together.</span></div><div><strong>AI when you choose it</strong><span>Bring a provider only when another perspective is useful.</span></div></div></section>
+      <section class="proof"><div class="shell proof-grid"><p>Security analysis that stays close to the code.</p><div><strong>Local by default</strong><span>Indexing and deterministic checks run in your workspace.</span></div><div><strong>Evidence with every alert</strong><span>Locations, traces, scores, and review state stay together.</span></div><div><strong>AI with intention</strong><span>Bring another perspective only when it is useful.</span></div></div></section>
       <section class="shell section" id="how-it-works">
-        <p class="kicker"><span></span> A practical loop</p><div class="section-heading"><h2>Less noise. Better context.</h2><p>Bugbee combines local analysis with a focused review workflow. It will not make security effortless, but it can make the next decision clearer.</p></div>
+        <p class="kicker"><span></span> A practical loop</p><div class="section-heading"><h2>Less noise.<br /><em>Better context.</em></h2><p>Bugbee combines local analysis with a focused review workflow. It will not make security effortless, but it can make the next decision clearer.</p></div>
         <div class="steps"><article><p class="step-number">01</p><h3>Map the repository</h3><p>Build a repository-aware index while respecting Git ignores and excluding generated, dependency, and local-state files.</p></article><article><p class="step-number">02</p><h3>Hunt for evidence</h3><p>Run deterministic rules, secrets detection, and scoped taint analysis across Python, JavaScript, TypeScript, Go, PHP, and Java.</p></article><article><p class="step-number">03</p><h3>Review deliberately</h3><p>Score findings, keep a local review queue, and export confirmed work as SARIF for the systems your team already uses.</p></article></div>
       </section>
-      <section class="feature-band" id="principles"><div class="shell split"><div><p class="kicker"><span></span> Built for real repositories</p><h2>Good security tooling knows its limits.</h2></div><div class="principles"><article><h3>Keep sensitive context contained</h3><p>Bugbee redacts secrets before preparing model-bound content and blocks sensitive paths by policy.</p></article><article><h3>Use models with intent</h3><p>Bring an OpenAI-compatible endpoint, Ollama, or Anthropic API for optional review—not as a substitute for local analysis.</p></article><article><h3>Leave a useful trail</h3><p>Risk and evidence scores, review status, and stable finding identities help teams revisit decisions with context.</p></article></div></div></section>
+      <section class="feature-band" id="principles"><div class="shell split"><div><p class="kicker"><span></span> Built for real repositories</p><h2>Good security tooling knows <em>its limits.</em></h2></div><div class="principles"><article><h3>Keep sensitive context contained</h3><p>Bugbee redacts secrets before preparing model-bound content and blocks sensitive paths by policy.</p></article><article><h3>Use models with intent</h3><p>Bring an OpenAI-compatible endpoint, Ollama, or Anthropic API for optional review—not as a substitute for local analysis.</p></article><article><h3>Leave a useful trail</h3><p>Risk and evidence scores, review status, and stable finding identities help teams revisit decisions with context.</p></article></div></div></section>
       <section class="shell install" id="access"><div><p class="kicker"><span></span> Private beta</p><h2>Start with a repository you know.</h2><p>We are opening access gradually with teams who want a thoughtful, local-first security workflow. The beta is intentionally small while we learn where the product is most useful.</p></div><div class="install-card"><p class="access-label">WHAT TO EXPECT</p><ul><li>A short conversation about your team and codebase.</li><li>Guided setup for your environment.</li><li>A clear path for feedback during the beta.</li></ul><p class="access-note">Access is currently by invitation.</p></div></section>
     </main>
     <footer class="shell footer"><a class="brand" href="#top"><img src="bugbee-mark-v2.png" alt="" /><span>bugbee</span></a><span>Private beta · Defensive security tooling</span></footer>
