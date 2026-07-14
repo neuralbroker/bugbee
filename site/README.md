@@ -1,19 +1,17 @@
-# Bugbee product site (Next.js + Vercel)
+# Bugbee product site
 
-Cinematic, motion-driven Next.js landing page for Bugbee.
+The private-beta product site is a statically exported Next.js application.
+It uses CSS motion and a compressed local WebP hero asset; no public source,
+release, or analytics integration is rendered on the page.
 
-The checked-in Vercel configuration supports either setup:
-
-- Preferred: use the repository root; root [`vercel.json`](../vercel.json)
-  deploys this directory as the output.
-- Existing project setup: use **Root Directory = `site`**; this directory's
-  [`vercel.json`](./vercel.json) applies the same security headers.
+Deploy with the repository root as the Vercel project root. The root
+[`vercel.json`](../vercel.json) installs, builds, and deploys `site/out`.
 
 ## Local preview
 
 ```bash
 cd site
-npm install
+npm ci
 npm run dev
 # open http://localhost:3000
 ```
@@ -21,9 +19,7 @@ npm run dev
 ## Deploy
 
 ```bash
-# Vercel dashboard: import repo, Root Directory = site
-# or
-cd site && npx vercel
+# Vercel dashboard: import the repository with Root Directory = .
 ```
 
 Not affiliated with SpaceXAI; aesthetic inspiration only.

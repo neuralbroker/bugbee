@@ -13,6 +13,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  site:
+    name: Verify private product site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install locked site dependencies
+        working-directory: site
+        run: npm ci
+
+      - name: Type-check site
+        working-directory: site
+        run: npm run lint
+
+      - name: Build static site
+        working-directory: site
+        run: npm run build
+
+      - name: Audit production dependencies
+        working-directory: site
+        run: npm audit --omit=dev --audit-level=moderate
+
   verify:
     name: Format, lint, test, and build
     runs-on: ubuntu-latest
