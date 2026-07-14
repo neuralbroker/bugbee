@@ -18,20 +18,40 @@ const workflow = [
   ["Report", "Carry context forward"],
 ];
 
+const terminalCommands = {
+  "bugbee hunt": ["Indexing repository...", "✓ Local index ready                 218 files", "✓ Rules and secrets checks complete", "✓ Taint analysis complete", "✓ Review queue prepared", "", "Findings ready for review              illustrative"],
+  "bugbee findings": ["Loading local finding store...", "42 findings across 218 files", "12 high · 18 medium · 12 low", "Evidence completeness                  98%", "", "Use bugbee review <id> to inspect one"],
+  "bugbee review": ["Opening human review queue...", "a8f3c1e2  HIGH     needs review", "f1029d7b  MEDIUM   needs review", "c71a082e  LOW      confirmed", "", "Your decision stays in the loop."],
+  "bugbee report": ["Preparing SARIF export...", "✓ Findings normalized", "✓ Locations and traces attached", "✓ Review history preserved", "", "Ready to write findings.sarif.json"],
+  "bugbee ask": ["Preparing a redacted context window...", "✓ Sensitive paths excluded", "✓ Secrets removed before model review", "", "Ask a focused question about this repository."],
+} as const;
+
+type TerminalCommand = keyof typeof terminalCommands;
+
 function Terminal({ compact = false }: { compact?: boolean }) {
+  const commands = Object.keys(terminalCommands) as TerminalCommand[];
+  const [active, setActive] = useState<TerminalCommand>("bugbee hunt");
+  const [typed, setTyped] = useState("");
+  const lines = terminalCommands[active];
+
+  useEffect(() => {
+    setTyped("");
+    let cursor = 0;
+    const timer = window.setInterval(() => {
+      cursor += 1;
+      setTyped(active.slice(0, cursor));
+      if (cursor >= active.length) window.clearInterval(timer);
+    }, 38);
+    return () => window.clearInterval(timer);
+  }, [active]);
+
   return (
-    <div className={"terminal " + (compact ? "terminalDemo" : "")} aria-label="Illustrative Bugbee terminal workspace">
+    <div className={"terminal " + (compact ? "terminalDemo" : "")} aria-label="Interactive Bugbee terminal workspace">
       <div className="terminalChrome"><span><i/><i/><i/></span><span>{compact ? "~/payments-api" : "bugbee / workspace"}</span><span>review</span></div>
-      <div className="terminalCode">
-        <p><b>$</b> bugbee hunt<span className="cursor"/></p>
-        <p className="muted">Indexing repository...</p>
-        <p><em>✓</em> Local index ready <small>218 files</small></p>
-        <p><em>✓</em> Rules and secrets checks complete</p>
-        <p><em>✓</em> Taint analysis complete</p>
-        <p><em>✓</em> Review queue prepared</p>
-        <div className="rule"/>
-        <p className="result">Findings ready for review <span>· illustrative</span></p>
-        <p>Evidence: <strong>attached to each finding</strong></p>
+      {!compact && <div className="terminalCommands" role="tablist" aria-label="Terminal commands">{commands.map((command) => <button key={command} className={command === active ? "active" : ""} onClick={() => setActive(command)} role="tab" aria-selected={command === active}>{command.replace("bugbee ", "")}</button>)}</div>}
+      <div className="terminalCode" aria-live="polite">
+        <p><b>$</b> {typed}<span className="cursor"/></p>
+        {lines.map((line, index) => line ? <p key={index} className={line.startsWith("✓") ? "terminalGood" : index === lines.length - 1 ? "result" : ""}>{line}</p> : <div className="rule" key={index}/>)}
         <p className="ready"><i/> READY FOR HUMAN REVIEW</p>
       </div>
     </div>
@@ -40,12 +60,14 @@ function Terminal({ compact = false }: { compact?: boolean }) {
 
 export default function Home() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [booting, setBooting] = useState(true);
 
   useEffect(() => {
     const onScroll = () => document.documentElement.style.setProperty("--scroll", String(Math.min(window.scrollY / 900, 1)));
+    const boot = window.setTimeout(() => setBooting(false), 900);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => { window.clearTimeout(boot); window.removeEventListener("scroll", onScroll); };
   }, []);
 
   const move = (event: PointerEvent<HTMLElement>) => {
@@ -54,6 +76,7 @@ export default function Home() {
   };
 
   return <main>
+    {booting && <div className="bootScreen" role="status" aria-live="polite"><img src="/bugbee-mark-light.png" alt="" /><p>BUGBEE / LOCAL WORKSPACE</p><span className="bootBar"><i/></span></div>}
     <nav className="nav" aria-label="Main navigation">
       <a href="#top" className="brand"><img src="/bugbee-mark-light.png" alt="" /> bugbee</a>
       <div className="navLinks"><a href="#product">Product</a><a href="#workflow">Workflow</a><a href="#architecture">Architecture</a><a href="#access" className="navCta">Private beta</a></div>
