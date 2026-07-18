@@ -19,6 +19,13 @@ Aligned with [VISION.md](./VISION.md). Versions are intentional, not calendar pr
 - [x] NSAE matrix + static IR prover (`bugbee-nsae`)
 - [x] Carlini refine loop + bounty ScribeAgent
 - [x] `bugbee swarm` / `bugbee godmode` + TUI `/swarm`
+- [x] gRPC Super Harness (Unix socket, DiffOracle, typed errors)
+- [x] Authorization gate HARD RULE (`--i-have-permission` + scope)
+- [x] Hunter Agent (`parseHypotheses`, mock LLM, hunt prompt)
+- [x] HTTP crawler (robots.txt, cycle detection, API spec discovery)
+- [x] AKG kill-chain topology tests (difficulty scoring, pivot, synthesis)
+- [x] VS Code extension (security sidebar, SARIF import/export)
+- [x] E2E validation against `fixtures/python-vuln/`
 - [x] CI workflow
 - [ ] Installer script + release binaries
 

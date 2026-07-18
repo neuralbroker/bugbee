@@ -16,7 +16,7 @@ Bugbee is an independent project and is **not affiliated** with the OpenCode tea
 
 See **[VISION.md](./VISION.md)** for the product constitution and **[ROADMAP.md](./ROADMAP.md)** for horizons.
 
-In short: every engineering org should run one local binary that understands their repo like a staff AppSec engineer — proves findings with evidence, patches safely, and never ships untrusted guesswork as “critical.”
+In short: every engineering org should run one local binary that understands their repo like a staff AppSec engineer — proves findings with evidence, patches safely, and never ships untrusted guesswork as "critical."
 
 ## Install (from source)
 
@@ -113,21 +113,42 @@ export HF_TOKEN=...
 ```
 bugbee          CLI entry
 bugbee-ui       Ratatui workspace
-bugbee-agent    Swarm · godmode harness · tools · permissions
+bugbee-agent    Swarm · godmode harness · crawl · hunter · tools · permissions
 bugbee-nsae     Neuro-symbolic adjudication + static prover
-bugbee-akg      Attack Knowledge Graph (kill chains)
-bugbee-engine   Rules · secrets
+bugbee-akg      Attack Knowledge Graph (kill chains, chain synthesis)
+bugbee-engine   Rules · secrets · sandbox
 bugbee-llm      BYOK providers (tool calling)
-bugbee-core     Types · config · SQLite · NSAE matrix · PoC · redaction
+bugbee-core     Types · config · SQLite · NSAE matrix · PoC · scope · redaction
+bugbee-harness  gRPC Super Harness (Unix socket, diff oracle, verification)
 ```
 
+### Key modules
+
+| Module | Location | Purpose |
+|--------|----------|---------|
+| Hunter Agent | `crates/bugbee-agent/src/hunter.rs` | LLM hypothesis parsing, mock provider, hunt prompt builder |
+| Crawler | `crates/bugbee-agent/src/crawl.rs` | HTTP crawler, robots.txt, cycle detection, API spec discovery |
+| Super Harness | `crates/bugbee-harness/` | gRPC server/client, DiffOracle, Unix-socket verification |
+| Authorization | `crates/bugbee-core/src/scope.rs` | Scope-based gate with `--i-have-permission` HARD RULE |
+| AKG | `crates/bugbee-akg/` | Attack Knowledge Graph: kill chains, topology, pivot suggestions |
+| VS Code | `vscode/` | Security sidebar with SARIF import/export, finding navigation |
+
 Full agent specification: **[SPEC.md](./SPEC.md)** · SuperHarness analysis: **[HARNESS.md](./HARNESS.md)** · vision: **[VISION.md](./VISION.md)**
+
+## Test suite
+
+```bash
+cargo test --workspace
+```
+
+124 tests across all crates (CLI integration, crawler, hunter, AKG kill-chain, engine, harness, LLM, E2E validation).
 
 ## Security
 
 - Policy `defense_only` cannot be disabled
 - Secrets redacted before outbound LLM calls
 - Sensitive paths blocked from tool reads by default
+- Authorization gate: `--i-have-permission` flag + scope file required for live-target commands
 - Report product issues via [SECURITY.md](./SECURITY.md)
 
 ## License

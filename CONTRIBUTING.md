@@ -22,12 +22,16 @@ cargo run -p bugbee -- --root fixtures/python-vuln hunt
 
 | Crate | Responsibility |
 |-------|----------------|
-| `bugbee-core` | Types, config, store, scoring, redaction |
-| `bugbee-engine` | Deterministic scanners |
+| `bugbee-core` | Types, config, store, scoring, redaction, scope |
+| `bugbee-engine` | Deterministic scanners, sandbox |
 | `bugbee-llm` | BYOK model clients |
-| `bugbee-agent` | Roles, tools, permissions, hunt orchestration |
+| `bugbee-agent` | Roles, tools, permissions, crawl, hunter, swarm orchestration |
+| `bugbee-akg` | Attack Knowledge Graph, kill chains |
+| `bugbee-harness` | gRPC Super Harness (server, client, diff oracle) |
+| `bugbee-nsae` | Neuro-symbolic adjudication engine |
 | `bugbee-ui` | Ratatui workspace |
 | `bugbee` | CLI binary |
+| `vscode/` | VS Code extension |
 
 ## Style
 

@@ -19,8 +19,8 @@ Every engineering org should be able to run one local binary that:
 5. **Exports** audit-grade artifacts (SARIF, evidence packs) for compliance and CI.
 6. **Never leaves** confidential source in the clear to untrusted clouds without redaction and explicit policy.
 
-If OpenCode is “pair programmer in the terminal,”  
-Bugbee is **“staff AppSec engineer + SRE of trust, in the terminal.”**
+If OpenCode is "pair programmer in the terminal,"  
+Bugbee is **"staff AppSec engineer + SRE of trust, in the terminal."**
 
 ---
 
@@ -69,7 +69,7 @@ Borrow the interaction model users already love; specialize the domain:
 | Slash commands | `/hunt` `/findings` `/review` `/ask` `/report` `/doctor` |
 | Sessions | Hunt sessions with audit log + resume |
 
-We are **inspired by** OpenCode’s agent UX. Bugbee is an independent project and is **not affiliated** with the OpenCode team.
+We are **inspired by** OpenCode's agent UX. Bugbee is an independent project and is **not affiliated** with the OpenCode team.
 
 ### 3. Evidence-first security claims
 
@@ -81,7 +81,7 @@ Every finding carries:
 - **Scores** — Bugbee Risk Score (BRS) + Evidence Completeness (ECS)
 - **Status** — draft → confirmed | false_positive | fixed
 
-No silent “high severity” without a trail a human can re-verify offline.
+No silent "high severity" without a trail a human can re-verify offline.
 
 ### 4. Defense only
 
@@ -107,13 +107,15 @@ Hard product law:
 ```
 bugbee          CLI + process entry
 bugbee-ui       Ratatui workspace (presentation only)
-bugbee-agent    Sessions, tools, permissions, multi-agent loop
+bugbee-agent    Sessions, tools, permissions, multi-agent loop, crawl, hunter
 bugbee-engine   Deterministic scanners & rule packs
 bugbee-llm      Provider-agnostic model clients (BYOK)
-bugbee-core     Types, config, store, scoring, redaction, errors
+bugbee-core     Types, config, store, scoring, redaction, errors, scope
+bugbee-akg      Attack Knowledge Graph (kill chains, topology)
+bugbee-harness  gRPC Super Harness (Unix socket, diff oracle, verification)
 ```
 
-**Dependency rule:** `ui → agent → {engine, llm} → core`.  
+**Dependency rule:** `ui → agent → {engine, llm, harness} → core`.  
 UI never talks to providers or the store except through agent/core APIs.  
 Engine never calls the network.
 
@@ -133,42 +135,10 @@ Roles may run as sequential phases or concurrent workers under a shared session 
 
 ---
 
-## Roadmap horizons
-
-### Horizon A — Foundation (now)
-- Clean Rust workspace, config, SQLite store
-- Rule + secrets engines, SARIF export
-- OpenCode-style TUI shell with slash commands
-- **Godmode harness**: tool registry, ReAct loop, multi-phase pipeline
-- OpenAI-compatible tool calling + local provider clients
-- Redaction + path policy stubs
-- Budget / doom-loop protection (OpenCode processor analogue)
-
-### Horizon B — Serious hunter
-- Tree-sitter multi-language taint (Python, JS/TS, Go, PHP, Java, Rust)
-- Embedded OWASP + regional policy packs
-- Dual-review gates (engine ∩ agent)
-- Keychain-backed credentials, `bugbee connect`
-- Fixture corpus + CI regression for true/false positives
-
-### Horizon C — Agent OS for AppSec
-- Full tool loop with sandboxed shell
-- Persistent knowledge per repo (what was fixed, what was FP)
-- Parallel multi-agent hunts with budget controls
-- IDE / CI adapters (GitHub Action, pre-commit, language servers)
-
-### Horizon D — Trust platform
-- Org policy server (optional), audit streaming
-- Signed rule packs and engine attestations
-- Team review queues and finding ownership
-- Compliance mappings (OWASP, CERT-In, SOC2 evidence packs)
-
----
-
 ## Non-goals
 
 - Replacing general-purpose coding agents for feature development
-- Offensive C2, mass scanning of the public internet, or “auto-pwn”
+- Offensive C2, mass scanning of the public internet, or "auto-pwn"
 - Hosting customer source in our cloud as a requirement
 - Rewriting the core in a GC / JIT language for convenience
 
@@ -186,10 +156,10 @@ Roles may run as sequential phases or concurrent workers under a shared session 
 
 ## Guiding aphorisms
 
-1. **If you can’t show the line, you don’t have a finding.**  
+1. **If you can't show the line, you don't have a finding.**  
 2. **The agent is untrusted; the evidence store is not.**  
-3. **Speed without memory safety is someone else’s incident.**  
-4. **Fix the bug; don’t become the bug.**  
+3. **Speed without memory safety is someone else's incident.**  
+4. **Fix the bug; don't become the bug.**  
 
 ---
 
