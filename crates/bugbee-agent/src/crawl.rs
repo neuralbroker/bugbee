@@ -305,7 +305,7 @@ impl Crawler {
             self.request_count.fetch_add(1, Ordering::SeqCst);
             match self.client.get(url).timeout(self.config.timeout).send().await {
                 Ok(resp) if resp.status().is_success() => {
-                    let endpoints = extract_endpoints_from_spec(url, &kind).await;
+                    let endpoints = extract_endpoints_from_spec(url, kind).await;
                     self.api_specs.push(ApiSpec {
                         url: url.clone(),
                         kind: kind.clone(),

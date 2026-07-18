@@ -1,10 +1,8 @@
 use std::time::Duration;
 
 use tonic::transport::{Endpoint, Uri};
-use tracing::debug;
 
 use crate::proto::{
-    self,
     harness_client::HarnessClient as ProtoHarnessClient,
     DiffRequest, DiffResponse, ReplayRequest, ReplayResponse, VerifyRequest, VerifyResponse,
 };

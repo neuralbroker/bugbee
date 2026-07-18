@@ -3,9 +3,8 @@ use std::collections::HashSet;
 use tracing::debug;
 
 use crate::proto::{
-    self, signal, DiffResponse, HttpResponse, Signal, VerificationStatus,
+    signal, DiffResponse, HttpResponse, Signal, VerificationStatus,
 };
-use crate::types::{SignalType, VerificationStatus as Vs};
 
 /// Differential oracle — analyzes baseline vs. exploit responses to detect
 /// indicators of successful exploitation.
@@ -165,7 +164,7 @@ fn extract_error_patterns(body: &[u8]) -> HashSet<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::proto::{HttpResponse as HttpResp, Signal as Sig};
+    use crate::proto::HttpResponse as HttpResp;
     use std::collections::HashMap;
 
     fn make_response(status: i32, body: &str, ms: i32) -> HttpResponse {

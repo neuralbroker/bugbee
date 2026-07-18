@@ -8,20 +8,11 @@ use bugbee_core::{Finding, FindingStatus, Severity};
 
 use crate::theme;
 
+#[derive(Default)]
 pub struct SecurityPanel {
     pub finding: Option<Finding>,
     pub chain_text: String,
     pub show_chain: bool,
-}
-
-impl Default for SecurityPanel {
-    fn default() -> Self {
-        Self {
-            finding: None,
-            chain_text: String::new(),
-            show_chain: false,
-        }
-    }
 }
 
 impl SecurityPanel {
@@ -59,7 +50,7 @@ impl SecurityPanel {
             return;
         };
 
-        let chunks = Layout::default()
+        let _chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
                 Constraint::Length(3),
