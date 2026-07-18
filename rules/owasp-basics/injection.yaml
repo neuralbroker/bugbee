@@ -1,0 +1,74 @@
+id: owasp-basics
+name: OWASP basics (foundation pack)
+rules:
+  - id: owasp.python.eval
+    title: Dangerous eval()
+    message: Dynamic eval of untrusted input can lead to RCE.
+    severity: critical
+    pattern: '\beval\s*\('
+    paths: ["*.py"]
+    cwe: CWE-95
+    tags: [injection, rce]
+
+  - id: owasp.python.exec
+    title: Dangerous exec()
+    message: Dynamic exec of untrusted input can lead to RCE.
+    severity: critical
+    pattern: '\bexec\s*\('
+    paths: ["*.py"]
+    cwe: CWE-95
+    tags: [injection, rce]
+
+  - id: owasp.js.eval
+    title: Dangerous eval()
+    message: eval() on untrusted data enables code injection.
+    severity: critical
+    pattern: '\beval\s*\('
+    paths: ["*.js", "*.ts", "*.jsx", "*.tsx"]
+    cwe: CWE-95
+    tags: [injection]
+
+  - id: owasp.sql.concatenate
+    title: Possible SQL string concatenation
+    message: Building SQL with string concatenation often causes injection.
+    severity: high
+    pattern: '(?i)(SELECT|INSERT|UPDATE|DELETE).{0,80}(\+|format\(|f["''])'
+    paths: ["*.py", "*.js", "*.ts", "*.go", "*.php", "*.java"]
+    cwe: CWE-89
+    tags: [sqli]
+
+  - id: owasp.command.shell_true
+    title: shell=True in subprocess
+    message: subprocess with shell=True is a common command-injection sink.
+    severity: high
+    pattern: 'shell\s*=\s*True'
+    paths: ["*.py"]
+    cwe: CWE-78
+    tags: [command-injection]
+
+  - id: owasp.php.raw_query
+    title: Possible raw SQL in PHP
+    message: Raw query construction may be injectable.
+    severity: high
+    pattern: '(?i)(mysqli_query|mysql_query|->query)\s*\('
+    paths: ["*.php"]
+    cwe: CWE-89
+    tags: [sqli]
+
+  - id: owasp.ssrf.urlopen
+    title: Server-side request from user-controlled URL (heuristic)
+    message: Fetching remote URLs without allowlists can enable SSRF.
+    severity: medium
+    pattern: '(?i)(urllib\.request\.urlopen|requests\.(get|post)|fetch\()\s*\('
+    paths: ["*.py", "*.js", "*.ts"]
+    cwe: CWE-918
+    tags: [ssrf]
+
+  - id: owasp.crypto.md5
+    title: Weak hash MD5
+    message: MD5 is not suitable for integrity or password storage.
+    severity: medium
+    pattern: '(?i)\bmd5\b'
+    paths: ["*.py", "*.js", "*.ts", "*.go", "*.java", "*.rs", "*.php"]
+    cwe: CWE-328
+    tags: [crypto]

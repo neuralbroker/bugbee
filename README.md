@@ -1,160 +1,135 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/bugbee-mark-light.png">
-    <img src="assets/brand/bugbee-mark-v2.png" width="144" alt="Bugbee logo — an abstract geometric signal-path mark">
-  </picture>
-</p>
+# Bugbee
 
-<h1 align="center">Bugbee</h1>
+**Terminal-first, memory-safe security agent for vulnerability hunting.**
 
-<p align="center">
-  <strong>Terminal-first agentic IDE for bug fixing and vulnerability hunting.</strong><br>
-  Lightweight TUI/CLI · heavy local analysis · model-agnostic BYOK · human + auto review.
-</p>
+Lightweight TUI/CLI · deterministic local engines · model-agnostic BYOK · human review.
 
-> Defensive only. No live exploitation. Designed for enterprises and confidential codebases.
+> Defensive only. No live exploitation. Built for enterprises and confidential codebases.<br>
+> Written in **Rust** for memory safety and a single static binary.
 
-Website (Vercel): [`site/`](./site) is the static product landing. The root
-[`vercel.json`](./vercel.json) deploys it when the Vercel project root is this
-repository.
+Agent UX is **inspired by** [OpenCode](https://opencode.ai) (slash commands, hunt/review roles like build/plan).<br>
+Bugbee is an independent project and is **not affiliated** with the OpenCode team.
 
-## Install
+---
 
-One command (macOS / Linux — installs into `~/.local/bin`):
+## Long-term vision
+
+See **[VISION.md](./VISION.md)** for the product constitution and **[ROADMAP.md](./ROADMAP.md)** for horizons.
+
+In short: every engineering org should run one local binary that understands their repo like a staff AppSec engineer — proves findings with evidence, patches safely, and never ships untrusted guesswork as “critical.”
+
+## Install (from source)
 
 ```bash
-curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh | bash
-```
-
-Then ensure `~/.local/bin` is on your `PATH` if the installer says so:
-
-```bash
-export PATH="$HOME/.local/bin:$PATH"
+cargo install --path crates/bugbee --locked
 bugbee --version
 ```
 
-### Other install options
+Or run from a checkout:
 
-| Method | Command |
-|--------|---------|
-| Pin a version | `BUGBEE_VERSION=v0.1.0-beta.2 curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh \| bash` |
-| Custom directory | `BUGBEE_INSTALL=/usr/local/bin curl -fsSL … \| bash` |
-| From source (Cargo) | `cargo install --git https://github.com/neuralbroker/bugbee --locked --bin bugbee` |
-| Windows | Download the `.zip` from [Releases](https://github.com/neuralbroker/bugbee/releases) |
-
-## Features
-
-- **Any model**: OpenAI-compatible endpoints, xAI Grok, DeepSeek, Qwen, Kimi, GLM, Claude, GPT, Ollama, OpenRouter, custom gateways — you bring the key and model id
-- **Deterministic engines**: embedded OWASP + **India AppSec** packs (gov/edu/BFSI/enterprise, CERT-In oriented), secrets, taint (Python / JS / TS / Go / **PHP / Java**)
-- **Aggressive by default**: wider human queue, multi-pack hunts, OpenCode-style interactive workspace
-- **Repository-safe indexing**: honors Git ignores and excludes generated, dependency, and local-state directories by default
-- **Scoring**: Bugbee Risk Score (BRS) + Evidence Completeness (ECS) + dual-review gates
-- **Review queue**: confirm / false-positive / fixed with SARIF export
-- **Redaction**: secrets scrubbed before LLM calls; sensitive paths blocked
-- **Agent constitution**: hunt lead, scout, taint analyst, adversarial reviewer, patchsmith
+```bash
+cargo build --release -p bugbee
+./target/release/bugbee --help
+```
 
 ## Quick start
 
 ```bash
-curl -fsSL https://github.com/neuralbroker/bugbee/releases/latest/download/install-bugbee.sh | bash
-export PATH="$HOME/.local/bin:$PATH"   # if needed
-
 cd /path/to/your/project
 bugbee init
-bugbee                  # OpenCode-style workspace (slash commands)
-# or headless:
-bugbee hunt            # aggressive + India AppSec + OWASP packs
+bugbee swarm -v         # neuro-symbolic multi-agent swarm (recommended)
+bugbee super -v "…"     # SuperHarness tool loop (Pi+OpenCode+Claude)
+bugbee godmode          # godmode pipeline (uses SuperHarness when LLM on)
+bugbee                  # interactive workspace (/swarm /godmode /hunt)
+# engines only:
+bugbee hunt
 bugbee findings
+bugbee report --format bounty -o report.md
 bugbee report --output findings.sarif.json
 ```
 
-### OpenCode-style workspace
+### Godmode harness (OpenCode-style tools, security niche)
 
-Running `bugbee` with no subcommand opens an interactive security IDE:
+```
+Phase 0  ENGINE     rules + secrets (git-aware walk)
+Phase 1  ENRICH     parallel context windows (rayon)
+Phase 2  HUNT LEAD  LLM tool loop (read/grep/glob/hunt/findings/…)
+Phase 3  TAINT      deep evidence on critical/high
+Phase 4  REVIEW     adversarial FP killer
+Phase 5  REPORT     digest + store
+```
 
-| Command | Action |
-|---------|--------|
-| `/hunt` | Aggressive local hunt (OWASP + India packs) |
-| `/findings` | List / filter findings |
+Tools exposed to the model: `hunt`, `read`, `grep`, `glob`, `list_dir`,
+`list_findings`, `get_finding`, `review_finding`, `add_evidence`, `todo_write`
+(plus gated `shell`). Budget + doom-loop protection included.
+
+```bash
+bugbee godmode              # uses LLM if connected
+bugbee godmode --offline    # engines + enrich only
+bugbee godmode -v           # print harness events
+```
+
+### Interactive workspace
+
+| Input | Action |
+|-------|--------|
+| `/godmode` or `g` | Offline godmode pipeline |
+| `/hunt` or `h` | Deterministic local hunt |
+| `/findings` | Refresh finding list |
 | `/review <id> confirm\|fp\|fixed` | Human review |
+| `c` / `f` / `x` | Confirm / false-positive / fixed |
+| `Tab` | Switch hunt ↔ review role |
 | `/doctor` | Config readiness |
-| `/ask …` | Chat with your connected model about this repo |
-| `/report` | SARIF export |
-| `c` / `f` / `x` | Confirm / false-positive / fixed selected finding |
+| `/report` | Write SARIF |
+| `q` | Quit |
 
-Optional model (BYOK):
-
-```bash
-bugbee connect --provider xai --api-key "$XAI_API_KEY" --model grok-4.5
-# or local
-bugbee connect --provider ollama --base-url http://127.0.0.1:11434/v1 --model qwen2.5-coder
-```
-
-Developers building from a checkout:
+### Connect a model (optional)
 
 ```bash
-cargo build --release -p bugbee-cli
-export PATH="$PWD/target/release:$PATH"
+bugbee connect --provider xai --model grok-4.5 --api-key-env XAI_API_KEY
+export XAI_API_KEY=...
+bugbee ask "What are the top risks in this repo?"
 ```
 
-Keys passed to `bugbee connect --api-key` are stored in the local OS keychain;
-they are not written to `bugbee.toml`. Environment variables remain supported
-for CI and headless environments.
-
-### Demo fixtures
+Supports OpenAI, native Anthropic Messages API, xAI, Kimi, Z.ai/GLM, DeepSeek,
+OpenRouter, Ollama, Hugging Face Inference Providers, and custom OpenAI-compatible
+gateways. API keys are read only from environment variables.
 
 ```bash
-bugbee --root fixtures/python-vuln init
-bugbee --root fixtures/python-vuln hunt
-bugbee --root fixtures/python-vuln findings
+# Native Anthropic tool calling (Messages API)
+bugbee connect --provider anthropic --model claude-3-5-haiku-latest
+export ANTHROPIC_API_KEY=...
+
+# OpenAI-compatible routes
+bugbee connect --provider kimi --model kimi-k2.5
+export MOONSHOT_API_KEY=...
+
+bugbee connect --provider hf --model openai/gpt-oss-120b:fastest
+export HF_TOKEN=...
 ```
-
-## CLI
-
-| Command | Description |
-|---------|-------------|
-| `bugbee init` | Create `bugbee.toml`, `BUGBEE.md`, `.bugbee/` |
-| `bugbee connect` | BYOK — configure any provider/model |
-| `bugbee hunt` | Index + engines (+ optional `--llm-review`) |
-| `bugbee findings` | List by BRS |
-| `bugbee review <id> confirm\|fp\|fixed` | Human review |
-| `bugbee report` | SARIF export |
-| `bugbee ask "..."` | Chat with configured model about the repo |
-| `bugbee models` | List providers / remote model ids |
-| `bugbee doctor` | Validate configuration and provider readiness without network calls |
-| `bugbee tui` | Terminal UI |
 
 ## Architecture
 
 ```
-bugbee (CLI/TUI)
-    └── core engines + harness (local)
-            ├── index (repo map)
-            ├── rules / taint / secrets
-            ├── finding store (SQLite) + BRS/ECS
-            └── providers (any model via OpenAI-compat + keys)
+bugbee          CLI entry
+bugbee-ui       Ratatui workspace
+bugbee-agent    Swarm · godmode harness · tools · permissions
+bugbee-nsae     Neuro-symbolic adjudication + static prover
+bugbee-akg      Attack Knowledge Graph (kill chains)
+bugbee-engine   Rules · secrets
+bugbee-llm      BYOK providers (tool calling)
+bugbee-core     Types · config · SQLite · NSAE matrix · PoC · redaction
 ```
 
-## Config (`bugbee.toml`)
+Full agent specification: **[SPEC.md](./SPEC.md)** · SuperHarness analysis: **[HARNESS.md](./HARNESS.md)** · vision: **[VISION.md](./VISION.md)**
 
-```toml
-[inference]
-# ANY model id your endpoint accepts
-hunt = "provider/model"
-scout = "provider/model"
-review = "other-provider/model"   # prefer different vendor for review
+## Security
 
-[providers.my-custom]
-base_url = "https://your-gateway/v1"
-api_key_env = "MY_KEY"
-protocol = "openai_compat"
-```
-
-## Security product boundary
-
-Bugbee is a **defensive AppSec assistant**. It will not help attack third-party systems. Sandbox network defaults to deny. Patches require human approval workflows.
+- Policy `defense_only` cannot be disabled
+- Secrets redacted before outbound LLM calls
+- Sensitive paths blocked from tool reads by default
+- Report product issues via [SECURITY.md](./SECURITY.md)
 
 ## License
 
-Apache-2.0. Enterprise services and commercial offerings may be distributed
-under separate terms.
+Apache-2.0 — see [LICENSE](./LICENSE).

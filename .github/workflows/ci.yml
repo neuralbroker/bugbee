@@ -1,71 +1,32 @@
 name: CI
 
 on:
-  pull_request:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
-permissions:
-  contents: read
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
 
 jobs:
-  site:
-    name: Verify private product site
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out source
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-
-      - name: Install locked site dependencies
-        working-directory: site
-        run: npm ci
-
-      - name: Type-check site
-        working-directory: site
-        run: npm run lint
-
-      - name: Build static site
-        working-directory: site
-        run: npm run build
-
-      - name: Audit production dependencies
-        working-directory: site
-        run: npm audit --omit=dev --audit-level=moderate
-
-  verify:
-    name: Format, lint, test, and build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Check formatting
-        run: cargo fmt --all --check
-
-      - name: Lint
-        run: cargo clippy --workspace --all-targets -- -D warnings
-
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Build
+        run: cargo build --workspace
       - name: Test
         run: cargo test --workspace
-
-      - name: Build release binary
-        run: cargo build --release -p bugbee-cli
-
-      - name: Smoke-test release binary against bundled fixtures
-        run: bash scripts/smoke-fixtures.sh target/release/bugbee
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Fixture hunt smoke
+        run: |
+          cargo run -p bugbee -- --root fixtures/python-vuln init --name python-vuln
+          cargo run -p bugbee -- --root fixtures/python-vuln hunt
+          cargo run -p bugbee -- --root fixtures/python-vuln findings

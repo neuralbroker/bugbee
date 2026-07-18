@@ -1,39 +1,25 @@
-from flask import Flask, request
+"""Synthetic vulnerable sample for Bugbee regression (local only)."""
+
 import os
 import subprocess
-import pickle
-import sqlite3
 
-app = Flask(__name__)
+# secrets.generic_password_assign
+password = "hunter2-not-real"
 
-# Intentionally vulnerable demo fixtures for Bugbee engines (DO NOT deploy).
+# owasp.command.shell_true
+def run_user(cmd: str) -> None:
+    subprocess.run(cmd, shell=True)
 
-@app.route("/search")
-def search():
-    q = request.args.get("q", "")
-    conn = sqlite3.connect("app.db")
-    cur = conn.cursor()
-    # SQL injection sink
-    cur.execute("SELECT * FROM items WHERE name = '%s'" % q)
-    return str(cur.fetchall())
 
-@app.route("/run")
-def run_cmd():
-    cmd = request.args.get("cmd", "echo hi")
-    # command injection
-    return os.system(cmd)
+# owasp.python.eval
+def calc(expr: str):
+    return eval(expr)
 
-@app.route("/load", methods=["POST"])
-def load_blob():
-    data = request.get_data()
-    # insecure deserialization
-    return str(pickle.loads(data))
 
-@app.route("/calc")
-def calc():
-    expr = request.args.get("e", "1+1")
-    return str(eval(expr))
+# owasp.sql.concatenate
+def lookup(user_id: str) -> str:
+    return "SELECT * FROM users WHERE id = '" + user_id + "'"
+
 
 if __name__ == "__main__":
-    # misconfig: debug true
-    app.run(debug=True)
+    print(lookup(os.environ.get("UID", "1")))

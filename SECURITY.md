@@ -1,25 +1,35 @@
-# Security policy
+# Security Policy
 
-## Supported versions
+## Defensive use only
 
-Security fixes are made on the latest version on the `main` branch while
-Bugbee is in its pre-1.0 phase.
+Bugbee is designed for **authorized, defensive** assessment of codebases you own
+or have explicit permission to test. It does not include live exploitation
+tooling against third-party systems.
 
-## Reporting a vulnerability
+## Reporting vulnerabilities in Bugbee
 
-Please do not report suspected vulnerabilities through a public issue.
+If you discover a security issue **in Bugbee itself** (the agent, store,
+redaction, or install path), please report it privately:
 
-Use GitHub's private vulnerability-reporting flow from the repository's
-**Security** tab. If that option is unavailable, contact the maintainer
-privately through their GitHub profile and include `Bugbee security report` in
-the subject.
+- Email: security@neuralbroker.dev (or open a private security advisory on GitHub)
+- Do not file public issues for unfixed critical vulnerabilities
 
-Include the affected version or commit, reproduction steps, impact, and any
-mitigation you have identified. Do not include customer secrets, API keys, or
-private source code in a report.
+Please include:
 
-## Scope
+1. Affected version / commit
+2. Reproduction steps
+3. Impact assessment
+4. Any suggested fix
 
-Reports involving credential handling, prompt/code redaction, sandbox escapes,
-unsafe command execution, provider request handling, or finding-data exposure
-are especially important.
+We aim to acknowledge reports within 72 hours.
+
+## Secrets and keys
+
+- Prefer environment variables or OS keychain via `bugbee connect` (when available)
+- Never commit API keys or `.bugbee/` state containing credentials
+- Outbound LLM prompts should pass through redaction before leaving the host
+
+## Supply chain
+
+- Prefer `cargo install --locked` or signed release binaries
+- Review third-party crate updates carefully; core stays Rust / memory-safe

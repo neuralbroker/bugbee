@@ -1,22 +1,36 @@
 # Contributing to Bugbee
 
-Bugbee welcomes bug reports, rule packs, vulnerable-but-safe fixtures, tests,
-and documentation improvements.
+Thank you for helping build a memory-safe security agent.
 
-## Before opening a pull request
+## Principles
+
+1. Read [VISION.md](./VISION.md) — PRs that contradict it need an explicit vision change.
+2. Keep the core in **Rust**. No Node/Python runtime in the agent binary path.
+3. Engine code must stay **offline** (no network in `bugbee-engine`).
+4. Prefer tests + fixtures over screenshots of findings.
+
+## Dev setup
 
 ```bash
-cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings
+rustup update stable
+cargo build -p bugbee
 cargo test --workspace
+cargo run -p bugbee -- --root fixtures/python-vuln hunt
 ```
 
-Keep changes focused. New detection rules should include a safe fixture that
-demonstrates both the intended finding and a nearby non-finding where practical.
-Never add real credentials, customer code, exploit payloads for live systems, or
-harmful automation.
+## Crate map
 
-## Responsible disclosure
+| Crate | Responsibility |
+|-------|----------------|
+| `bugbee-core` | Types, config, store, scoring, redaction |
+| `bugbee-engine` | Deterministic scanners |
+| `bugbee-llm` | BYOK model clients |
+| `bugbee-agent` | Roles, tools, permissions, hunt orchestration |
+| `bugbee-ui` | Ratatui workspace |
+| `bugbee` | CLI binary |
 
-Do not open a public issue for a suspected security vulnerability. Follow the
-[security policy](SECURITY.md) instead.
+## Style
+
+- `cargo fmt` + `cargo clippy -p bugbee -- -D warnings` before sending a PR
+- Small, reviewable commits
+- New rules go under `rules/` with a clear id and CWE when known

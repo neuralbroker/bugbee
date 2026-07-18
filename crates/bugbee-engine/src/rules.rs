@@ -1,20 +1,19 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use bugbee_core::{
-    BrsWeights, Evidence, Finding, FindingLocation, LocationRole, Redactor, Severity,
-};
-use bugbee_index::{Lang, RepoIndex};
+use bugbee_core::{Error, Evidence, Finding, Location, Result, Severity, SourceKind};
 use regex::Regex;
 use serde::Deserialize;
+use tracing::{debug, warn};
 
-const BUILTIN_OWASP_CORE: &str =
-    include_str!("../../../rules/owasp-2025/injection-crypto-misconfig.yaml");
-const BUILTIN_OWASP_WEB: &str = include_str!("../../../rules/owasp-2025/web-auth-ssrf-xss.yaml");
-const BUILTIN_INDIA_APPSEC: &str =
-    include_str!("../../../rules/india-appsec/india-gov-edu-enterprise.yaml");
-const BUILTIN_CLASSICS_MODERN: &str =
-    include_str!("../../../rules/classics-modern/memory-web-cloud.yaml");
+#[derive(Debug, Clone, Deserialize)]
+pub struct RulePack {
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub rules: Vec<Rule>,
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Rule {
@@ -22,197 +21,134 @@ pub struct Rule {
     pub title: String,
     pub message: String,
     pub severity: String,
-    #[serde(default)]
-    pub cwe: Vec<String>,
-    #[serde(default)]
-    pub owasp: Vec<String>,
-    pub category: String,
-    pub languages: Vec<String>,
+    /// Regex matched against each line.
     pub pattern: String,
     #[serde(default)]
-    pub confidence: Option<f64>,
+    pub languages: Vec<String>,
     #[serde(default)]
-    pub exploitability: Option<f64>,
+    pub cwe: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    /// File path globs (simple suffix / contains checks for v0).
+    #[serde(default)]
+    pub paths: Vec<String>,
 }
 
-/// A rule with a precompiled regex so packs are not recompiled per file.
-#[derive(Debug, Clone)]
-struct CompiledRule {
-    meta: Rule,
-    re: Regex,
-    severity: Severity,
-}
+impl Rule {
+    pub fn severity(&self) -> Severity {
+        Severity::parse(&self.severity).unwrap_or(Severity::Medium)
+    }
 
-#[derive(Debug, Clone)]
-pub struct RulePack {
-    pub name: String,
-    pub rules: Vec<Rule>,
-    compiled: Vec<CompiledRule>,
-}
-
-impl RulePack {
-    pub fn from_rules(name: impl Into<String>, rules: Vec<Rule>) -> anyhow::Result<Self> {
-        let name = name.into();
-        let mut compiled = Vec::with_capacity(rules.len());
-        for rule in &rules {
-            let re = Regex::new(&rule.pattern)
-                .map_err(|e| anyhow::anyhow!("bad regex in {}: {e}", rule.id))?;
-            compiled.push(CompiledRule {
-                meta: rule.clone(),
-                re,
-                severity: parse_severity(&rule.severity),
-            });
+    fn path_matches(&self, path: &Path) -> bool {
+        if self.paths.is_empty() {
+            return true;
         }
-        Ok(Self {
-            name,
-            rules,
-            compiled,
+        let s = path.to_string_lossy();
+        self.paths.iter().any(|p| {
+            if let Some(ext) = p.strip_prefix("*.") {
+                s.ends_with(&format!(".{ext}")) || s.ends_with(ext)
+            } else {
+                s.contains(p.trim_start_matches('*'))
+            }
         })
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.compiled.is_empty()
-    }
-
-    /// Keep the first occurrence of each rule id and drop later duplicates.
-    pub fn dedup_rules(&mut self, seen: &mut std::collections::HashSet<String>) {
-        let mut keep = Vec::with_capacity(self.compiled.len());
-        let mut keep_meta = Vec::with_capacity(self.rules.len());
-        for compiled in self.compiled.drain(..) {
-            if seen.insert(compiled.meta.id.clone()) {
-                keep_meta.push(compiled.meta.clone());
-                keep.push(compiled);
-            }
+    pub fn apply(&self, path: &Path, content: &str) -> Result<Vec<Finding>> {
+        if !self.path_matches(path) {
+            return Ok(Vec::new());
         }
-        self.rules = keep_meta;
-        self.compiled = keep;
-    }
-
-    pub fn scan(&self, index: &RepoIndex, weights: &BrsWeights) -> anyhow::Result<Vec<Finding>> {
-        let redactor = Redactor::enterprise();
+        let re = Regex::new(&self.pattern)
+            .map_err(|e| Error::Engine(format!("bad regex in {}: {e}", self.id)))?;
         let mut out = Vec::new();
-
-        for file in &index.files {
-            if file.lang == Lang::Other {
-                continue;
-            }
-            let lang = file.lang.as_str();
-            let content = match index.read_file(&file.path) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
-
-            for rule in &self.compiled {
-                if !rule.meta.languages.is_empty()
-                    && !rule
-                        .meta
-                        .languages
-                        .iter()
-                        .any(|l| l == lang || l == "generic")
-                {
-                    continue;
-                }
-
-                for (i, line) in content.lines().enumerate() {
-                    if !rule.re.is_match(line) {
-                        continue;
-                    }
-                    let line_no = (i + 1) as u32;
-                    let safe_snippet = redactor.redact(line.trim());
-                    let mut f = Finding::new(
-                        &rule.meta.title,
-                        format!(
-                            "{} — matched in {}:{}",
-                            rule.meta.message, file.path, line_no
-                        ),
-                        rule.severity,
-                        &rule.meta.category,
-                    );
-                    f.cwe = rule.meta.cwe.clone();
-                    f.owasp = rule.meta.owasp.clone();
-                    f.confidence = rule.meta.confidence.unwrap_or(0.65);
-                    f.exploitability = rule.meta.exploitability.unwrap_or(0.5);
-                    f.evidence = Evidence {
-                        rule_id: Some(rule.meta.id.clone()),
-                        has_sink: true,
-                        has_source: false,
-                        has_path: false,
-                        has_repro: false,
-                        missing_sanitizer_check: true,
-                        traces: vec![format!("{}:{}: {}", file.path, line_no, safe_snippet)],
-                        dataflow: None,
-                        agent_notes: Some(format!("rule pack: {}", self.name)),
-                    };
-                    f.add_location(FindingLocation {
-                        file: file.path.clone(),
-                        start_line: line_no,
-                        end_line: line_no,
-                        start_col: None,
-                        end_col: None,
-                        role: LocationRole::Sink,
-                        snippet: Some(safe_snippet),
-                    });
-                    f.recompute_scores(weights);
-                    out.push(f);
-                }
+        let rel = path.to_string_lossy();
+        for (idx, line) in content.lines().enumerate() {
+            if re.is_match(line) {
+                let line_no = (idx + 1) as u32;
+                let mut finding = Finding::new(
+                    &self.id,
+                    &self.title,
+                    &self.message,
+                    self.severity(),
+                    SourceKind::Rule,
+                    Location::line(rel.as_ref(), line_no).with_snippet(line.trim()),
+                );
+                finding.cwe = self.cwe.clone();
+                finding.tags = self.tags.clone();
+                finding.push_evidence(Evidence {
+                    kind: "pattern_match".into(),
+                    detail: format!("rule {} matched line {line_no}", self.id),
+                    location: Some(Location::line(rel.as_ref(), line_no)),
+                });
+                out.push(finding);
             }
         }
         Ok(out)
     }
 }
 
-pub fn load_rules_dir(dir: &Path) -> anyhow::Result<Vec<RulePack>> {
-    let mut packs = Vec::new();
-    if !dir.exists() {
-        return Ok(packs);
+pub fn load_rules_from_dir(dir: impl AsRef<Path>) -> Result<Vec<Rule>> {
+    let dir = dir.as_ref();
+    if !dir.is_dir() {
+        return Ok(Vec::new());
     }
-    for entry in fs::read_dir(dir)? {
-        let entry = entry?;
+    let mut rules = Vec::new();
+    for entry in walkdir::WalkDir::new(dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
         let path = entry.path();
-        if path.extension().and_then(|e| e.to_str()) != Some("yaml")
-            && path.extension().and_then(|e| e.to_str()) != Some("yml")
-        {
+        if !path.is_file() {
             continue;
         }
-        let raw = fs::read_to_string(&path)?;
-        let rules: Vec<Rule> = serde_yaml::from_str(&raw)?;
-        let name = path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("rules")
-            .to_string();
-        packs.push(RulePack::from_rules(name, rules)?);
+        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+        if ext != "yaml" && ext != "yml" {
+            continue;
+        }
+        match load_pack(path) {
+            Ok(pack) => {
+                debug!(pack = %pack.id, n = pack.rules.len(), "loaded rule pack");
+                rules.extend(pack.rules);
+            }
+            Err(e) => warn!(path = %path.display(), error = %e, "skip rule pack"),
+        }
     }
-    Ok(packs)
+    Ok(rules)
 }
 
-/// Embedded baselines ship inside every release binary:
-///
-/// - OWASP-focused core + web rules
-/// - India AppSec pack (gov / edu / BFSI / enterprise hygiene, CERT-In oriented)
-///
-/// Filesystem rule packs remain supported for organization-specific rules.
-pub fn builtin_rule_packs() -> anyhow::Result<Vec<RulePack>> {
-    let mut packs = Vec::new();
-    for (name, raw) in [
-        ("builtin-owasp-2025-core", BUILTIN_OWASP_CORE),
-        ("builtin-owasp-2025-web", BUILTIN_OWASP_WEB),
-        ("builtin-india-appsec", BUILTIN_INDIA_APPSEC),
-        ("builtin-classics-modern", BUILTIN_CLASSICS_MODERN),
-    ] {
-        let rules: Vec<Rule> = serde_yaml::from_str(raw)
-            .map_err(|error| anyhow::anyhow!("invalid embedded pack {name}: {error}"))?;
-        packs.push(RulePack::from_rules(name, rules)?);
-    }
-    Ok(packs)
+/// Built-in foundation pack so a single binary works without external files.
+pub fn embedded_rules() -> Result<Vec<Rule>> {
+    const YAML: &str = include_str!("../../../rules/owasp-basics/injection.yaml");
+    let pack: RulePack =
+        serde_yaml::from_str(YAML).map_err(|e| Error::Engine(format!("embedded rules: {e}")))?;
+    Ok(pack.rules)
 }
 
-fn parse_severity(s: &str) -> Severity {
-    match s.to_lowercase().as_str() {
-        "critical" => Severity::Critical,
-        "high" => Severity::High,
-        "medium" => Severity::Medium,
-        "low" => Severity::Low,
-        _ => Severity::Info,
+pub fn load_pack(path: impl AsRef<Path>) -> Result<RulePack> {
+    let text = fs::read_to_string(path.as_ref())?;
+    let pack: RulePack = serde_yaml::from_str(&text)
+        .map_err(|e| Error::Engine(format!("yaml {}: {e}", path.as_ref().display())))?;
+    Ok(pack)
+}
+
+/// Discover rule directories: project `rules/`, then bundled relative to executable optional.
+pub fn discover_rule_dirs(project_root: &Path, extra: &[String]) -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+    let local = project_root.join("rules");
+    if local.is_dir() {
+        dirs.push(local);
     }
+    // Workspace rules when developing Bugbee itself / monorepo layouts.
+    if let Ok(cwd) = std::env::current_dir() {
+        let cand = cwd.join("rules");
+        if cand.is_dir() && !dirs.contains(&cand) {
+            dirs.push(cand);
+        }
+    }
+    for e in extra {
+        let p = PathBuf::from(e);
+        if p.is_dir() {
+            dirs.push(p);
+        }
+    }
+    dirs
 }

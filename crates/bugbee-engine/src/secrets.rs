@@ -1,124 +1,112 @@
-use bugbee_core::{BrsWeights, Evidence, Finding, FindingLocation, LocationRole, Severity};
-use bugbee_index::RepoIndex;
-use once_cell::sync::Lazy;
+use std::path::Path;
+use std::sync::OnceLock;
+
+use bugbee_core::{Evidence, Finding, Location, Severity, SourceKind};
 use regex::Regex;
 
-struct SecretPattern {
+struct SecretRule {
     id: &'static str,
-    re: Regex,
+    title: &'static str,
     severity: Severity,
+    re: Regex,
 }
 
-static PATTERNS: Lazy<Vec<SecretPattern>> = Lazy::new(|| {
-    vec![
-        SecretPattern {
-            id: "aws-access-key",
-            re: Regex::new(r"AKIA[0-9A-Z]{16}").expect("valid secrets regex"),
-            severity: Severity::Critical,
-        },
-        SecretPattern {
-            id: "generic-api-key",
-            re: Regex::new(
-                r#"(?i)(api[_-]?key|secret|token)\s*[=:]\s*['"][A-Za-z0-9_\-]{16,}['"]"#,
-            )
-            .expect("valid secrets regex"),
-            severity: Severity::High,
-        },
-        SecretPattern {
-            id: "private-key-header",
-            re: Regex::new(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")
-                .expect("valid secrets regex"),
-            severity: Severity::Critical,
-        },
-        SecretPattern {
-            id: "jwt-token",
-            re: Regex::new(r"eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+")
-                .expect("valid secrets regex"),
-            severity: Severity::Medium,
-        },
-        SecretPattern {
-            id: "github-token",
-            re: Regex::new(r"\b(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b")
-                .expect("valid secrets regex"),
-            severity: Severity::Critical,
-        },
-        SecretPattern {
-            id: "openai-style-key",
-            re: Regex::new(r"\b(sk-(?:proj-|svcacct-|ant-)?[A-Za-z0-9_-]{20,})\b")
-                .expect("valid secrets regex"),
-            severity: Severity::Critical,
-        },
-        // India payment / gateway style secrets (defensive detection, never store raw values)
-        SecretPattern {
-            id: "razorpay-key",
-            re: Regex::new(r"\brzp_(?:live|test)_[A-Za-z0-9]{10,}\b").expect("valid secrets regex"),
-            severity: Severity::Critical,
-        },
-        SecretPattern {
-            id: "india-payment-secret",
-            re: Regex::new(
-                r#"(?i)(razorpay|payu|paytm|cashfree|phonepe).{0,32}(secret|key|salt)\s*[=:]\s*['"][A-Za-z0-9_\-]{12,}['"]"#,
-            )
-            .expect("valid secrets regex"),
-            severity: Severity::Critical,
-        },
-        SecretPattern {
-            id: "slack-or-discord-webhook",
-            re: Regex::new(r"https://hooks\.slack\.com/services/[A-Za-z0-9/_-]+")
-                .expect("valid secrets regex"),
-            severity: Severity::High,
-        },
-    ]
-});
+fn secret_rules() -> &'static [SecretRule] {
+    static RULES: OnceLock<Vec<SecretRule>> = OnceLock::new();
+    RULES.get_or_init(|| {
+        vec![
+            SecretRule {
+                id: "secrets.aws_access_key",
+                title: "AWS access key id",
+                severity: Severity::Critical,
+                re: Regex::new(r"AKIA[0-9A-Z]{16}").expect("re"),
+            },
+            SecretRule {
+                id: "secrets.github_pat",
+                title: "GitHub personal access token",
+                severity: Severity::Critical,
+                re: Regex::new(r"ghp_[A-Za-z0-9]{20,}").expect("re"),
+            },
+            SecretRule {
+                id: "secrets.openai_key",
+                title: "OpenAI-style API key",
+                severity: Severity::High,
+                re: Regex::new(r"sk-[A-Za-z0-9]{20,}").expect("re"),
+            },
+            SecretRule {
+                id: "secrets.xai_key",
+                title: "xAI API key",
+                severity: Severity::High,
+                re: Regex::new(r"xai-[A-Za-z0-9]{20,}").expect("re"),
+            },
+            SecretRule {
+                id: "secrets.private_key_header",
+                title: "Private key material",
+                severity: Severity::Critical,
+                re: Regex::new(r"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----").expect("re"),
+            },
+            SecretRule {
+                id: "secrets.generic_password_assign",
+                title: "Hardcoded password assignment",
+                severity: Severity::Medium,
+                re: Regex::new(r#"(?i)(password|passwd|pwd)\s*=\s*['"][^'"]{6,}['"]"#).expect("re"),
+            },
+        ]
+    })
+}
 
-pub fn scan_secrets(index: &RepoIndex, weights: &BrsWeights) -> anyhow::Result<Vec<Finding>> {
+fn skip_path(path: &Path) -> bool {
+    let s = path.to_string_lossy();
+    s.contains("/target/")
+        || s.contains("/node_modules/")
+        || s.contains("/.git/")
+        || s.contains("/.bugbee/")
+        || s.ends_with(".lock")
+        || s.ends_with(".min.js")
+}
+
+/// Scan file content for high-signal secret patterns.
+pub fn scan_secrets(path: &Path, content: &str) -> Vec<Finding> {
+    if skip_path(path) {
+        return Vec::new();
+    }
+    // Skip huge files
+    if content.len() > 1_500_000 {
+        return Vec::new();
+    }
+    let rel = path.to_string_lossy();
     let mut out = Vec::new();
-    for file in &index.files {
-        let content = match index.read_file(&file.path) {
-            Ok(c) => c,
-            Err(_) => continue,
-        };
-        for pattern in PATTERNS.iter() {
-            for (i, line) in content.lines().enumerate() {
-                if !pattern.re.is_match(line) {
-                    continue;
-                }
-                let line_no = (i + 1) as u32;
-                let mut f = Finding::new(
-                    format!("Secret detected: {}", pattern.id),
-                    format!("Potential secret material in {}:{}", file.path, line_no),
-                    pattern.severity,
-                    "secrets",
+    for rule in secret_rules() {
+        for (idx, line) in content.lines().enumerate() {
+            if rule.re.is_match(line) {
+                let line_no = (idx + 1) as u32;
+                // Avoid reporting the secret value in snippet — truncate mid-token.
+                let snippet = redact_line_snippet(line);
+                let mut finding = Finding::new(
+                    rule.id,
+                    rule.title,
+                    format!("{} detected in source", rule.title),
+                    rule.severity,
+                    SourceKind::Secrets,
+                    Location::line(rel.as_ref(), line_no).with_snippet(snippet),
                 );
-                f.cwe = vec!["CWE-798".into()];
-                f.owasp = vec!["A02:2025".into(), "A07:2025".into()];
-                f.confidence = 0.8;
-                f.exploitability = 0.7;
-                f.evidence = Evidence {
-                    rule_id: Some(format!("secrets.{}", pattern.id)),
-                    has_sink: true,
-                    has_source: true,
-                    has_path: true,
-                    has_repro: false,
-                    missing_sanitizer_check: false,
-                    // Never persist the raw secret material.
-                    traces: vec![format!("{}:{}: [redacted match]", file.path, line_no)],
-                    dataflow: None,
-                    agent_notes: Some("Secret scanners never forward raw secrets to LLMs".into()),
-                };
-                f.add_location(FindingLocation {
-                    file: file.path.clone(),
-                    start_line: line_no,
-                    end_line: line_no,
-                    start_col: None,
-                    end_col: None,
-                    role: LocationRole::Sink,
-                    snippet: Some("[redacted snippet]".into()),
+                finding.tags = vec!["secrets".into(), "credentials".into()];
+                finding.push_evidence(Evidence {
+                    kind: "secret_pattern".into(),
+                    detail: format!("{} matched", rule.id),
+                    location: Some(Location::line(rel.as_ref(), line_no)),
                 });
-                f.recompute_scores(weights);
-                out.push(f);
+                out.push(finding);
             }
         }
     }
-    Ok(out)
+    out
+}
+
+fn redact_line_snippet(line: &str) -> String {
+    let t = line.trim();
+    if t.len() <= 24 {
+        return "***".into();
+    }
+    format!("{}…***", &t[..12.min(t.len())])
 }

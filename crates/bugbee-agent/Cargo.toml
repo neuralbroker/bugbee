@@ -1,0 +1,28 @@
+[package]
+name = "bugbee-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Godmode harness + neuro-symbolic multi-agent swarm for Bugbee"
+rust-version.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+bugbee-akg = { workspace = true }
+bugbee-core = { workspace = true }
+bugbee-engine = { workspace = true }
+bugbee-llm = { workspace = true }
+bugbee-nsae = { workspace = true }
+chrono = { workspace = true }
+glob = { workspace = true }
+ignore = { workspace = true }
+parking_lot = { workspace = true }
+rayon = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+uuid = { workspace = true }

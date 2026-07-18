@@ -1,0 +1,20 @@
+[package]
+name = "bugbee-ui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "OpenCode-style terminal IDE for Bugbee security agent"
+rust-version.workspace = true
+
+[dependencies]
+bugbee-agent = { workspace = true }
+bugbee-core = { workspace = true }
+chrono = { workspace = true }
+crossterm = { workspace = true }
+parking_lot = { workspace = true }
+ratatui = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+unicode-width = "0.2"

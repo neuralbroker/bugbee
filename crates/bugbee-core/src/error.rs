@@ -1,45 +1,48 @@
 use thiserror::Error;
 
-pub type Result<T> = std::result::Result<T, BugbeeError>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Error)]
-pub enum BugbeeError {
-    #[error("config error: {0}")]
-    Config(String),
-
-    #[error("io error: {0}")]
+pub enum Error {
+    #[error("io: {0}")]
     Io(#[from] std::io::Error),
 
-    #[error("json error: {0}")]
-    Json(#[from] serde_json::Error),
+    #[error("config: {0}")]
+    Config(String),
 
-    #[error("toml error: {0}")]
-    Toml(#[from] toml::de::Error),
-
-    #[error("database error: {0}")]
-    Db(String),
-
-    #[error("provider error: {0}")]
-    Provider(String),
-
-    #[error("engine error: {0}")]
-    Engine(String),
+    #[error("store: {0}")]
+    Store(String),
 
     #[error("not found: {0}")]
     NotFound(String),
+
+    #[error("invalid input: {0}")]
+    Invalid(String),
+
+    #[error("permission denied: {0}")]
+    Permission(String),
+
+    #[error("provider: {0}")]
+    Provider(String),
+
+    #[error("engine: {0}")]
+    Engine(String),
+
+    #[error("json: {0}")]
+    Json(#[from] serde_json::Error),
+
+    #[error("toml: {0}")]
+    Toml(String),
+
+    #[error("sqlite: {0}")]
+    Sqlite(#[from] rusqlite::Error),
 
     #[error("{0}")]
     Other(String),
 }
 
-impl From<rusqlite::Error> for BugbeeError {
-    fn from(e: rusqlite::Error) -> Self {
-        BugbeeError::Db(e.to_string())
-    }
-}
-
-impl From<anyhow::Error> for BugbeeError {
-    fn from(e: anyhow::Error) -> Self {
-        BugbeeError::Other(e.to_string())
+impl From<toml::de::Error> for Error {
+    fn from(value: toml::de::Error) -> Self {
+        Error::Toml(value.to_string())
     }
 }

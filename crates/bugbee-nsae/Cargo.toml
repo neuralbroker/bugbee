@@ -1,0 +1,16 @@
+[package]
+name = "bugbee-nsae"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Neuro-Symbolic Adjudication Engine for Bugbee"
+rust-version.workspace = true
+
+[dependencies]
+bugbee-core = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }

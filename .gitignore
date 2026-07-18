@@ -1,8 +1,29 @@
-/target
+# Rust
+/target/
 **/*.rs.bk
+Cargo.lock.bak
+
+# Bugbee local state
 .bugbee/
-**/.bugbee/
-*.db
+*.sarif.json
+findings.json
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*~
 .DS_Store
-fixtures/**/bugbee.toml
-fixtures/**/BUGBEE.md
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Node (site may return later)
+node_modules/
+.next/
+site/out/
+
+# Reference clones (local only)
+/reference/

@@ -3,17 +3,16 @@ name = "bugbee-engine"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Deterministic detection engines: rules, taint, secrets"
+authors.workspace = true
+repository.workspace = true
+description = "Deterministic vulnerability scanners and rule packs for Bugbee"
+rust-version.workspace = true
 
 [dependencies]
 bugbee-core = { workspace = true }
-bugbee-index = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-serde_yaml = { workspace = true }
-thiserror = { workspace = true }
-anyhow = { workspace = true }
+ignore = { workspace = true }
 regex = { workspace = true }
-once_cell = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }
 tracing = { workspace = true }
 walkdir = { workspace = true }
