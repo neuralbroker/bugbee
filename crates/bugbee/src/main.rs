@@ -18,14 +18,32 @@ use tracing_subscriber::EnvFilter;
 #[command(
     name = "bugbee",
     version = VERSION,
-    about = "Terminal-first, memory-safe security agent for vulnerability hunting",
-    long_about = "Bugbee finds and helps fix vulnerabilities with deterministic engines \
-                  plus a godmode multi-agent harness. Defensive only. Agent UX inspired by \
-                  OpenCode — not affiliated with the OpenCode team."
+    about = "🐝 Bugbee — your terminal security engineer",
+    long_about = "\
+Bugbee finds vulnerabilities, proves them with evidence, and helps fix them safely.
+
+  🔍  Deterministic engines + optional AI swarm
+  🛡️  Defense only — no live exploits
+  🧠  Bring your own model (OpenAI, Anthropic, Ollama, 10+)
+  📦  Single Rust binary — no Node/Python runtime
+  🔒  Secrets redacted before outbound calls
+
+Agent UX inspired by OpenCode — not affiliated with the OpenCode team.",
+    after_help = "\
+Examples:
+  bugbee init              Set up your project
+  bugbee hunt              Run rules + secrets engines
+  bugbee findings          List findings
+  bugbee report -o report.sarif.json
+  bugbee connect --provider ollama --model qwen2.5-coder
+  bugbee swarm -v          Full multi-agent pipeline
+  bugbee                   Launch interactive TUI
+
+Learn more: https://github.com/neuralbroker/bugbee"
 )]
 struct Cli {
-    /// Project root (defaults to cwd / nearest bugbee.toml)
-    #[arg(long, global = true)]
+    /// Project root directory (auto-detects from bugbee.toml otherwise)
+    #[arg(long, global = true, help = "Project root directory (default: auto-detect from bugbee.toml)")]
     root: Option<PathBuf>,
 
     #[command(subcommand)]
@@ -34,82 +52,96 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// Create bugbee.toml and local state
+    /// 🔧 Initialize bugbee.toml and local state in your project
     Init {
+        /// Project name (default: directory name)
         #[arg(long)]
         name: Option<String>,
     },
-    /// Run deterministic vulnerability hunt (engines only)
+    /// 🔍 Run deterministic vulnerability scan (rules + secrets, no LLM needed)
     Hunt,
-    /// GODMODE: multi-phase pipeline (engine → enrich → agents)
+    /// 🤖 Multi-phase AI pipeline: engine → enrich → agents → review
     Godmode {
-        /// Force offline (no LLM) even if provider configured
-        #[arg(long)]
+        /// Skip LLM — engines only
+        #[arg(long, help = "Skip LLM — run engines and enrichment only")]
         offline: bool,
-        /// Skip adversarial review phase
-        #[arg(long)]
+        /// Bypass adversarial false-positive review
+        #[arg(long, help = "Skip adversarial false-positive review phase")]
         no_review: bool,
-        /// Print harness event stream
-        #[arg(long, short)]
+        /// Show detailed event stream
+        #[arg(long, short, help = "Show detailed event stream")]
         verbose: bool,
     },
-    /// Full neuro-symbolic swarm (Recon→Hunter→NSAE→Prover→Chain→Scribe)
+    /// 🧠 Full neuro-symbolic swarm: Recon → Hunter → NSAE → Prover → Chain → Scribe
     Swarm {
-        /// Do not resume from .bugbee/checkpoint.json
-        #[arg(long)]
+        /// Start fresh (ignore saved checkpoint)
+        #[arg(long, help = "Start fresh — ignore saved checkpoint")]
         no_resume: bool,
-        /// Write bounty markdown report
-        #[arg(long)]
+        /// Write bounty markdown report to this path
+        #[arg(long, help = "Write bounty-format markdown report")]
         report: Option<PathBuf>,
-        /// Print event stream
-        #[arg(long, short)]
+        /// Show detailed event stream
+        #[arg(long, short, help = "Show detailed event stream")]
         verbose: bool,
     },
-    /// SuperHarness agent loop (Pi + OpenCode + Claude Code patterns)
+    /// ⚡ SuperHarness agent loop with tool-calling LLM
     Super {
-        /// Goal / prompt for the agent
-        #[arg(required = true, num_args = 1..)]
+        /// Goal or task for the agent
+        #[arg(required = true, num_args = 1.., help = "Goal or task for the agent")]
         goal: Vec<String>,
-        /// Ralph outer iterations (0 = single SuperHarness run)
-        #[arg(long, default_value_t = 0)]
+        /// Outer retry iterations (0 = single pass)
+        #[arg(long, default_value_t = 0, help = "Outer retry iterations (0 = single pass)")]
         ralph: u32,
-        /// Print event stream
-        #[arg(long, short)]
+        /// Show detailed event stream
+        #[arg(long, short, help = "Show detailed event stream")]
         verbose: bool,
     },
-    /// List findings
+    /// 📋 List all findings (optionally filter by status)
     Findings {
-        #[arg(long)]
+        /// Filter by status: draft, confirmed, false_positive, fixed
+        #[arg(long, help = "Filter by status: draft, confirmed, false_positive, fixed")]
         status: Option<String>,
     },
-    /// Review a finding: confirm | fp | fixed
-    Review { id: String, action: String },
-    /// Export findings (SARIF by default)
+    /// ✅ Review a finding: confirm | fp | fixed
+    Review {
+        /// Finding ID
+        id: String,
+        /// Action: confirm, fp (false positive), or fixed
+        action: String,
+    },
+    /// 📄 Export findings (SARIF, JSON, or bounty markdown)
     Report {
-        #[arg(long, short, default_value = "findings.sarif.json")]
+        /// Output file path
+        #[arg(long, short, default_value = "findings.sarif.json", help = "Output file path")]
         output: PathBuf,
-        #[arg(long, default_value = "sarif")]
+        /// Output format: sarif, json, or bounty
+        #[arg(long, default_value = "sarif", help = "Output format: sarif, json, or bounty")]
         format: String,
     },
-    /// Check configuration readiness
+    /// 🏥 Check configuration and system readiness
     Doctor,
-    /// Ask the configured model about this repository
+    /// 💬 Ask the configured AI model a question about your repo
     Ask {
-        #[arg(required = true, num_args = 1..)]
+        /// Your question
+        #[arg(required = true, num_args = 1.., help = "Your question about the codebase")]
         question: Vec<String>,
     },
-    /// Configure provider settings in bugbee.toml (key stays in env)
+    /// 🔌 Configure an AI provider (key stays in env vars)
     Connect {
-        #[arg(long)]
+        /// Provider name: openai, anthropic, ollama, xai, deepseek, etc.
+        #[arg(long, help = "Provider: openai, anthropic, ollama, xai, deepseek, ...")]
         provider: String,
-        #[arg(long)]
+        /// Model name (e.g. gpt-4o, claude-3-haiku, qwen2.5-coder)
+        #[arg(long, help = "Model name (e.g. gpt-4o, claude-3-haiku)")]
         model: String,
-        #[arg(long)]
+        /// Custom base URL (for self-hosted gateways)
+        #[arg(long, help = "Custom base URL for self-hosted/private gateways")]
         base_url: Option<String>,
-        #[arg(long)]
+        /// Environment variable holding the API key
+        #[arg(long, help = "Env var name for API key (e.g. OPENAI_API_KEY)")]
         api_key_env: Option<String>,
     },
-    /// Open interactive OpenCode-style workspace
+    /// 🖥️ Open the interactive terminal workspace
     Workspace,
 }
 

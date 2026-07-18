@@ -494,7 +494,7 @@ mod tests {
     #[test]
     fn ingest_with_chain_deps() {
         let mut g = AttackKnowledgeGraph::new();
-        let mut f1 = make_finding("sql", "SQLi", Severity::Critical, "app.rs", 1);
+        let f1 = make_finding("sql", "SQLi", Severity::Critical, "app.rs", 1);
         let mut f2 = make_finding("auth", "Auth Bypass", Severity::Critical, "app.rs", 5);
         f2.chain_dependencies.push(f1.id.clone());
         g.ingest_findings(&[f1, f2]);

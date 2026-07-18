@@ -44,7 +44,6 @@ pub fn success() -> Style {
     Style::default().fg(SUCCESS)
 }
 
-#[allow(dead_code)]
 pub fn error() -> Style {
     Style::default().fg(ERROR)
 }

@@ -135,21 +135,21 @@ struct App {
 const SPINNER: &[&str] = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
 const SLASH: &[(&str, &str)] = &[
-    ("/help", "Show keyboard shortcuts"),
-    ("/hunt", "Run deterministic vulnerability hunt"),
-    ("/deep-hunt", "Deep hunt (godmode pipeline + enrichment)"),
-    ("/swarm", "Neuro-symbolic multi-agent swarm"),
-    ("/godmode", "Offline godmode pipeline"),
-    ("/findings", "Refresh findings sidebar"),
-    ("/report", "Export SARIF + bounty report"),
-    ("/doctor", "Config readiness"),
-    ("/connect", "Show provider connect hints"),
-    ("/status", "Session + project status"),
-    ("/new", "New session (home)"),
-    ("/sidebar", "Toggle findings sidebar"),
-    ("/agent", "Toggle hunt ↔ review agent"),
-    ("/clear", "Clear transcript"),
-    ("/quit", "Exit IDE"),
+    ("/help",            "📖  Show keyboard shortcuts"),
+    ("/hunt",            "🔍  Run deterministic vulnerability hunt"),
+    ("/deep-hunt",       "⚔️   Deep hunt (godmode + enrichment)"),
+    ("/swarm",           "🐝  Neuro-symbolic multi-agent swarm"),
+    ("/godmode",         "🤖  Offline godmode pipeline"),
+    ("/findings",        "📋  Refresh findings sidebar"),
+    ("/report",          "📄  Export SARIF + bounty report"),
+    ("/doctor",          "🏥  Config readiness check"),
+    ("/connect",         "🔌  Show provider connect hints"),
+    ("/status",          "📊  Session + project status"),
+    ("/new",             "🆕  New session (home)"),
+    ("/sidebar",         "🔄  Toggle findings sidebar"),
+    ("/agent",           "🔄  Toggle hunt ↔ review agent"),
+    ("/clear",           "🧹  Clear transcript"),
+    ("/quit",            "🚪  Exit"),
 ];
 
 // ── Public entry ─────────────────────────────────────────────────
@@ -844,7 +844,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
             push_msg(
                 app,
                 MsgKind::System,
-                format!("unknown command: /{other} — try /help"),
+                format!("❓ unknown command: /{other} — try /help"),
             );
         }
     }
@@ -936,7 +936,7 @@ fn draw_home(f: &mut Frame, app: &App, area: Rect) {
 
     // Tips
     let tips = Paragraph::new(vec![Line::from(Span::styled(
-        "  Tab agent  ·  / commands  ·  Ctrl+B sidebar  ·  F1 help  ·  q quit",
+        "  🔄 Tab agent  ·  ⌨️ / commands  ·  📂 Ctrl+B sidebar  ·  ❓ F1 help  ·  🚪 q quit",
         theme::muted(),
     ))])
     .alignment(Alignment::Center);
@@ -984,11 +984,16 @@ fn draw_session(f: &mut Frame, app: &mut App, area: Rect) {
         Span::styled(format!("{} findings", app.findings.len()), theme::info()),
         if app.busy {
             Span::styled(
-                format!("  {} {}", SPINNER[app.spinner_i], app.status),
+                format!("  {} ⚡{}", SPINNER[app.spinner_i], app.status),
                 theme::warning(),
             )
         } else {
-            Span::styled(format!("  {}", app.status), theme::muted())
+            match app.status.as_str() {
+                "error" => Span::styled("  ✗ error", theme::error()),
+                "disconnected" => Span::styled("  ⚠ disconnected", theme::warning()),
+                "ready" => Span::styled("  ✓ ready", theme::muted()),
+                _ => Span::styled(format!("  {}", app.status), theme::muted()),
+            }
         },
     ]);
     f.render_widget(
@@ -1032,7 +1037,7 @@ fn draw_transcript(f: &mut Frame, app: &App, area: Rect) {
             Paragraph::new(vec![
                 Line::from(""),
                 Line::from(Span::styled(
-                    "  No messages yet. Type a goal or /hunt · /swarm · /help",
+                    "  💬  No messages yet.  Try: /hunt  /swarm  /help  or type a goal",
                     theme::muted(),
                 )),
             ]),
@@ -1044,11 +1049,11 @@ fn draw_transcript(f: &mut Frame, app: &App, area: Rect) {
     let mut lines: Vec<Line> = Vec::new();
     for m in &app.messages {
         let (tag, style) = match m.kind {
-            MsgKind::User => ("you", theme::user_msg()),
-            MsgKind::Assistant => ("bugbee", theme::assistant_msg()),
-            MsgKind::System => ("sys", theme::system_msg()),
-            MsgKind::Tool => ("tool", theme::tool_msg()),
-            MsgKind::Finding => ("find", theme::warning()),
+            MsgKind::User => ("💬 you", theme::user_msg()),
+            MsgKind::Assistant => ("🐝 bugbee", theme::assistant_msg()),
+            MsgKind::System => ("⚙ sys", theme::system_msg()),
+            MsgKind::Tool => ("🔧 tool", theme::tool_msg()),
+            MsgKind::Finding => ("🔍 find", theme::warning()),
         };
         lines.push(Line::from(vec![
             Span::styled(format!(" {} ", tag), style.add_modifier(Modifier::BOLD)),
@@ -1237,14 +1242,14 @@ fn draw_footer(f: &mut Frame, app: &App, area: Rect) {
         .clone()
         .unwrap_or_else(|| "—".into());
 
-    let left = Span::styled(format!(" {root} "), theme::muted());
+    let left = Span::styled(format!(" 📁 {root} "), theme::muted());
     let right = Line::from(vec![
-        Span::styled(format!(" {} ", app.agent.label()), theme::primary()),
+        Span::styled(format!(" 🐝 {} ", app.agent.label()), theme::primary()),
         Span::styled("• ", theme::success()),
-        Span::styled(format!("{provider}/{model} "), theme::text()),
-        Span::styled(format!("{} findings ", app.findings.len()), theme::info()),
-        Span::styled("/status ", theme::muted()),
-        Span::styled("F1 help ", theme::muted()),
+        Span::styled(format!("🔌 {provider}/{model} "), theme::text()),
+        Span::styled(format!("📋 {} findings ", app.findings.len()), theme::info()),
+        Span::styled("📊 /status ", theme::muted()),
+        Span::styled("❓ F1 help ", theme::muted()),
     ]);
 
     let row = Layout::default()
@@ -1277,27 +1282,27 @@ fn draw_help_modal(f: &mut Frame, area: Rect) {
     f.render_widget(Clear, rect);
     let text = vec![
         Line::from(Span::styled(
-            " OpenCode-class keymap ",
+            " BugBee keymap ",
             theme::primary_bold(),
         )),
         Line::from(""),
-        Line::from("  Tab          Toggle agent hunt ↔ review (build/plan)"),
-        Line::from("  Enter        Send message / run slash command"),
-        Line::from("  /…           Slash commands (/hunt /swarm /findings …)"),
-        Line::from("  Ctrl+B       Toggle findings sidebar"),
-        Line::from("  Ctrl+N       New session"),
-        Line::from("  PgUp/PgDn    Scroll transcript"),
-        Line::from("  s            Focus sidebar  ·  j/k move  ·  c/f/x review"),
-        Line::from("  Esc          Clear prompt / back to home"),
-        Line::from("  F1 / ?       This help"),
-        Line::from("  Ctrl+C / q   Quit (q on home)"),
+        Line::from("  Tab       🔄  Toggle agent hunt ↔ review (build/plan)"),
+        Line::from("  Enter     ⏎  Send message / run slash command"),
+        Line::from("  /…        ⌨️  Slash commands (/hunt /swarm /findings …)"),
+        Line::from("  Ctrl+B    📂  Toggle findings sidebar"),
+        Line::from("  Ctrl+N    🆕  New session"),
+        Line::from("  PgUp/Dn   📜  Scroll transcript"),
+        Line::from("  s         📋  Focus sidebar  ·  j/k move  ·  c/f/x review"),
+        Line::from("  Esc       ⏪  Clear prompt / back to home"),
+        Line::from("  F1 / ?    ❓  This help"),
+        Line::from("  Ctrl+C/q  🚪  Quit (q on home screen)"),
         Line::from(""),
         Line::from(Span::styled(
             "  Commands: /hunt /swarm /godmode /report /doctor /connect /quit",
             theme::muted(),
         )),
         Line::from(""),
-        Line::from(Span::styled("  press Esc to close", theme::muted())),
+        Line::from(Span::styled("  Esc to close", theme::muted())),
     ];
     f.render_widget(
         Paragraph::new(text).block(
