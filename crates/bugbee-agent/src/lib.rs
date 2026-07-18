@@ -7,6 +7,7 @@ pub mod harness;
 pub mod permissions;
 pub mod roles;
 pub mod session;
+pub mod stream;
 pub mod superharness;
 pub mod swarm;
 pub mod tools;

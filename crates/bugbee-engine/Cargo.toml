@@ -10,6 +10,7 @@ rust-version.workspace = true
 
 [dependencies]
 bugbee-core = { workspace = true }
+chrono = { workspace = true }
 ignore = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }

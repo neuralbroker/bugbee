@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package harness;
+
+option go_package = "github.com/neuralbroker/bugbee/proto/harness";
+
+// ── Service Definition ────────────────────────────────────────────
+
+service Harness {
+  // Verify a finding by replaying the exploit against the target
+  // and analyzing the response differential.
+  rpc Verify(VerifyRequest) returns (VerifyResponse);
+
+  // Replay a single HTTP request (sandboxed).
+  rpc Replay(ReplayRequest) returns (ReplayResponse);
+
+  // Differential analysis of baseline vs. exploit response.
+  rpc Diff(DiffRequest) returns (DiffResponse);
+}
+
+// ── Verify ────────────────────────────────────────────────────────
+
+message VerifyRequest {
+  string finding_id = 1;
+  string target_url = 2;
+  string cwe_id = 3;
+  HttpRequest baseline = 4;
+  HttpRequest exploit = 5;
+  string payload = 6;
+  bytes metadata = 7; // JSON-encoded extras
+}
+
+message VerifyResponse {
+  VerificationStatus status = 1;
+  repeated Signal signals = 2;
+  CausalChain causal_chain = 3;
+  int64 duration_ms = 4;
+  string summary = 5;
+}
+
+enum VerificationStatus {
+  VERIFICATION_UNKNOWN = 0;
+  CONFIRMED = 1;
+  FALSE_POSITIVE = 2;
+  UNREPRODUCIBLE = 3;
+  INCONCLUSIVE = 4;
+}
+
+// ── Replay ────────────────────────────────────────────────────────
+
+message ReplayRequest {
+  HttpRequest request = 1;
+  int32 timeout_ms = 2;
+}
+
+message ReplayResponse {
+  HttpResponse response = 1;
+  int32 duration_ms = 2;
+  bool sandbox_escape_attempted = 3;
+  string error = 4;
+}
+
+// ── Diff ──────────────────────────────────────────────────────────
+
+message DiffRequest {
+  HttpResponse baseline = 1;
+  HttpResponse exploit = 2;
+}
+
+message DiffResponse {
+  bool significant = 1;
+  repeated Signal signals = 2;
+  int64 diff_bytes = 3;
+}
+
+// ── Core Types ────────────────────────────────────────────────────
+
+message HttpRequest {
+  string method = 1;
+  string url = 2;
+  map<string, string> headers = 3;
+  bytes body = 4;
+}
+
+message HttpResponse {
+  int32 status_code = 1;
+  map<string, string> headers = 2;
+  bytes body = 3;
+  int32 duration_ms = 4;
+}
+
+message Signal {
+  SignalType type = 1;
+  string evidence = 2;
+  double confidence = 3;
+
+  enum SignalType {
+    SIGNAL_UNKNOWN = 0;
+    TIME_DELAY = 1;
+    ERROR_LEAK = 2;
+    STRUCTURAL_CHANGE = 3;
+    OOB_TRIGGERED = 4;
+    STATUS_CHANGE = 5;
+    CONTENT_CHANGE = 6;
+    HEADER_CHANGE = 7;
+  }
+}
+
+message CausalChain {
+  bool valid = 1;
+  repeated CausalLink links = 2;
+  string proof_summary = 3;
+}
+
+message CausalLink {
+  string cause = 1;
+  string effect = 2;
+  string evidence = 3;
+  double confidence = 4;
+}

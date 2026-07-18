@@ -1,25 +1,27 @@
 [package]
-name = "bugbee-core"
+name = "bugbee-harness"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "Domain types, config, store, scoring, and redaction for Bugbee"
+description = "gRPC-based Super Harness for sandboxed verification and differential analysis"
 rust-version.workspace = true
 
 [dependencies]
+bugbee-core = { workspace = true }
+anyhow = { workspace = true }
 chrono = { workspace = true }
-directories = { workspace = true }
-hex = { workspace = true }
-regex = { workspace = true }
-rusqlite = { workspace = true }
+prost = "0.13"
 serde = { workspace = true }
 serde_json = { workspace = true }
-serde_yaml = { workspace = true }
-sha2 = { workspace = true }
 thiserror = { workspace = true }
-toml = { workspace = true }
+tokio = { workspace = true, features = ["net", "signal"] }
+tokio-stream = "0.1"
+tonic = "0.12"
+tonic-build = "0.12"
 tracing = { workspace = true }
-url = "2"
 uuid = { workspace = true }
+
+[build-dependencies]
+tonic-build = "0.12"

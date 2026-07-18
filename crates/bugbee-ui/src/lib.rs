@@ -4,6 +4,8 @@
 
 mod app;
 mod logo;
+mod security_panel;
 mod theme;
 
 pub use app::run_workspace;
+pub use security_panel::SecurityPanel;

@@ -32,6 +32,10 @@ pub fn primary() -> Style {
     Style::default().fg(PRIMARY)
 }
 
+pub fn secondary() -> Style {
+    Style::default().fg(SECONDARY)
+}
+
 pub fn primary_bold() -> Style {
     Style::default().fg(PRIMARY).add_modifier(Modifier::BOLD)
 }

@@ -14,6 +14,7 @@ pub enum ToolName {
     AddEvidence,
     TodoWrite,
     Shell,
+    Edit,
 }
 
 impl ToolName {
@@ -30,6 +31,7 @@ impl ToolName {
             ToolName::AddEvidence => "add_evidence",
             ToolName::TodoWrite => "todo_write",
             ToolName::Shell => "shell",
+            ToolName::Edit => "edit",
         }
     }
 
@@ -46,6 +48,7 @@ impl ToolName {
             "add_evidence" => Some(Self::AddEvidence),
             "todo_write" => Some(Self::TodoWrite),
             "shell" => Some(Self::Shell),
+            "edit" => Some(Self::Edit),
             _ => None,
         }
     }
@@ -185,6 +188,20 @@ pub fn tool_specs(include_shell: bool, include_edit_review: bool) -> Vec<ToolSpe
                     "status": { "type": "string", "description": "confirm|fp|fixed|draft" }
                 },
                 "required": ["id", "status"]
+            }),
+        ));
+        tools.push(ToolSpec::function(
+            "edit",
+            "Apply a safe patch to fix a vulnerability. Uses exact string replacement. Must be within project root. Never edit .bugbee/ or .git/ paths.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string", "description": "relative file path" },
+                    "old_string": { "type": "string", "description": "exact string to replace (must match)" },
+                    "new_string": { "type": "string", "description": "replacement string" },
+                    "finding_id": { "type": "string", "description": "optional finding id to associate" }
+                },
+                "required": ["path", "old_string", "new_string"]
             }),
         ));
     }

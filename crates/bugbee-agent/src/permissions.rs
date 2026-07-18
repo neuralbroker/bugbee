@@ -1,6 +1,7 @@
 //! OpenCode-style permission envelope (allow / ask / deny).
 
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use bugbee_core::{Error, Result};
 use serde::{Deserialize, Serialize};
@@ -30,7 +31,11 @@ pub enum Decision {
     Deny,
 }
 
-#[derive(Debug, Clone)]
+/// Callback for interactive approval of Ask-level permissions.
+/// Returns true if approved.
+pub type ApprovalFn = Arc<dyn Fn(&str, Permission) -> bool + Send + Sync>;
+
+#[derive(Clone)]
 pub struct PermissionGate {
     pub root: PathBuf,
     pub read_only: bool,
@@ -40,6 +45,8 @@ pub struct PermissionGate {
     /// Auto-approve "ask" in headless godmode when true.
     pub auto_approve: bool,
     pub sensitive_globs: Vec<String>,
+    /// Interactive approval hook — called for Ask decisions when !auto_approve.
+    pub approval: Option<ApprovalFn>,
 }
 
 impl PermissionGate {
@@ -52,6 +59,7 @@ impl PermissionGate {
             allow_edit: false,
             auto_approve: true,
             sensitive_globs: default_sensitive(),
+            approval: None,
         }
     }
 
@@ -64,6 +72,7 @@ impl PermissionGate {
             allow_edit: false,
             auto_approve: true,
             sensitive_globs: default_sensitive(),
+            approval: None,
         }
     }
 
@@ -87,9 +96,17 @@ impl PermissionGate {
         match self.decide(perm) {
             Decision::Allow => Ok(()),
             Decision::Ask if self.auto_approve => Ok(()),
-            Decision::Ask => Err(Error::Permission(format!(
-                "{perm:?} requires approval (interactive not wired)"
-            ))),
+            Decision::Ask => {
+                if let Some(ref approve) = self.approval {
+                    let label = format!("{:?}", perm);
+                    if approve(&label, perm) {
+                        return Ok(());
+                    }
+                }
+                Err(Error::Permission(format!(
+                    "{perm:?} requires approval"
+                )))
+            }
             Decision::Deny => Err(Error::Permission(format!(
                 "{perm:?} denied by policy (read_only={}, shell={}, edit={}, net={})",
                 self.read_only, self.allow_shell, self.allow_edit, self.allow_network

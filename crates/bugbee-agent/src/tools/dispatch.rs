@@ -50,6 +50,7 @@ impl ToolExecutor {
             ToolName::AddEvidence => self.tool_add_evidence(args),
             ToolName::TodoWrite => self.tool_todo(args),
             ToolName::Shell => self.tool_shell(args),
+            ToolName::Edit => self.tool_edit(args),
         };
         match res {
             Ok(mut r) => {
@@ -415,6 +416,77 @@ impl ToolExecutor {
         }
         text.push_str(&format!("\n(exit {})", output.status.code().unwrap_or(-1)));
         Ok(ToolResult::ok("shell", text))
+    }
+
+    fn tool_edit(&self, args: &Value) -> Result<ToolResult> {
+        self.ctx.gate.check(Permission::Edit)?;
+        let path = str_arg(args, "path")
+            .ok_or_else(|| bugbee_core::Error::Invalid("path required".into()))?;
+        let old = str_arg(args, "old_string")
+            .ok_or_else(|| bugbee_core::Error::Invalid("old_string required".into()))?;
+        let new = str_arg(args, "new_string")
+            .ok_or_else(|| bugbee_core::Error::Invalid("new_string required".into()))?;
+
+        let resolved = self.ctx.gate.resolve_path(path)?;
+        if self.ctx.gate.is_sensitive(&resolved) {
+            return Ok(ToolResult::err(
+                "edit",
+                format!("blocked sensitive path: {}", resolved.display()),
+            ));
+        }
+        if !resolved.starts_with(&self.ctx.root) {
+            return Ok(ToolResult::err(
+                "edit",
+                "path escapes project root".to_string(),
+            ));
+        }
+
+        let content = fs::read_to_string(&resolved)?;
+        if !content.contains(old) {
+            return Ok(ToolResult::err(
+                "edit",
+                format!("old_string not found in {}", self.ctx.gate.rel_display(&resolved)),
+            ));
+        }
+        let count = content.matches(old).count();
+        if count > 1 {
+            return Ok(ToolResult::err(
+                "edit",
+                format!("old_string matched {count} times — provide more context"),
+            ));
+        }
+
+        let new_content = content.replace(old, new);
+        fs::write(&resolved, &new_content)?;
+
+        let rel = self.ctx.gate.rel_display(&resolved);
+        let finding_id = str_arg(args, "finding_id").unwrap_or("-");
+        if finding_id != "-" && !finding_id.is_empty() {
+            if let Ok(Some(mut f)) = self.ctx.store.lock().get(&bugbee_core::FindingId(finding_id.to_string())) {
+                f.push_evidence(bugbee_core::Evidence {
+                    kind: "patch".into(),
+                    detail: format!("edit {}: replaced pattern ({} chars → {} chars)", rel, old.len(), new.len()),
+                    location: None,
+                });
+                let _ = self.ctx.store.lock().upsert_finding(&f);
+            }
+        }
+
+        Ok(ToolResult::ok(
+            "edit",
+            format!(
+                "applied edit to {rel} ({} replacement{}), {} → {} chars",
+                count,
+                if count == 1 { "" } else { "s" },
+                old.len(),
+                new.len()
+            ),
+        ).with_meta(json!({
+            "path": rel,
+            "old_len": old.len(),
+            "new_len": new.len(),
+            "finding_id": finding_id
+        })))
     }
 }
 

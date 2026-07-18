@@ -7,7 +7,8 @@ use std::io::{self, stdout};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-use bugbee_agent::{run_swarm, GodmodeOptions, SwarmOptions, Workspace};
+use bugbee_agent::stream::{run_godmode_streaming, run_swarm_streaming, StreamEvent};
+use bugbee_agent::{GodmodeOptions, SwarmOptions, Workspace};
 use bugbee_core::{Finding, FindingStatus, Severity};
 use chrono::Local;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
@@ -25,6 +26,9 @@ use ratatui::widgets::{
 };
 use ratatui::Frame;
 use ratatui::Terminal;
+use tokio::sync::mpsc;
+
+use crate::security_panel::SecurityPanel;
 
 use crate::logo::{bugbee_logo_lines, small_brand};
 use crate::theme;
@@ -66,6 +70,12 @@ enum Focus {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
+enum SidebarMode {
+    Findings,
+    Detail,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum AgentMode {
     Hunt,   // OpenCode "build"
     Review, // OpenCode "plan"
@@ -99,6 +109,8 @@ struct App {
     screen: Screen,
     focus: Focus,
     agent: AgentMode,
+    sidebar_mode: SidebarMode,
+    sec_panel: SecurityPanel,
     prompt: String,
     cursor: usize,
     history: Vec<String>,
@@ -112,6 +124,7 @@ struct App {
     busy: bool,
     spinner_i: usize,
     toast: Option<(String, Instant)>,
+    stream_rx: Option<mpsc::Receiver<StreamEvent>>,
     palette_query: String,
     palette_sel: usize,
     placeholders: Vec<&'static str>,
@@ -124,6 +137,7 @@ const SPINNER: &[&str] = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧
 const SLASH: &[(&str, &str)] = &[
     ("/help", "Show keyboard shortcuts"),
     ("/hunt", "Run deterministic vulnerability hunt"),
+    ("/deep-hunt", "Deep hunt (godmode pipeline + enrichment)"),
     ("/swarm", "Neuro-symbolic multi-agent swarm"),
     ("/godmode", "Offline godmode pipeline"),
     ("/findings", "Refresh findings sidebar"),
@@ -153,6 +167,8 @@ pub fn run_workspace(workspace: Workspace) -> io::Result<()> {
         screen: Screen::Home,
         focus: Focus::Prompt,
         agent: AgentMode::Hunt,
+        sidebar_mode: SidebarMode::Findings,
+        sec_panel: SecurityPanel::new(),
         prompt: String::new(),
         cursor: 0,
         history: Vec::new(),
@@ -166,6 +182,7 @@ pub fn run_workspace(workspace: Workspace) -> io::Result<()> {
         busy: false,
         spinner_i: 0,
         toast: None,
+        stream_rx: None,
         palette_query: String::new(),
         palette_sel: 0,
         placeholders: vec![
@@ -203,6 +220,79 @@ fn event_loop(
             if let Some((_, t)) = &app.toast {
                 if t.elapsed() > Duration::from_secs(4) {
                     app.toast = None;
+                }
+            }
+        }
+
+        // Poll stream events from background tasks
+        if let Some(ref mut rx) = app.stream_rx {
+            match rx.try_recv() {
+                Ok(ev) => {
+                    app.busy = true;
+                    app.status = "streaming…".into();
+                    match &ev {
+                        StreamEvent::Phase { name } => {
+                            push_msg(app, MsgKind::Tool, format!("▶ phase: {name}"));
+                        }
+                        StreamEvent::Step { message } => {
+                            push_msg(app, MsgKind::Tool, message.clone());
+                        }
+                        StreamEvent::Finding { count } => {
+                            push_msg(
+                                app,
+                                MsgKind::Finding,
+                                format!("🔍 {count} findings"),
+                            );
+                            refresh_findings(app);
+                        }
+                        StreamEvent::ToolCall { name, args } => {
+                            let preview = if args.len() > 80 {
+                                format!("{}…", &args[..80])
+                            } else {
+                                args.clone()
+                            };
+                            push_msg(
+                                app,
+                                MsgKind::Tool,
+                                format!("⚡ {name}({preview})"),
+                            );
+                        }
+                        StreamEvent::ToolResult { name, ok, preview } => {
+                            let status = if *ok { "✓" } else { "✗" };
+                            push_msg(
+                                app,
+                                MsgKind::Tool,
+                                format!("  {status} {name}: {preview}"),
+                            );
+                        }
+                        StreamEvent::Warn { message } => {
+                            push_msg(app, MsgKind::System, format!("⚠ {message}"));
+                        }
+                        StreamEvent::Done { summary, elapsed_ms } => {
+                            push_msg(
+                                app,
+                                MsgKind::Assistant,
+                                format!("{summary}\n⏱ {elapsed_ms}ms"),
+                            );
+                            app.busy = false;
+                            app.stream_rx = None;
+                            app.status = "ready".into();
+                            refresh_findings(app);
+                            app.sidebar = true;
+                        }
+                        StreamEvent::Error { message } => {
+                            push_msg(app, MsgKind::System, message.clone());
+                            app.busy = false;
+                            app.stream_rx = None;
+                            app.status = "error".into();
+                        }
+                    }
+                }
+                Err(mpsc::error::TryRecvError::Empty) => {}
+                Err(mpsc::error::TryRecvError::Disconnected) => {
+                    app.busy = false;
+                    app.stream_rx = None;
+                    app.status = "disconnected".into();
                 }
             }
         }
@@ -303,14 +393,32 @@ fn event_loop(
             KeyCode::Char('k') if app.focus == Focus::Sidebar => select_finding(app, -1),
             KeyCode::Down if app.focus == Focus::Sidebar => select_finding(app, 1),
             KeyCode::Up if app.focus == Focus::Sidebar => select_finding(app, -1),
-            KeyCode::Char('c') if app.focus == Focus::Sidebar => {
+            KeyCode::Char('c') if app.focus == Focus::Sidebar && app.sidebar_mode == SidebarMode::Findings => {
                 set_finding_status(app, FindingStatus::Confirmed);
             }
-            KeyCode::Char('f') if app.focus == Focus::Sidebar => {
+            KeyCode::Char('f') if app.focus == Focus::Sidebar && app.sidebar_mode == SidebarMode::Findings => {
                 set_finding_status(app, FindingStatus::FalsePositive);
             }
-            KeyCode::Char('x') if app.focus == Focus::Sidebar => {
+            KeyCode::Char('x') if app.focus == Focus::Sidebar && app.sidebar_mode == SidebarMode::Findings => {
                 set_finding_status(app, FindingStatus::Fixed);
+            }
+            KeyCode::Char('d') if app.focus == Focus::Sidebar => {
+                if app.sidebar_mode == SidebarMode::Findings {
+                    if let Some(i) = app.find_state.selected() {
+                        if let Some(f) = app.findings.get(i) {
+                            app.sec_panel.set_finding(f.clone());
+                            app.sidebar_mode = SidebarMode::Detail;
+                            toast(app, &format!("detail: {}", f.id));
+                        }
+                    }
+                } else {
+                    app.sidebar_mode = SidebarMode::Findings;
+                    toast(app, "findings list");
+                }
+            }
+            KeyCode::Char('k') if app.focus == Focus::Sidebar && app.sidebar_mode == SidebarMode::Detail => {
+                app.sec_panel.show_chain = !app.sec_panel.show_chain;
+                toast(app, if app.sec_panel.show_chain { "kill chain on" } else { "kill chain off" });
             }
             KeyCode::Char('s') if app.prompt.is_empty() && key.modifiers.is_empty() => {
                 app.focus = Focus::Sidebar;
@@ -617,9 +725,14 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
             app.busy = false;
             app.status = "ready".into();
         }
-        "swarm" => {
+        "deep-hunt" | "dh" => {
+            if app.stream_rx.is_some() {
+                toast(app, "already running");
+                return false;
+            }
             app.busy = true;
-            push_msg(app, MsgKind::Tool, "🐝 swarm pipeline…");
+            app.status = "deep hunt with godmode…".into();
+            push_msg(app, MsgKind::Tool, "⚔ deep hunt (godmode + streaming)…");
             let root = app.workspace.root.clone();
             let config = app.workspace.config.clone();
             let store = match bugbee_core::Store::open(bugbee_core::config::store_path(&root)) {
@@ -627,6 +740,38 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
                 Err(e) => {
                     push_msg(app, MsgKind::System, format!("store: {e}"));
                     app.busy = false;
+                    app.status = "error".into();
+                    return false;
+                }
+            };
+            let opts = GodmodeOptions {
+                use_llm: false,
+                aggressive: true,
+                adversarial: true,
+                enrich_max: 64,
+            };
+            let (tx, rx) = mpsc::channel(256);
+            app.stream_rx = Some(rx);
+            tokio::spawn(async move {
+                run_godmode_streaming(root, config, store, None, opts, tx).await;
+            });
+        }
+        "swarm" => {
+            if app.stream_rx.is_some() {
+                toast(app, "already running");
+                return false;
+            }
+            app.busy = true;
+            app.status = "launching swarm…".into();
+            push_msg(app, MsgKind::Tool, "🐝 swarm pipeline (streaming)…");
+            let root = app.workspace.root.clone();
+            let config = app.workspace.config.clone();
+            let store = match bugbee_core::Store::open(bugbee_core::config::store_path(&root)) {
+                Ok(s) => s,
+                Err(e) => {
+                    push_msg(app, MsgKind::System, format!("store: {e}"));
+                    app.busy = false;
+                    app.status = "error".into();
                     return false;
                 }
             };
@@ -634,37 +779,22 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
             let opts = SwarmOptions {
                 resume: true,
                 carlini_max: 8,
-                write_report: Some(report.clone()),
+                write_report: Some(report),
             };
-            let rt = tokio::runtime::Runtime::new().ok();
-            if let Some(rt) = rt {
-                match rt.block_on(run_swarm(root, config, store, opts)) {
-                    Ok(r) => {
-                        push_msg(app, MsgKind::Assistant, r.summary);
-                        push_msg(
-                            app,
-                            MsgKind::System,
-                            format!(
-                                "swarm: {} findings · {} vul · {} ver · {}ms · {}",
-                                r.findings_total,
-                                r.vulnerable,
-                                r.verified,
-                                r.elapsed_ms,
-                                report.display()
-                            ),
-                        );
-                        refresh_findings(app);
-                        app.sidebar = true;
-                    }
-                    Err(e) => push_msg(app, MsgKind::System, format!("swarm error: {e}")),
-                }
-            }
-            app.busy = false;
-            app.status = "ready".into();
+            let (tx, rx) = mpsc::channel(256);
+            app.stream_rx = Some(rx);
+            tokio::spawn(async move {
+                run_swarm_streaming(root, config, store, opts, tx).await;
+            });
         }
         "godmode" | "gm" => {
+            if app.stream_rx.is_some() {
+                toast(app, "already running");
+                return false;
+            }
             app.busy = true;
-            push_msg(app, MsgKind::Tool, "⚔ godmode (offline)…");
+            app.status = "launching godmode…".into();
+            push_msg(app, MsgKind::Tool, "⚔ godmode (streaming)…");
             let root = app.workspace.root.clone();
             let config = app.workspace.config.clone();
             let store = match bugbee_core::Store::open(bugbee_core::config::store_path(&root)) {
@@ -672,6 +802,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
                 Err(e) => {
                     push_msg(app, MsgKind::System, format!("store: {e}"));
                     app.busy = false;
+                    app.status = "error".into();
                     return false;
                 }
             };
@@ -681,17 +812,11 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
                 adversarial: false,
                 enrich_max: 64,
             };
-            if let Ok(rt) = tokio::runtime::Runtime::new() {
-                match rt.block_on(bugbee_agent::run_godmode(root, config, store, None, opts)) {
-                    Ok(r) => {
-                        push_msg(app, MsgKind::Assistant, r.summary);
-                        refresh_findings(app);
-                    }
-                    Err(e) => push_msg(app, MsgKind::System, format!("godmode error: {e}")),
-                }
-            }
-            app.busy = false;
-            app.status = "ready".into();
+            let (tx, rx) = mpsc::channel(256);
+            app.stream_rx = Some(rx);
+            tokio::spawn(async move {
+                run_godmode_streaming(root, config, store, None, opts, tx).await;
+            });
         }
         "report" => {
             let findings = app.workspace.store.list(None).unwrap_or_default();
@@ -959,47 +1084,48 @@ fn draw_transcript(f: &mut Frame, app: &App, area: Rect) {
 }
 
 fn draw_sidebar(f: &mut Frame, app: &mut App, area: Rect) {
-    let border = if app.focus == Focus::Sidebar {
-        theme::border_active()
-    } else {
-        theme::border()
-    };
-    let title = format!(" findings ({}) ", app.findings.len());
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_style(border)
-        .title(Span::styled(title, theme::muted()))
-        .style(Style::default().bg(theme::BG_PANEL));
-
-    let items: Vec<ListItem> = app
-        .findings
-        .iter()
-        .map(|finding| {
-            let sev = match finding.severity {
-                Severity::Critical => theme::error(),
-                Severity::High => theme::warning(),
-                Severity::Medium => theme::primary(),
-                Severity::Low => theme::success(),
-                Severity::Info => theme::muted(),
+    match app.sidebar_mode {
+        SidebarMode::Detail => {
+            app.sec_panel.draw(f, area);
+        }
+        SidebarMode::Findings => {
+            let border = if app.focus == Focus::Sidebar {
+                theme::border_active()
+            } else {
+                theme::border()
             };
-            ListItem::new(Line::from(vec![
-                Span::styled(format!("{:<8}", finding.severity.as_str()), sev),
-                Span::styled(
-                    format!(
-                        " {} {}:{}",
-                        finding.title, finding.location.path, finding.location.start_line
-                    ),
-                    theme::text(),
-                ),
-            ]))
-        })
-        .collect();
+            let title = format!(" findings ({}) ", app.findings.len());
+            let block = Block::default()
+                .borders(Borders::ALL)
+                .border_style(border)
+                .title(Span::styled(title, theme::muted()))
+                .style(Style::default().bg(theme::BG_PANEL));
 
-    let list = List::new(items)
-        .block(block)
-        .highlight_style(theme::selected())
-        .highlight_symbol("▸ ");
-    f.render_stateful_widget(list, area, &mut app.find_state);
+            let items: Vec<ListItem> = app
+                .findings
+                .iter()
+                .map(|f| {
+                    let sev = SecurityPanel::severity_color(&f.severity);
+                    ListItem::new(Line::from(vec![
+                        Span::styled(format!("{:<8}", f.severity.as_str()), sev),
+                        Span::styled(
+                            format!(
+                                " {} {}:{}",
+                                f.title, f.location.path, f.location.start_line
+                            ),
+                            theme::text(),
+                        ),
+                    ]))
+                })
+                .collect();
+
+            let list = List::new(items)
+                .block(block)
+                .highlight_style(theme::selected())
+                .highlight_symbol("▸ ");
+            f.render_stateful_widget(list, area, &mut app.find_state);
+        }
+    }
 }
 
 fn draw_prompt_box(f: &mut Frame, app: &App, area: Rect, home: bool) {

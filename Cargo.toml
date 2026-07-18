@@ -6,6 +6,7 @@ members = [
     "crates/bugbee-engine",
     "crates/bugbee-akg",
     "crates/bugbee-nsae",
+    "crates/bugbee-harness",
     "crates/bugbee-agent",
     "crates/bugbee-ui",
     "crates/bugbee",

@@ -9,6 +9,7 @@ pub mod error;
 pub mod finding;
 pub mod poc;
 pub mod redact;
+pub mod scope;
 pub mod scoring;
 pub mod store;
 pub mod target;
