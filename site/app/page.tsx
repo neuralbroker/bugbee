@@ -1,16 +1,33 @@
-import { AppShell } from "./components/AppShell";
-import { Architecture } from "./sections/Architecture";
-import { DeepEngine } from "./sections/DeepEngine";
-import { Enterprise } from "./sections/Enterprise";
-import { Footer } from "./sections/Footer";
-import { Hero } from "./sections/Hero";
-import { InteractiveTerminal } from "./sections/InteractiveTerminal";
-import { OpenCore } from "./sections/OpenCore";
-import { PrivateBeta } from "./sections/PrivateBeta";
-import { TrustedBy } from "./sections/TrustedBy";
-import { WhyBugbee } from "./sections/WhyBugbee";
-import { Workflow } from "./sections/Workflow";
+import { Navigation } from "@/app/sections/Navigation";
+import { Hero } from "@/app/sections/Hero";
+import { Problem } from "@/app/sections/Problem";
+import { Features } from "@/app/sections/Features";
+import { HowItWorks } from "@/app/sections/HowItWorks";
+import { LiveDemo } from "@/app/sections/LiveDemo";
+import { Testimonials } from "@/app/sections/Testimonials";
+import { Pricing } from "@/app/sections/Pricing";
+import { Stats } from "@/app/sections/Stats";
+import { FAQ } from "@/app/sections/FAQ";
+import { FinalCTA } from "@/app/sections/FinalCTA";
+import { Footer } from "@/app/sections/Footer";
 
 export default function Home() {
-  return <AppShell><main><Hero /><TrustedBy /><InteractiveTerminal /><Workflow /><WhyBugbee /><DeepEngine /><Architecture /><Enterprise /><OpenCore /><PrivateBeta /></main><Footer /></AppShell>;
+  return (
+    <>
+      <Navigation />
+      <main>
+        <Hero />
+        <Problem />
+        <Features />
+        <HowItWorks />
+        <LiveDemo />
+        <Testimonials />
+        <Pricing />
+        <Stats />
+        <FAQ />
+        <FinalCTA />
+      </main>
+      <Footer />
+    </>
+  );
 }

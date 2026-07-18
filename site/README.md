@@ -1,25 +1,47 @@
-# Bugbee product site
+# BugBee Landing Site
 
-The private-beta product site is a statically exported Next.js application.
-It uses CSS motion and a compressed local WebP hero asset; no public source,
-release, or analytics integration is rendered on the page.
+Premium marketing site for [BugBee](https://github.com/neuralbroker/bugbee) — NeuralBroker’s AI-powered bug detection platform.
 
-Deploy with the repository root as the Vercel project root. The root
-[`vercel.json`](../vercel.json) installs, builds, and deploys `site/out`.
+## Stack
 
-## Local preview
+- **Next.js** (App Router, static export)
+- **Tailwind CSS 3.4** + Framer Motion
+- **React Three Fiber** (hero mesh gradient + particle fields)
+- **Zustand**, React Hook Form + Zod
+- **@vercel/analytics**
+
+## Develop
 
 ```bash
 cd site
-npm ci
+npm install
 npm run dev
-# open http://localhost:3000
 ```
 
-## Deploy
+Open [http://localhost:3000](http://localhost:3000).
+
+## Build & deploy
 
 ```bash
-# Vercel dashboard: import the repository with Root Directory = .
+npm run build   # outputs static site to site/out
 ```
 
-Not affiliated with SpaceXAI; aesthetic inspiration only.
+Root [`vercel.json`](../vercel.json) builds this folder when the Vercel project root is the monorepo.
+
+```bash
+# from repo root
+vercel --prod
+```
+
+## Structure
+
+```
+app/
+  page.tsx              # Landing composition
+  layout.tsx            # Fonts, analytics, providers
+  sections/             # Nav → Footer (12 sections)
+  components/ui/        # Button, Card, Accordion, …
+  components/three/     # R3F hero + particles
+  components/animations/
+  hooks/ store/ lib/
+```
