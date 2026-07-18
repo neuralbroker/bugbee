@@ -1,0 +1,67 @@
+{
+  "name": "bugbee-security",
+  "displayName": "BugBee Security",
+  "description": "AI-powered vulnerability hunting sidebar — findings, kill chains, and verification for BugBee scans",
+  "version": "0.1.0",
+  "private": true,
+  "publisher": "neuralbroker",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": ["Programming Languages", "Security", "Testing"],
+  "keywords": ["security", "vulnerability", "bugbee", "cve", "appsec"],
+  "activationEvents": ["onView:bugbee.securitySidebar"],
+  "icon": "icon.png",
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "bugbee-security",
+          "title": "BugBee Security",
+          "icon": "$(shield)"
+        }
+      ]
+    },
+    "views": {
+      "bugbee-security": [
+        {
+          "type": "webview",
+          "id": "bugbee.securitySidebar",
+          "name": "Findings"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "bugbee.importSarif",
+        "title": "BugBee: Import SARIF report"
+      },
+      {
+        "command": "bugbee.exportSarif",
+        "title": "BugBee: Export findings as SARIF"
+      },
+      {
+        "command": "bugbee.jumpToFinding",
+        "title": "BugBee: Jump to finding location"
+      },
+      {
+        "command": "bugbee.toggleVerified",
+        "title": "BugBee: Toggle verified status"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json",
+    "lint": "eslint src/",
+    "test": "node out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.92.0",
+    "@types/node": "^20",
+    "typescript": "^5.5.0",
+    "eslint": "^8.57.0"
+  }
+}

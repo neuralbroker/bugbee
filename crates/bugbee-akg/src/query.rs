@@ -220,28 +220,284 @@ mod tests {
     use super::*;
     use bugbee_core::{Finding, Location, Severity, SourceKind};
 
+    fn make_finding(rule_id: &str, title: &str, sev: Severity, path: &str, line: u32) -> Finding {
+        Finding::new(rule_id, title, "", sev, SourceKind::Rule, Location::line(path, line))
+    }
+
+    fn make_secret(rule_id: &str, path: &str) -> Finding {
+        let mut f = Finding::new(
+            rule_id,
+            "Hardcoded Secret",
+            "API key in source",
+            Severity::High,
+            SourceKind::Secrets,
+            Location::line(path, 5),
+        );
+        f.tags = vec!["secret".into(), "hardcoded".into()];
+        f.rule_id = "secret.hardcoded".into();
+        f
+    }
+
+    fn make_rce(rule_id: &str, path: &str) -> Finding {
+        let mut f = Finding::new(
+            rule_id,
+            "Command Injection",
+            "eval on user input",
+            Severity::Critical,
+            SourceKind::Rule,
+            Location::line(path, 10),
+        );
+        f.rule_id = "rce.command.exec".into();
+        f
+    }
+
+    fn nid(f: &Finding) -> NodeId {
+        NodeId(format!("finding:{}", f.id.0))
+    }
+
+    // ── Topology fixture: 3-chain kill path ───────────────────────
+
     #[test]
     fn ingest_and_chain() {
         let mut g = AttackKnowledgeGraph::new();
-        let f1 = Finding::new(
-            "secrets.x",
-            "Secret",
-            "key",
-            Severity::High,
-            SourceKind::Secrets,
-            Location::line("app.py", 1),
-        );
-        let f2 = Finding::new(
-            "owasp.python.eval",
-            "Eval",
-            "eval",
-            Severity::Critical,
-            SourceKind::Rule,
-            Location::line("app.py", 10),
-        );
+        let f1 = make_finding("secrets.x", "Secret", Severity::High, "app.py", 1);
+        let f2 = make_finding("owasp.python.eval", "Eval", Severity::Critical, "app.py", 10);
         g.ingest_findings(&[f1.clone(), f2.clone()]);
         g.synthesize_local_chains(&[f1, f2]);
         assert!(g.node_count() >= 2);
         assert!(!g.list_attack_paths().is_empty() || g.edge_count() > 0);
+    }
+
+    #[test]
+    fn kill_chain_topology_three_hop() {
+        let mut g = AttackKnowledgeGraph::new();
+        let f1 = make_finding("sql-injection", "SQLi", Severity::Critical, "db.rs", 42);
+        let f2 = make_finding("xss", "XSS", Severity::High, "ui.rs", 15);
+        let f3 = make_finding("cmd-injection", "CMDi", Severity::Critical, "exec.rs", 7);
+
+        g.ingest_findings(&[f1.clone(), f2.clone(), f3.clone()]);
+
+        let a = nid(&f1);
+        let b = nid(&f2);
+        let c = nid(&f3);
+        g.link(&a, &b, AkgEdge::DependsOn);
+        g.link(&b, &c, AkgEdge::DependsOn);
+
+        let chains = g.find_kill_chains(5);
+        assert!(!chains.is_empty(), "should find at least one chain");
+
+        let has_three_hop = chains.iter().any(|c| c.nodes.len() >= 3);
+        assert!(has_three_hop, "expected a 3-hop kill chain");
+    }
+
+    #[test]
+    fn kill_chain_with_explicit_attack_path() {
+        let mut g = AttackKnowledgeGraph::new();
+
+        let f1 = make_finding("cred-1", "AWS Key", Severity::High, "config.py", 1);
+        let f2 = make_finding("rce-1", "RCE via eval", Severity::Critical, "exec.py", 20);
+        g.ingest_findings(&[f1.clone(), f2.clone()]);
+
+        g.add_attack_path(
+            "cred-to-rce",
+            "AWS key exposure enables authenticated RCE",
+            85,
+            &[f1.id.clone(), f2.id.clone()],
+        );
+
+        let chains = g.find_kill_chains(5);
+        let has_path = chains.iter().any(|c| c.labels.iter().any(|l| l.contains("cred-to-rce")));
+        assert!(has_path, "attack path should appear in kill chains");
+    }
+
+    // ── Path difficulty scoring ───────────────────────────────────
+
+    #[test]
+    fn path_difficulty_critical() {
+        let g = AttackKnowledgeGraph::new();
+        let d = g.estimate_difficulty(2, Severity::Critical);
+        assert_eq!(d.score, 40);
+        assert_eq!(d.hops, 2);
+    }
+
+    #[test]
+    fn path_difficulty_info() {
+        let g = AttackKnowledgeGraph::new();
+        let d = g.estimate_difficulty(1, Severity::Info);
+        assert_eq!(d.score, 75);
+        assert_eq!(d.hops, 1);
+    }
+
+    #[test]
+    fn path_difficulty_capped_hops() {
+        let g = AttackKnowledgeGraph::new();
+        let d = g.estimate_difficulty(10, Severity::Medium);
+        assert_eq!(d.score, 85);
+        assert_eq!(d.hops, 10);
+    }
+
+    // ── Empty graph / edge cases ──────────────────────────────────
+
+    #[test]
+    fn empty_graph_no_chains() {
+        let g = AttackKnowledgeGraph::new();
+        let chains = g.find_kill_chains(5);
+        assert!(chains.is_empty());
+    }
+
+    #[test]
+    fn empty_graph_no_attack_paths() {
+        let g = AttackKnowledgeGraph::new();
+        let paths = g.list_attack_paths();
+        assert!(paths.is_empty());
+    }
+
+    #[test]
+    fn empty_graph_no_pivot() {
+        let g = AttackKnowledgeGraph::new();
+        let pivots = g.suggest_pivot();
+        assert!(pivots.is_empty());
+    }
+
+    // ── Pivot suggestions ─────────────────────────────────────────
+
+    #[test]
+    fn suggest_pivot_returns_unverified_critical() {
+        let mut g = AttackKnowledgeGraph::new();
+        let f = make_finding("sqli", "SQLi", Severity::Critical, "db.rs", 1);
+        let id = f.id.clone();
+        g.ingest_findings(&[f]);
+        let pivots = g.suggest_pivot();
+        assert_eq!(pivots.len(), 1);
+        assert_eq!(pivots[0], id);
+    }
+
+    #[test]
+    fn suggest_pivot_skips_verified() {
+        let mut g = AttackKnowledgeGraph::new();
+        let mut f = make_finding("sqli", "SQLi", Severity::Critical, "db.rs", 1);
+        f.verified = true;
+        g.ingest_findings(&[f]);
+        let pivots = g.suggest_pivot();
+        assert!(pivots.is_empty());
+    }
+
+    #[test]
+    fn suggest_pivot_skips_info() {
+        let mut g = AttackKnowledgeGraph::new();
+        let f = make_finding("style", "Style", Severity::Info, "db.rs", 1);
+        g.ingest_findings(&[f]);
+        let pivots = g.suggest_pivot();
+        assert!(pivots.is_empty());
+    }
+
+    // ── Attack path missing prerequisites ─────────────────────────
+
+    #[test]
+    fn attack_path_missing_prereqs() {
+        let mut g = AttackKnowledgeGraph::new();
+        g.add_attack_path("chain-1", "impact", 50, &[FindingId("nonexistent".into())]);
+        let paths = g.list_attack_paths();
+        assert!(paths.is_empty() || paths[0].prerequisites.is_empty());
+    }
+
+    // ── DependsOn multi-hop ───────────────────────────────────────
+
+    #[test]
+    fn depends_on_creates_dependency_chain() {
+        let mut g = AttackKnowledgeGraph::new();
+        let f1 = make_finding("a", "Finding A", Severity::Medium, "f1.py", 1);
+        let f2 = make_finding("b", "Finding B", Severity::High, "f2.py", 2);
+        g.ingest_findings(&[f1.clone(), f2.clone()]);
+        g.link(&nid(&f1), &nid(&f2), AkgEdge::DependsOn);
+        let chains = g.find_kill_chains(5);
+        let has_dep_chain = chains.iter().any(|c| c.nodes.len() >= 2);
+        assert!(has_dep_chain, "expected depends-on chain");
+    }
+
+    // ── Secret→RCE synthesis ──────────────────────────────────────
+
+    #[test]
+    fn synthesize_secret_to_rce() {
+        let mut g = AttackKnowledgeGraph::new();
+        let secret = make_secret("sec-1", "config.py");
+        let rce = make_rce("rce-1", "config.py");
+        g.ingest_findings(&[secret.clone(), rce.clone()]);
+        g.synthesize_local_chains(&[secret, rce]);
+        let paths = g.list_attack_paths();
+        let has = paths.iter().any(|p| p.label.contains("secret→rce"));
+        assert!(has, "expected secret→rce path");
+    }
+
+    #[test]
+    fn synthesize_skips_single() {
+        let mut g = AttackKnowledgeGraph::new();
+        let secret = make_secret("sec-1", "config.py");
+        g.ingest_findings(&[secret.clone()]);
+        g.synthesize_local_chains(&[secret]);
+        assert!(g.list_attack_paths().is_empty());
+    }
+
+    // ── Snapshot round-trip ───────────────────────────────────────
+
+    #[test]
+    fn snapshot_round_trip() {
+        let mut g = AttackKnowledgeGraph::new();
+        let f1 = make_finding("sql", "SQLi", Severity::Critical, "app.py", 1);
+        let f2 = make_finding("xss", "XSS", Severity::High, "app.py", 2);
+        g.ingest_findings(&[f1.clone(), f2.clone()]);
+        g.add_attack_path("tp", "impact", 50, &[f1.id.clone(), f2.id.clone()]);
+
+        let snap = g.snapshot();
+        assert_eq!(snap.nodes.len(), g.node_count());
+        assert_eq!(snap.edges.len(), g.edge_count());
+
+        let restored = AttackKnowledgeGraph::restore(snap);
+        assert_eq!(restored.node_count(), g.node_count());
+        assert_eq!(restored.edge_count(), g.edge_count());
+    }
+
+    // ── Duplicate edge prevention ─────────────────────────────────
+
+    #[test]
+    fn duplicate_edges_not_added() {
+        let mut g = AttackKnowledgeGraph::new();
+        let f1 = make_finding("fa", "A", Severity::High, "a.py", 1);
+        let f2 = make_finding("fb", "B", Severity::High, "b.py", 2);
+        g.ingest_findings(&[f1.clone(), f2.clone()]);
+
+        let a = nid(&f1);
+        let b = nid(&f2);
+        g.link(&a, &b, AkgEdge::DependsOn);
+        let count = g.edge_count();
+        g.link(&a, &b, AkgEdge::DependsOn);
+        assert_eq!(g.edge_count(), count);
+    }
+
+    // ── Multiple attack paths ─────────────────────────────────────
+
+    #[test]
+    fn multiple_attack_paths_listed() {
+        let mut g = AttackKnowledgeGraph::new();
+        let f1 = make_finding("v1", "SQLi", Severity::Critical, "db.rs", 1);
+        let f2 = make_finding("v2", "XSS", Severity::High, "ui.rs", 2);
+        let f3 = make_finding("v3", "RCE", Severity::Critical, "exec.rs", 3);
+        g.ingest_findings(&[f1, f2, f3]);
+        g.add_attack_path("path-a", "data exfil", 70, &[FindingId("v1".into())]);
+        g.add_attack_path("path-b", "full compromise", 90, &[FindingId("v1".into()), FindingId("v3".into())]);
+
+        assert_eq!(g.list_attack_paths().len(), 2);
+    }
+
+    // ── Ingest with chain_dependencies ────────────────────────────
+
+    #[test]
+    fn ingest_with_chain_deps() {
+        let mut g = AttackKnowledgeGraph::new();
+        let mut f1 = make_finding("sql", "SQLi", Severity::Critical, "app.rs", 1);
+        let mut f2 = make_finding("auth", "Auth Bypass", Severity::Critical, "app.rs", 5);
+        f2.chain_dependencies.push(f1.id.clone());
+        g.ingest_findings(&[f1, f2]);
+        assert!(g.edge_count() >= 1, "expected DependsOn edges from chain_dependencies");
     }
 }

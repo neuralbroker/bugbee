@@ -229,9 +229,11 @@ dependencies = [
  "clap",
  "parking_lot",
  "serde_json",
+ "tempfile",
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "walkdir",
 ]
 
 [[package]]
@@ -250,6 +252,7 @@ dependencies = [
  "parking_lot",
  "rayon",
  "regex",
+ "reqwest",
  "serde",
  "serde_json",
  "tokio",

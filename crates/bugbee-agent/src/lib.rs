@@ -3,7 +3,9 @@
 //! Architecture mirrors OpenCode's tool registry + session processor, specialized
 //! for AppSec: hunt engines, evidence, multi-role review, defense-only policy.
 
+pub mod crawl;
 pub mod harness;
+pub mod hunter;
 pub mod permissions;
 pub mod roles;
 pub mod session;

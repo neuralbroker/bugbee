@@ -306,7 +306,7 @@ mod tests {
 
     #[test]
     fn test_load_toml_scope() {
-        let dir = std::env::temp_dir().join(format!("scope-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("scope-test-{}-toml", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
         let path = dir.join("scope.toml");
         std::fs::write(
@@ -324,7 +324,7 @@ authorized_by = "test"
 
     #[test]
     fn test_load_yaml_scope() {
-        let dir = std::env::temp_dir().join(format!("scope-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("scope-test-{}-yaml", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
         let path = dir.join("scope.yaml");
         std::fs::write(
@@ -350,7 +350,7 @@ authorized_by: "test"
 
     #[test]
     fn test_load_invalid_content() {
-        let dir = std::env::temp_dir().join(format!("scope-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("scope-test-{}-invalid", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
         let path = dir.join("scope.toml");
         std::fs::write(&path, "@@@ invalid toml @@@").unwrap();
