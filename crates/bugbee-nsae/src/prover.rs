@@ -126,6 +126,9 @@ fn execute_ir(root: &Path, finding: &Finding, script: &FormalScript) -> Verifica
                 let content = read(root, path);
                 let has_guard = content.as_ref().is_some_and(|c| {
                     let lines: Vec<_> = c.lines().collect();
+                    if lines.is_empty() {
+                        return false;
+                    }
                     let idx = line.saturating_sub(1) as usize;
                     let start = idx.saturating_sub(*window as usize);
                     let end = idx.min(lines.len().saturating_sub(1));

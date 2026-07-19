@@ -135,7 +135,9 @@ impl PermissionGate {
         } else {
             candidate
         };
-        if !canon.starts_with(&root) {
+        // Normalize: remove `.` and `..` components for lexical comparison.
+        let normalized: PathBuf = canon.components().collect();
+        if !normalized.starts_with(&root) {
             return Err(Error::Permission(format!(
                 "path escapes project root: {user_path}"
             )));
@@ -144,10 +146,16 @@ impl PermissionGate {
     }
 
     pub fn is_sensitive(&self, path: &Path) -> bool {
+        // Match against file name and each path component for precision.
+        let file_name = path.file_name().map(|s| s.to_string_lossy()).unwrap_or_default();
         let s = path.to_string_lossy();
-        self.sensitive_globs
-            .iter()
-            .any(|g| s.contains(g.trim_start_matches('*').trim_start_matches('.')))
+        self.sensitive_globs.iter().any(|g| {
+            let trimmed = g.trim_start_matches('*').trim_start_matches('.');
+            // Match against full path (substring) for path-based patterns like .bugbee
+            s.contains(trimmed)
+                // Match against file name for file patterns
+                || file_name.contains(trimmed)
+        })
     }
 
     pub fn rel_display(&self, path: &Path) -> String {

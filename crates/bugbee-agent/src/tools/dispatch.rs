@@ -392,14 +392,39 @@ impl ToolExecutor {
         let cmd = str_arg(args, "command")
             .ok_or_else(|| bugbee_core::Error::Invalid("command required".into()))?;
         let lower = cmd.to_ascii_lowercase();
-        for bad in [
-            "rm -rf", "mkfs", "dd if=", ":(){", "curl |", "wget |", "nc -", "ncat",
-        ] {
+        // Block dangerous patterns that attempt to bypass the permission gate.
+        let blocked_patterns = [
+            "rm -rf /", "rm -rf /*", "mkfs", "dd if=", ":(){",
+            "curl | sh", "curl | bash", "wget -", "nc -", "ncat",
+            ">/dev/sda", ">/dev/hda", "dd of=",
+            "chmod 777", "chown -R", "sudo ", "su -",
+            "poweroff", "shutdown", "reboot", "init 0", "init 6",
+        ];
+        for bad in &blocked_patterns {
             if lower.contains(bad) {
                 return Ok(ToolResult::err(
                     "shell",
                     format!("blocked dangerous command pattern: {bad}"),
                 ));
+            }
+        }
+        // Block shell metacharacters that enable code injection.
+        let dangerous_chars = ['$', '`', '|', ';', '&', '\n', '\r'];
+        let cmd_chars: Vec<char> = cmd.chars().collect();
+        let mut in_single_quote = false;
+        let mut in_double_quote = false;
+        for c in &cmd_chars {
+            match c {
+                '\'' => in_single_quote = !in_single_quote,
+                '"' if !in_single_quote => in_double_quote = !in_double_quote,
+                _ => {
+                    if !in_single_quote && !in_double_quote && dangerous_chars.contains(c) {
+                        return Ok(ToolResult::err(
+                            "shell",
+                            format!("shell metacharacter '{c}' is not allowed"),
+                        ));
+                    }
+                }
             }
         }
         debug!(cmd = %cmd, "shell tool");
@@ -462,12 +487,18 @@ impl ToolExecutor {
         let rel = self.ctx.gate.rel_display(&resolved);
         let finding_id = str_arg(args, "finding_id").unwrap_or("-");
         if finding_id != "-" && !finding_id.is_empty() {
-            if let Ok(Some(mut f)) = self.ctx.store.lock().get(&bugbee_core::FindingId(finding_id.to_string())) {
+            let fid = bugbee_core::FindingId(finding_id.to_string());
+            let mut finding = {
+                self.ctx.store.lock().get(&fid).ok().flatten()
+            };
+            if let Some(ref mut f) = finding {
                 f.push_evidence(bugbee_core::Evidence {
                     kind: "patch".into(),
-                    detail: format!("edit {}: replaced pattern ({} chars → {} chars)", rel, old.len(), new.len()),
+                    detail: format!("edit {}: replaced pattern ({} chars \u{2192} {} chars)", rel, old.len(), new.len()),
                     location: None,
                 });
+            }
+            if let Some(f) = finding {
                 let _ = self.ctx.store.lock().upsert_finding(&f);
             }
         }
