@@ -135,21 +135,21 @@ struct App {
 const SPINNER: &[&str] = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
 const SLASH: &[(&str, &str)] = &[
-    ("/help",            "📖  Show keyboard shortcuts"),
-    ("/hunt",            "🔍  Run deterministic vulnerability hunt"),
-    ("/deep-hunt",       "⚔️   Deep hunt (godmode + enrichment)"),
-    ("/swarm",           "🐝  Neuro-symbolic multi-agent swarm"),
-    ("/godmode",         "🤖  Offline godmode pipeline"),
-    ("/findings",        "📋  Refresh findings sidebar"),
-    ("/report",          "📄  Export SARIF + bounty report"),
-    ("/doctor",          "🏥  Config readiness check"),
-    ("/connect",         "🔌  Show provider connect hints"),
-    ("/status",          "📊  Session + project status"),
-    ("/new",             "🆕  New session (home)"),
-    ("/sidebar",         "🔄  Toggle findings sidebar"),
-    ("/agent",           "🔄  Toggle hunt ↔ review agent"),
-    ("/clear",           "🧹  Clear transcript"),
-    ("/quit",            "🚪  Exit"),
+    ("/help",            "Show keyboard shortcuts"),
+    ("/hunt",            "Run deterministic vulnerability hunt"),
+    ("/deep-hunt",       "Deep hunt (godmode + enrichment)"),
+    ("/swarm",           "Neuro-symbolic multi-agent swarm"),
+    ("/godmode",         "Offline godmode pipeline"),
+    ("/findings",        "Refresh findings sidebar"),
+    ("/report",          "Export SARIF + bounty report"),
+    ("/doctor",          "Config readiness check"),
+    ("/connect",         "Show provider connect hints"),
+    ("/status",          "Session + project status"),
+    ("/new",             "New session (home)"),
+    ("/sidebar",         "Toggle findings sidebar"),
+    ("/agent",           "Toggle hunt <-> review agent"),
+    ("/clear",           "Clear transcript"),
+    ("/quit",            "Exit"),
 ];
 
 // ── Public entry ─────────────────────────────────────────────────
@@ -232,7 +232,7 @@ fn event_loop(
                     app.status = "streaming…".into();
                     match &ev {
                         StreamEvent::Phase { name } => {
-                            push_msg(app, MsgKind::Tool, format!("▶ phase: {name}"));
+                            push_msg(app, MsgKind::Tool, format!("> phase: {name}"));
                         }
                         StreamEvent::Step { message } => {
                             push_msg(app, MsgKind::Tool, message.clone());
@@ -241,7 +241,7 @@ fn event_loop(
                             push_msg(
                                 app,
                                 MsgKind::Finding,
-                                format!("🔍 {count} findings"),
+                                format!("{} findings", count),
                             );
                             refresh_findings(app);
                         }
@@ -254,11 +254,11 @@ fn event_loop(
                             push_msg(
                                 app,
                                 MsgKind::Tool,
-                                format!("⚡ {name}({preview})"),
+                                format!("[tool] {name}({preview})"),
                             );
                         }
                         StreamEvent::ToolResult { name, ok, preview } => {
-                            let status = if *ok { "✓" } else { "✗" };
+                            let status = if *ok { "+" } else { "-" };
                             push_msg(
                                 app,
                                 MsgKind::Tool,
@@ -266,13 +266,13 @@ fn event_loop(
                             );
                         }
                         StreamEvent::Warn { message } => {
-                            push_msg(app, MsgKind::System, format!("⚠ {message}"));
+                            push_msg(app, MsgKind::System, format!("warn: {message}"));
                         }
                         StreamEvent::Done { summary, elapsed_ms } => {
                             push_msg(
                                 app,
                                 MsgKind::Assistant,
-                                format!("{summary}\n⏱ {elapsed_ms}ms"),
+                                format!("{}\n{}ms", summary, elapsed_ms),
                             );
                             app.busy = false;
                             app.stream_rx = None;
@@ -732,7 +732,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
             }
             app.busy = true;
             app.status = "deep hunt with godmode…".into();
-            push_msg(app, MsgKind::Tool, "⚔ deep hunt (godmode + streaming)…");
+            push_msg(app, MsgKind::Tool, "deep hunt (godmode + streaming)…");
             let root = app.workspace.root.clone();
             let config = app.workspace.config.clone();
             let store = match bugbee_core::Store::open(bugbee_core::config::store_path(&root)) {
@@ -763,7 +763,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
             }
             app.busy = true;
             app.status = "launching swarm…".into();
-            push_msg(app, MsgKind::Tool, "🐝 swarm pipeline (streaming)…");
+            push_msg(app, MsgKind::Tool, "swarm pipeline (streaming)…");
             let root = app.workspace.root.clone();
             let config = app.workspace.config.clone();
             let store = match bugbee_core::Store::open(bugbee_core::config::store_path(&root)) {
@@ -794,7 +794,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
             }
             app.busy = true;
             app.status = "launching godmode…".into();
-            push_msg(app, MsgKind::Tool, "⚔ godmode (streaming)…");
+            push_msg(app, MsgKind::Tool, "godmode (streaming)…");
             let root = app.workspace.root.clone();
             let config = app.workspace.config.clone();
             let store = match bugbee_core::Store::open(bugbee_core::config::store_path(&root)) {
@@ -844,7 +844,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
             push_msg(
                 app,
                 MsgKind::System,
-                format!("❓ unknown command: /{other} — try /help"),
+                format!("unknown command: /{other} -- try /help"),
             );
         }
     }
@@ -936,7 +936,7 @@ fn draw_home(f: &mut Frame, app: &App, area: Rect) {
 
     // Tips
     let tips = Paragraph::new(vec![Line::from(Span::styled(
-        "  🔄 Tab agent  ·  ⌨️ / commands  ·  📂 Ctrl+B sidebar  ·  ❓ F1 help  ·  🚪 q quit",
+        "  Tab agent  ·  / commands  ·  Ctrl+B sidebar  ·  F1 help  ·  q quit",
         theme::muted(),
     ))])
     .alignment(Alignment::Center);
@@ -984,14 +984,14 @@ fn draw_session(f: &mut Frame, app: &mut App, area: Rect) {
         Span::styled(format!("{} findings", app.findings.len()), theme::info()),
         if app.busy {
             Span::styled(
-                format!("  {} ⚡{}", SPINNER[app.spinner_i], app.status),
+                format!("  {} {}", SPINNER[app.spinner_i], app.status),
                 theme::warning(),
             )
         } else {
             match app.status.as_str() {
-                "error" => Span::styled("  ✗ error", theme::error()),
-                "disconnected" => Span::styled("  ⚠ disconnected", theme::warning()),
-                "ready" => Span::styled("  ✓ ready", theme::muted()),
+                "error" => Span::styled("  error", theme::error()),
+                "disconnected" => Span::styled("  disconnected", theme::warning()),
+                "ready" => Span::styled("  ready", theme::muted()),
                 _ => Span::styled(format!("  {}", app.status), theme::muted()),
             }
         },
@@ -1037,7 +1037,7 @@ fn draw_transcript(f: &mut Frame, app: &App, area: Rect) {
             Paragraph::new(vec![
                 Line::from(""),
                 Line::from(Span::styled(
-                    "  💬  No messages yet.  Try: /hunt  /swarm  /help  or type a goal",
+                    "  No messages yet.  Try: /hunt  /swarm  /help  or type a goal",
                     theme::muted(),
                 )),
             ]),
@@ -1049,11 +1049,11 @@ fn draw_transcript(f: &mut Frame, app: &App, area: Rect) {
     let mut lines: Vec<Line> = Vec::new();
     for m in &app.messages {
         let (tag, style) = match m.kind {
-            MsgKind::User => ("💬 you", theme::user_msg()),
-            MsgKind::Assistant => ("🐝 bugbee", theme::assistant_msg()),
-            MsgKind::System => ("⚙ sys", theme::system_msg()),
-            MsgKind::Tool => ("🔧 tool", theme::tool_msg()),
-            MsgKind::Finding => ("🔍 find", theme::warning()),
+            MsgKind::User => ("you", theme::user_msg()),
+            MsgKind::Assistant => ("bugbee", theme::assistant_msg()),
+            MsgKind::System => ("sys", theme::system_msg()),
+            MsgKind::Tool => ("tool", theme::tool_msg()),
+            MsgKind::Finding => ("find", theme::warning()),
         };
         lines.push(Line::from(vec![
             Span::styled(format!(" {} ", tag), style.add_modifier(Modifier::BOLD)),
@@ -1242,14 +1242,14 @@ fn draw_footer(f: &mut Frame, app: &App, area: Rect) {
         .clone()
         .unwrap_or_else(|| "—".into());
 
-    let left = Span::styled(format!(" 📁 {root} "), theme::muted());
+    let left = Span::styled(format!(" {} ", root), theme::muted());
     let right = Line::from(vec![
-        Span::styled(format!(" 🐝 {} ", app.agent.label()), theme::primary()),
-        Span::styled("• ", theme::success()),
-        Span::styled(format!("🔌 {provider}/{model} "), theme::text()),
-        Span::styled(format!("📋 {} findings ", app.findings.len()), theme::info()),
-        Span::styled("📊 /status ", theme::muted()),
-        Span::styled("❓ F1 help ", theme::muted()),
+        Span::styled(format!(" {} ", app.agent.label()), theme::primary()),
+        Span::styled("| ", theme::success()),
+        Span::styled(format!("{provider}/{model} "), theme::text()),
+        Span::styled(format!("{} findings ", app.findings.len()), theme::info()),
+        Span::styled("/status ", theme::muted()),
+        Span::styled("F1 help ", theme::muted()),
     ]);
 
     let row = Layout::default()
@@ -1286,16 +1286,16 @@ fn draw_help_modal(f: &mut Frame, area: Rect) {
             theme::primary_bold(),
         )),
         Line::from(""),
-        Line::from("  Tab       🔄  Toggle agent hunt ↔ review (build/plan)"),
-        Line::from("  Enter     ⏎  Send message / run slash command"),
-        Line::from("  /…        ⌨️  Slash commands (/hunt /swarm /findings …)"),
-        Line::from("  Ctrl+B    📂  Toggle findings sidebar"),
-        Line::from("  Ctrl+N    🆕  New session"),
-        Line::from("  PgUp/Dn   📜  Scroll transcript"),
-        Line::from("  s         📋  Focus sidebar  ·  j/k move  ·  c/f/x review"),
-        Line::from("  Esc       ⏪  Clear prompt / back to home"),
-        Line::from("  F1 / ?    ❓  This help"),
-        Line::from("  Ctrl+C/q  🚪  Quit (q on home screen)"),
+        Line::from("  Tab       Toggle agent hunt <-> review (build/plan)"),
+        Line::from("  Enter     Send message / run slash command"),
+        Line::from("  /...      Slash commands (/hunt /swarm /findings ...)"),
+        Line::from("  Ctrl+B    Toggle findings sidebar"),
+        Line::from("  Ctrl+N    New session"),
+        Line::from("  PgUp/Dn   Scroll transcript"),
+        Line::from("  s         Focus sidebar  ·  j/k move  ·  c/f/x review"),
+        Line::from("  Esc       Clear prompt / back to home"),
+        Line::from("  F1 / ?    This help"),
+        Line::from("  Ctrl+C/q  Quit (q on home screen)"),
         Line::from(""),
         Line::from(Span::styled(
             "  Commands: /hunt /swarm /godmode /report /doctor /connect /quit",

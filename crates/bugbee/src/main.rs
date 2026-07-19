@@ -18,15 +18,15 @@ use tracing_subscriber::EnvFilter;
 #[command(
     name = "bugbee",
     version = VERSION,
-    about = "🐝 Bugbee — your terminal security engineer",
+    about = "Bugbee — terminal-native security engineering",
     long_about = "\
-Bugbee finds vulnerabilities, proves them with evidence, and helps fix them safely.
+Bugbee finds vulnerabilities, proves them with evidence, and helps resolve them safely.
 
-  🔍  Deterministic engines + optional AI swarm
-  🛡️  Defense only — no live exploits
-  🧠  Bring your own model (OpenAI, Anthropic, Ollama, 10+)
-  📦  Single Rust binary — no Node/Python runtime
-  🔒  Secrets redacted before outbound calls
+  Deterministic engines + optional AI swarm
+  Defense only — no live exploits
+  Bring your own model (OpenAI, Anthropic, Ollama, 10+)
+  Single Rust binary — no Node.js or Python runtime
+  Secrets redacted before outbound calls
 
 Agent UX inspired by OpenCode — not affiliated with the OpenCode team.",
     after_help = "\
@@ -52,15 +52,15 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// 🔧 Initialize bugbee.toml and local state in your project
+    /// Initialize bugbee.toml and local state in your project
     Init {
         /// Project name (default: directory name)
         #[arg(long)]
         name: Option<String>,
     },
-    /// 🔍 Run deterministic vulnerability scan (rules + secrets, no LLM needed)
+    /// Run deterministic vulnerability scan (rules + secrets, no LLM needed)
     Hunt,
-    /// 🤖 Multi-phase AI pipeline: engine → enrich → agents → review
+    /// Multi-phase AI pipeline: engine -> enrich -> agents -> review
     Godmode {
         /// Skip LLM — engines only
         #[arg(long, help = "Skip LLM — run engines and enrichment only")]
@@ -72,7 +72,7 @@ enum Commands {
         #[arg(long, short, help = "Show detailed event stream")]
         verbose: bool,
     },
-    /// 🧠 Full neuro-symbolic swarm: Recon → Hunter → NSAE → Prover → Chain → Scribe
+    /// Full neuro-symbolic swarm: Recon -> Hunter -> NSAE -> Prover -> Chain -> Scribe
     Swarm {
         /// Start fresh (ignore saved checkpoint)
         #[arg(long, help = "Start fresh — ignore saved checkpoint")]
@@ -84,7 +84,7 @@ enum Commands {
         #[arg(long, short, help = "Show detailed event stream")]
         verbose: bool,
     },
-    /// ⚡ SuperHarness agent loop with tool-calling LLM
+    /// SuperHarness agent loop with tool-calling LLM
     Super {
         /// Goal or task for the agent
         #[arg(required = true, num_args = 1.., help = "Goal or task for the agent")]
@@ -96,20 +96,20 @@ enum Commands {
         #[arg(long, short, help = "Show detailed event stream")]
         verbose: bool,
     },
-    /// 📋 List all findings (optionally filter by status)
+    /// List all findings (optionally filter by status)
     Findings {
         /// Filter by status: draft, confirmed, false_positive, fixed
         #[arg(long, help = "Filter by status: draft, confirmed, false_positive, fixed")]
         status: Option<String>,
     },
-    /// ✅ Review a finding: confirm | fp | fixed
+    /// Review a finding: confirm | fp | fixed
     Review {
         /// Finding ID
         id: String,
         /// Action: confirm, fp (false positive), or fixed
         action: String,
     },
-    /// 📄 Export findings (SARIF, JSON, or bounty markdown)
+    /// Export findings (SARIF, JSON, or bounty markdown)
     Report {
         /// Output file path
         #[arg(long, short, default_value = "findings.sarif.json", help = "Output file path")]
@@ -118,15 +118,15 @@ enum Commands {
         #[arg(long, default_value = "sarif", help = "Output format: sarif, json, or bounty")]
         format: String,
     },
-    /// 🏥 Check configuration and system readiness
+    /// Check configuration and system readiness
     Doctor,
-    /// 💬 Ask the configured AI model a question about your repo
+    /// Ask the configured AI model a question about your repo
     Ask {
         /// Your question
         #[arg(required = true, num_args = 1.., help = "Your question about the codebase")]
         question: Vec<String>,
     },
-    /// 🔌 Configure an AI provider (key stays in env vars)
+    /// Configure an AI provider (key stays in env vars)
     Connect {
         /// Provider name: openai, anthropic, ollama, xai, deepseek, etc.
         #[arg(long, help = "Provider: openai, anthropic, ollama, xai, deepseek, ...")]
@@ -141,7 +141,7 @@ enum Commands {
         #[arg(long, help = "Env var name for API key (e.g. OPENAI_API_KEY)")]
         api_key_env: Option<String>,
     },
-    /// 🖥️ Open the interactive terminal workspace
+    /// Open the interactive terminal workspace
     Workspace,
 }
 
@@ -266,7 +266,7 @@ fn run() -> Result<()> {
                 };
 
                 println!(
-                    "⚔  BUGBEE GODMODE  ·  {}  ·  llm={}",
+                    "BUGBEE GODMODE  ·  {}  ·  llm={}",
                     ws.config.project.name,
                     if client.is_some() { "on" } else { "off" }
                 );
@@ -304,7 +304,7 @@ fn run() -> Result<()> {
                 let store = bugbee_core::Store::open(config::store_path(&root))?;
                 let report_path = report.unwrap_or_else(|| root.join("bugbee-report.md"));
                 println!(
-                    "🐝 BUGBEE SWARM  ·  neuro-symbolic  ·  {}",
+                    "BUGBEE SWARM  ·  neuro-symbolic  ·  {}",
                     ws.config.project.name
                 );
                 let opts = SwarmOptions {
@@ -369,7 +369,7 @@ fn run() -> Result<()> {
                     ));
                 }
 
-                println!("⚡ BUGBEE SUPERHARNESS  ·  pi+opencode+claude  ·  ralph={ralph}");
+                println!("BUGBEE SUPERHARNESS  ·  pi+opencode+claude  ·  ralph={ralph}");
 
                 if ralph > 0 {
                     let runner = RalphRunner::new(
