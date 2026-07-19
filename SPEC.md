@@ -1,4 +1,4 @@
-# BugBee AI Agent Executable Specification (Implementation Map)
+# Bugbee AI Agent Executable Specification (Implementation Map)
 
 **Version:** 0.1.0-alpha · **Runtime:** Rust · **Paradigm:** Neuro-Symbolic Autonomous Vulnerability Discovery  
 

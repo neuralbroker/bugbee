@@ -18,17 +18,16 @@ use tracing_subscriber::EnvFilter;
 #[command(
     name = "bugbee",
     version = VERSION,
-    about = "Bugbee — terminal-native security engineering",
+    about = "Bugbee — security analysis for your source code",
     long_about = "\
-Bugbee finds vulnerabilities, proves them with evidence, and helps resolve them safely.
+Bugbee analyzes source code for vulnerabilities using deterministic rules,
+secrets scanning, and optional AI-powered analysis.
 
-  Deterministic engines + optional AI swarm
-  Defense only — no live exploits
-  Bring your own model (OpenAI, Anthropic, Ollama, 10+)
-  Single Rust binary — no Node.js or Python runtime
-  Secrets redacted before outbound calls
-
-Agent UX inspired by OpenCode — not affiliated with the OpenCode team.",
+  Deterministic engines (no model required)
+  Defense-only — no exploitation or weaponized payloads
+  Bring your own LLM (OpenAI, Anthropic, Ollama, and many more)
+  Single Rust binary — no runtime dependencies
+  Secrets redacted before outbound calls",
     after_help = "\
 Examples:
   bugbee init              Set up your project
@@ -36,8 +35,8 @@ Examples:
   bugbee findings          List findings
   bugbee report -o report.sarif.json
   bugbee connect --provider ollama --model qwen2.5-coder
-  bugbee swarm -v          Full multi-agent pipeline
-  bugbee                   Launch interactive TUI
+  bugbee swarm             Full multi-agent pipeline
+  bugbee                   Launch interactive terminal
 
 Learn more: https://github.com/neuralbroker/bugbee"
 )]
@@ -60,31 +59,31 @@ enum Commands {
     },
     /// Run deterministic vulnerability scan (rules + secrets, no LLM needed)
     Hunt,
-    /// Multi-phase AI pipeline: engine -> enrich -> agents -> review
+    /// Multi-phase AI analysis pipeline
     Godmode {
         /// Skip LLM — engines only
-        #[arg(long, help = "Skip LLM — run engines and enrichment only")]
+        #[arg(long, help = "Skip LLM — run deterministic engines only")]
         offline: bool,
-        /// Bypass adversarial false-positive review
-        #[arg(long, help = "Skip adversarial false-positive review phase")]
+        /// Bypass false-positive review phase
+        #[arg(long, help = "Skip false-positive review phase")]
         no_review: bool,
-        /// Show detailed event stream
-        #[arg(long, short, help = "Show detailed event stream")]
+        /// Show detailed progress output
+        #[arg(long, short, help = "Show detailed progress output")]
         verbose: bool,
     },
-    /// Full neuro-symbolic swarm: Recon -> Hunter -> NSAE -> Prover -> Chain -> Scribe
+    /// Multi-agent neuro-symbolic analysis pipeline
     Swarm {
-        /// Start fresh (ignore saved checkpoint)
-        #[arg(long, help = "Start fresh — ignore saved checkpoint")]
+        /// Start fresh (ignore saved state)
+        #[arg(long, help = "Start fresh — ignore saved state")]
         no_resume: bool,
         /// Write bounty markdown report to this path
         #[arg(long, help = "Write bounty-format markdown report")]
         report: Option<PathBuf>,
-        /// Show detailed event stream
-        #[arg(long, short, help = "Show detailed event stream")]
+        /// Show detailed progress output
+        #[arg(long, short, help = "Show detailed progress output")]
         verbose: bool,
     },
-    /// SuperHarness agent loop with tool-calling LLM
+    /// Interactive agent with tool-calling LLM
     Super {
         /// Goal or task for the agent
         #[arg(required = true, num_args = 1.., help = "Goal or task for the agent")]
@@ -92,8 +91,8 @@ enum Commands {
         /// Outer retry iterations (0 = single pass)
         #[arg(long, default_value_t = 0, help = "Outer retry iterations (0 = single pass)")]
         ralph: u32,
-        /// Show detailed event stream
-        #[arg(long, short, help = "Show detailed event stream")]
+        /// Show detailed progress output
+        #[arg(long, short, help = "Show detailed progress output")]
         verbose: bool,
     },
     /// List all findings (optionally filter by status)
@@ -245,14 +244,12 @@ fn run() -> Result<()> {
                                     Some(Arc::from(c))
                                 }
                             } else {
-                                eprintln!(
-                                    "warn: provider set but API key missing — offline godmode"
-                                );
+                                eprintln!("warning: provider configured but API key is missing — running offline");
                                 None
                             }
                         }
                         Err(e) => {
-                            eprintln!("warn: llm unavailable ({e}) — offline godmode");
+                            eprintln!("warning: LLM unavailable ({e}) — running offline");
                             None
                         }
                     }
@@ -266,7 +263,7 @@ fn run() -> Result<()> {
                 };
 
                 println!(
-                    "BUGBEE GODMODE  ·  {}  ·  llm={}",
+                    "Bugbee analysis · {} · llm={}",
                     ws.config.project.name,
                     if client.is_some() { "on" } else { "off" }
                 );
@@ -304,7 +301,7 @@ fn run() -> Result<()> {
                 let store = bugbee_core::Store::open(config::store_path(&root))?;
                 let report_path = report.unwrap_or_else(|| root.join("bugbee-report.md"));
                 println!(
-                    "BUGBEE SWARM  ·  neuro-symbolic  ·  {}",
+                    "Bugbee swarm · neuro-symbolic · {}",
                     ws.config.project.name
                 );
                 let opts = SwarmOptions {
@@ -369,7 +366,7 @@ fn run() -> Result<()> {
                     ));
                 }
 
-                println!("BUGBEE SUPERHARNESS  ·  pi+opencode+claude  ·  ralph={ralph}");
+                println!("Bugbee agent  ·  iterations={ralph}");
 
                 if ralph > 0 {
                     let runner = RalphRunner::new(

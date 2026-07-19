@@ -218,16 +218,16 @@ impl LlmClient for AnthropicClient {
             .await
             .map_err(|error| Error::Provider(format!("read body: {error}")))?;
         if !status.is_success() {
+            let preview: String = text.chars().take(200).collect();
             return Err(Error::Provider(format!(
-                "HTTP {status}: {}",
-                text.chars().take(600).collect::<String>()
+                "provider returned HTTP {status} — check your API key, model name, and account balance. Body: {preview}",
             )));
         }
 
         let value: Value = serde_json::from_str(&text).map_err(|error| {
+            let preview: String = text.chars().take(200).collect();
             Error::Provider(format!(
-                "parse response: {error}; body={}",
-                text.chars().take(400).collect::<String>()
+                "failed to parse provider response: {error}. Raw response: {preview}",
             ))
         })?;
         parse_response(value, &self.model)

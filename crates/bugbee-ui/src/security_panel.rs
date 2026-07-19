@@ -133,7 +133,7 @@ impl SecurityPanel {
         if let Some(ref poc) = finding.poc {
             lines.push(Line::from(vec![
                 Span::styled(" PoC Class: ", theme::muted()),
-                Span::styled(format!("{:?}", poc.class), theme::warning()),
+                Span::styled(poc.class.as_str().to_string(), theme::warning()),
             ]));
             if let Some(ref curl) = poc.curl_template {
                 lines.push(Line::from(Span::styled(

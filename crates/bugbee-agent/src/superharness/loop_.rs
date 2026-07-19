@@ -6,7 +6,6 @@ use std::sync::Arc;
 use bugbee_core::{Redactor, Result};
 use bugbee_llm::{ChatMessage, ChatRequest, LlmClient, ToolCall};
 use parking_lot::Mutex;
-use tracing::{debug, warn};
 
 use crate::harness::{Budget, RunLimits};
 use crate::roles::AgentRole;
@@ -350,11 +349,4 @@ fn short_hash(s: &str) -> String {
     let mut h = DefaultHasher::new();
     s.hash(&mut h);
     format!("{:x}", h.finish() & 0xffff)
-}
-
-// silence unused import warn in debug
-#[allow(dead_code)]
-fn _dbg() {
-    debug!("superharness");
-    warn!("superharness");
 }

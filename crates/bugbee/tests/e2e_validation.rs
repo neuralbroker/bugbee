@@ -83,13 +83,17 @@ fn test_e2e_python_vuln_hunt() {
     assert!(ok, "findings failed:\n{stderr}");
 
     // The fixture has: hardcoded password, subprocess shell, eval, SQL concat
-    let has_secrets = stdout.contains("secrets") || stdout.contains("password");
-    let has_eval = stdout.contains("eval");
-    let has_shell = stdout.contains("shell") || stdout.contains("subprocess");
-
-    eprintln!(
-        "fixture detection: secrets={} eval={} shell={}\n{}",
-        has_secrets, has_eval, has_shell, stdout
+    assert!(
+        stdout.contains("secrets") || stdout.contains("password"),
+        "expected secrets or password in hunt output"
+    );
+    assert!(
+        stdout.contains("eval"),
+        "expected eval in hunt output"
+    );
+    assert!(
+        stdout.contains("shell") || stdout.contains("subprocess"),
+        "expected shell or subprocess in hunt output"
     );
 }
 

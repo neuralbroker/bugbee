@@ -144,16 +144,16 @@ impl LlmClient for OpenAiCompatClient {
             .map_err(|e| Error::Provider(format!("read body: {e}")))?;
 
         if !status.is_success() {
+            let preview: String = text.chars().take(200).collect();
             return Err(Error::Provider(format!(
-                "HTTP {status}: {}",
-                text.chars().take(600).collect::<String>()
+                "provider returned HTTP {status} — check your API key, model name, and account balance. Body: {preview}",
             )));
         }
 
         let parsed: ApiResponse = serde_json::from_str(&text).map_err(|e| {
+            let preview: String = text.chars().take(200).collect();
             Error::Provider(format!(
-                "parse response: {e}; body={}",
-                text.chars().take(400).collect::<String>()
+                "failed to parse provider response: {e}. Raw response: {preview}",
             ))
         })?;
 

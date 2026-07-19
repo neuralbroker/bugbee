@@ -123,15 +123,10 @@ pub fn symbolic_strength_for_line(
         .taint_sinks
         .iter()
         .any(|s| s.line.abs_diff(line) <= 2 || s.line == line);
-    let has_source_before = slice.taint_sources.iter().any(|s| s.line <= line);
-    let has_guard = slice
-        .guards
-        .iter()
-        .any(|g| g.line <= line && line.saturating_sub(g.line) < 15);
 
     if near_sink {
-        // Source-before + no guard strengthens confidence but sink-on-line is enough for Strong
-        let _ = (has_source_before, has_guard);
+        // Source-before + no guard would strengthen confidence,
+        // but sink-on-line alone is sufficient for Strong.
         bugbee_core::SymbolicVerdict::Strong
     } else if slice
         .dangerous_apis

@@ -64,8 +64,6 @@ enum Focus {
     Prompt,
     Transcript,
     Sidebar,
-    #[allow(dead_code)] // Command palette UI activation is reserved for the next TUI pass.
-    Palette,
     Help,
 }
 
@@ -125,8 +123,6 @@ struct App {
     spinner_i: usize,
     toast: Option<(String, Instant)>,
     stream_rx: Option<mpsc::Receiver<StreamEvent>>,
-    palette_query: String,
-    palette_sel: usize,
     placeholders: Vec<&'static str>,
     placeholder_i: usize,
     tick: Instant,
@@ -137,9 +133,9 @@ const SPINNER: &[&str] = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧
 const SLASH: &[(&str, &str)] = &[
     ("/help",            "Show keyboard shortcuts"),
     ("/hunt",            "Run deterministic vulnerability hunt"),
-    ("/deep-hunt",       "Deep hunt (godmode + enrichment)"),
-    ("/swarm",           "Neuro-symbolic multi-agent swarm"),
-    ("/godmode",         "Offline godmode pipeline"),
+    ("/deep-hunt",       "Deep analysis (full pipeline + enrichment)"),
+    ("/swarm",           "Multi-agent neuro-symbolic analysis"),
+    ("/godmode",         "Deep analysis pipeline (offline)"),
     ("/findings",        "Refresh findings sidebar"),
     ("/report",          "Export SARIF + bounty report"),
     ("/doctor",          "Config readiness check"),
@@ -183,8 +179,6 @@ pub fn run_workspace(workspace: Workspace) -> io::Result<()> {
         spinner_i: 0,
         toast: None,
         stream_rx: None,
-        palette_query: String::new(),
-        palette_sel: 0,
         placeholders: vec![
             "Hunt this repo for injection and secrets…",
             "Summarize top security risks with file:line",
@@ -333,20 +327,11 @@ fn event_loop(
             }
         }
 
-        match app.focus {
-            Focus::Help => {
-                if matches!(key.code, KeyCode::Esc | KeyCode::Char('q') | KeyCode::Enter) {
-                    app.focus = Focus::Prompt;
-                }
-                continue;
+        if app.focus == Focus::Help {
+            if matches!(key.code, KeyCode::Esc | KeyCode::Char('q') | KeyCode::Enter) {
+                app.focus = Focus::Prompt;
             }
-            Focus::Palette => {
-                if handle_palette_key(app, key.code, key.modifiers) {
-                    return Ok(());
-                }
-                continue;
-            }
-            _ => {}
+            continue;
         }
 
         match key.code {
@@ -366,11 +351,7 @@ fn event_loop(
                 app.agent = app.agent.toggle();
                 toast(
                     app,
-                    &format!(
-                        "agent → {} (opencode {})",
-                        app.agent.label(),
-                        app.agent.opencode()
-                    ),
+                    &format!("agent mode: {}", app.agent.label()),
                 );
             }
             KeyCode::F(1) => app.focus = Focus::Help,
@@ -601,8 +582,8 @@ fn local_reply(app: &App, q: &str) -> String {
         n,
         vul
     );
-    s.push_str("For a full engine pass use `/hunt` or `/swarm`. ");
-    s.push_str("Connect a model with `bugbee connect` then `bugbee super \"…\"` for tool-loop reasoning.\n\n");
+    s.push_str("For a full analysis run `/hunt` or `/swarm`. ");
+    s.push_str("Connect a model with `bugbee connect` then `bugbee super \"...\"` for interactive analysis.\n\n");
     if !app.findings.is_empty() {
         s.push_str("Top findings:\n");
         for f in app.findings.iter().take(5) {
@@ -654,11 +635,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
             push_msg(
                 app,
                 MsgKind::System,
-                format!(
-                    "agent → {} (OpenCode {})",
-                    app.agent.label(),
-                    app.agent.opencode()
-                ),
+                format!("agent mode: {}", app.agent.label()),
             );
         }
         "status" | "doctor" => {
@@ -731,7 +708,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
                 return false;
             }
             app.busy = true;
-            app.status = "deep hunt with godmode…".into();
+            app.status = "deep analysis…".into();
             push_msg(app, MsgKind::Tool, "deep hunt (godmode + streaming)…");
             let root = app.workspace.root.clone();
             let config = app.workspace.config.clone();
@@ -762,7 +739,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
                 return false;
             }
             app.busy = true;
-            app.status = "launching swarm…".into();
+            app.status = "swarm analysis…".into();
             push_msg(app, MsgKind::Tool, "swarm pipeline (streaming)…");
             let root = app.workspace.root.clone();
             let config = app.workspace.config.clone();
@@ -793,7 +770,7 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
                 return false;
             }
             app.busy = true;
-            app.status = "launching godmode…".into();
+            app.status = "deep analysis…".into();
             push_msg(app, MsgKind::Tool, "godmode (streaming)…");
             let root = app.workspace.root.clone();
             let config = app.workspace.config.clone();
@@ -849,50 +826,6 @@ fn run_slash(app: &mut App, raw: &str) -> bool {
         }
     }
     false
-}
-
-fn handle_palette_key(app: &mut App, code: KeyCode, _mods: KeyModifiers) -> bool {
-    match code {
-        KeyCode::Esc => {
-            app.focus = Focus::Prompt;
-            app.palette_query.clear();
-        }
-        KeyCode::Up => {
-            app.palette_sel = app.palette_sel.saturating_sub(1);
-        }
-        KeyCode::Down => {
-            let n = filtered_slash(app).len().saturating_sub(1);
-            app.palette_sel = (app.palette_sel + 1).min(n);
-        }
-        KeyCode::Enter => {
-            let items = filtered_slash(app);
-            if let Some((cmd, _)) = items.get(app.palette_sel) {
-                app.prompt = (*cmd).to_string();
-                app.cursor = app.prompt.len();
-                app.focus = Focus::Prompt;
-                app.palette_query.clear();
-                return submit_prompt(app);
-            }
-        }
-        KeyCode::Char(c) => {
-            app.palette_query.push(c);
-            app.palette_sel = 0;
-        }
-        KeyCode::Backspace => {
-            app.palette_query.pop();
-        }
-        _ => {}
-    }
-    false
-}
-
-fn filtered_slash(app: &App) -> Vec<(&'static str, &'static str)> {
-    let q = app.palette_query.to_ascii_lowercase();
-    SLASH
-        .iter()
-        .copied()
-        .filter(|(c, d)| c.contains(&q) || d.to_ascii_lowercase().contains(&q))
-        .collect()
 }
 
 // ── Drawing ──────────────────────────────────────────────────────
@@ -1282,11 +1215,11 @@ fn draw_help_modal(f: &mut Frame, area: Rect) {
     f.render_widget(Clear, rect);
     let text = vec![
         Line::from(Span::styled(
-            " BugBee keymap ",
+            " Bugbee keymap ",
             theme::primary_bold(),
         )),
         Line::from(""),
-        Line::from("  Tab       Toggle agent hunt <-> review (build/plan)"),
+        Line::from("  Tab       Toggle agent between hunt and review modes"),
         Line::from("  Enter     Send message / run slash command"),
         Line::from("  /...      Slash commands (/hunt /swarm /findings ...)"),
         Line::from("  Ctrl+B    Toggle findings sidebar"),

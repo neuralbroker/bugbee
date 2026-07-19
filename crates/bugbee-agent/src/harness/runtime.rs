@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use bugbee_core::{Error, Redactor, Result};
+use bugbee_core::{Redactor, Result};
 use bugbee_llm::LlmClient;
 use parking_lot::Mutex;
 
@@ -149,10 +149,4 @@ pub fn offline_agent_pass(
         hot,
         list.output
     ))
-}
-
-// keep Error import used if needed
-#[allow(dead_code)]
-fn _e() -> Error {
-    Error::Other("x".into())
 }

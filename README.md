@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Rust-1.75%2B-orange" alt="Rust">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License">
-  <img src="https://img.shields.io/badge/tests-124-green" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-passing-green" alt="Tests">
   <img src="https://img.shields.io/badge/clippy-0%20warnings-brightgreen" alt="Clippy">
   <img src="https://img.shields.io/badge/PRs-welcome-purple" alt="PRs">
 </p>
@@ -36,7 +36,7 @@
 | **Interactive TUI** | Full workspace with slash commands, finding review, live streaming events |
 | **Single binary** | `cargo install` · air-gap ready · no Node.js or Python runtime required |
 | **SARIF export** | CI-ready output · bounty reports · compliance pack generation |
-| **124 tests** | CLI integration, crawler, kill-chain topology, engine, harness, E2E validation |
+| **Tests** | CLI integration, crawler, kill-chain topology, engine, harness, E2E validation |
 
 ---
 
@@ -113,7 +113,7 @@ bugbee connect --provider ollama --model qwen2.5-coder
 # No API key required — runs entirely on your machine
 
 # Other supported providers:
-# xAI · Kimi · DeepSeek · OpenRouter · HuggingFace · Z.ai · GLM · custom
+# xAI · DeepSeek · OpenRouter · HuggingFace · GLM · custom
 ```
 
 When connected, Bugbee operates as an AI security engineer — it reads files, runs targeted hunts, correlates findings across modules, and writes evidence-backed reports. Without a model, all deterministic engines function fully offline.
@@ -178,8 +178,8 @@ The engine never calls the network. Secrets are redacted before any outbound LLM
 ## Test suite
 
 ```bash
-cargo test --workspace   # 124 tests, all passing
-cargo clippy --workspace # 0 warnings
+cargo test --workspace   # all tests passing
+cargo clippy --workspace # zero warnings
 ```
 
 ---

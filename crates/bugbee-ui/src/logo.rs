@@ -1,4 +1,4 @@
-//! Wordmark banners (OpenCode logo layout analogue).
+//! Wordmark banners.
 
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};

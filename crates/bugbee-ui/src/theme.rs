@@ -1,5 +1,4 @@
-//! OpenCode default theme palette (dark).
-//! Source: packages/tui/src/theme/assets/opencode.json
+//! Bugbee default theme palette (dark).
 
 use ratatui::style::{Color, Modifier, Style};
 
