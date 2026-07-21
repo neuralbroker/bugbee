@@ -50,6 +50,8 @@ it.instance("returns default native agents when no config", () =>
     const names = agents.map((a) => a.name)
     expect(names).toContain("build")
     expect(names).toContain("plan")
+    expect(names).toContain("hunt")
+    expect(names).toContain("security-review")
     expect(names).toContain("general")
     expect(names).toContain("explore")
     expect(names).toContain("compaction")
@@ -117,6 +119,34 @@ it.instance("explore agent denies edit and write", () =>
     expect(evalPerm(explore, "edit")).toBe("deny")
     expect(evalPerm(explore, "write")).toBe("deny")
     expect(evalPerm(explore, "todowrite")).toBe("deny")
+  }),
+)
+
+it.instance("hunt agent is primary with security tools allowed", () =>
+  Effect.gen(function* () {
+    const hunt = yield* load((svc) => svc.get("hunt"))
+    expect(hunt).toBeDefined()
+    expect(hunt?.mode).toBe("primary")
+    expect(hunt?.native).toBe(true)
+    expect(evalPerm(hunt, "vuln_scan")).toBe("allow")
+    expect(evalPerm(hunt, "secrets_scan")).toBe("allow")
+    expect(evalPerm(hunt, "findings")).toBe("allow")
+    expect(evalPerm(hunt, "security_report")).toBe("allow")
+    expect(evalPerm(hunt, "edit")).toBe("ask")
+  }),
+)
+
+it.instance("security-review agent is read-only subagent", () =>
+  Effect.gen(function* () {
+    const review = yield* load((svc) => svc.get("security-review"))
+    expect(review).toBeDefined()
+    expect(review?.mode).toBe("subagent")
+    expect(review?.native).toBe(true)
+    expect(evalPerm(review, "edit")).toBe("deny")
+    expect(evalPerm(review, "bash")).toBe("deny")
+    expect(evalPerm(review, "read")).toBe("allow")
+    expect(evalPerm(review, "findings")).toBe("allow")
+    expect(evalPerm(review, "grep")).toBe("allow")
   }),
 )
 
@@ -749,6 +779,8 @@ it.instance(
       agent: {
         build: { disable: true },
         plan: { disable: true },
+        // hunt is also a built-in primary agent (security hunt mode)
+        hunt: { disable: true },
       },
     },
   },

@@ -63,37 +63,39 @@ Hard product law: **defense only**. No live exploitation modules. No weaponized 
 ```bash
 git clone https://github.com/neuralbroker/bugbee.git
 cd bugbee
-bun install
+bun install --ignore-scripts   # full monorepo; --ignore-scripts avoids optional native rebuild issues
+
+# Local CLI wrapper (preserves your cwd for relative paths)
+./bin/bugbee --help
 
 # Interactive TUI
 bun run dev
-
-# CLI help
-bun run --cwd packages/bugbee --conditions=browser src/index.ts --help
+# or:
+./bin/bugbee
 ```
 
 ### Offline security hunt (no LLM required)
 
 ```bash
 # Scan a directory with secrets + rule engines
-bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt /path/to/project
+./bin/bugbee hunt /path/to/project
+# or from repo root:
+bun run hunt ./fixtures/python-vuln
 
 # List findings
-bun run --cwd packages/bugbee --conditions=browser src/index.ts findings --directory /path/to/project
+./bin/bugbee findings --directory ./fixtures/python-vuln
 
 # SARIF for CI
-bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt /path/to/project \
-  --format sarif -o bugbee-results.sarif.json
+./bin/bugbee hunt ./fixtures/python-vuln --format sarif -o bugbee-results.sarif.json
 
 # Markdown report
-bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt /path/to/project \
-  --format markdown -o bugbee-report.md
+./bin/bugbee hunt ./fixtures/python-vuln --format markdown -o bugbee-report.md
 ```
 
 Try the intentional fixture:
 
 ```bash
-bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt ./fixtures/python-vuln
+./bin/bugbee hunt ./fixtures/python-vuln
 ```
 
 ### Interactive agent (with model)
@@ -218,11 +220,12 @@ Environment flags use the `BUGBEE_*` prefix (see `packages/core/src/flag/flag.ts
 ## Development
 
 ```bash
-bun install
+bun install --ignore-scripts
 bun run dev                          # TUI
+./bin/bugbee hunt ./fixtures/python-vuln
+bun run test:security                # security engine selftest
+bun run test:bugbee                  # packages/bugbee unit suite
 bun run typecheck                    # turbo typecheck (when workspaces fully installed)
-bun run --cwd packages/bugbee test   # package tests
-bun packages/bugbee/src/security/selftest.ts
 ```
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) and [AGENTS.md](./AGENTS.md).

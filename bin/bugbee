@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Local monorepo runner — preserves caller cwd for relative paths (hunt fixtures, etc.)
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export PATH="${HOME}/.bun/bin:${PATH}"
+# Do not use --cwd so process.cwd() stays the caller's directory.
+exec bun --conditions=browser "$ROOT/packages/bugbee/src/index.ts" "$@"
