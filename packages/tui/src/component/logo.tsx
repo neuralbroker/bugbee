@@ -51,11 +51,15 @@ export function Logo() {
       <For each={logo.left}>
         {(line, index) => (
           <box flexDirection="row" gap={1}>
-            <box flexDirection="row">{renderLine(line, theme.textMuted, false)}</box>
+            <box flexDirection="row">{renderLine(line, theme.primary, false)}</box>
             <box flexDirection="row">{renderLine(logo.right[index()], theme.text, true)}</box>
           </box>
         )}
       </For>
+      <box height={1} />
+      <text fg={theme.textMuted} selectable={false}>
+        AI coding agent · defense-ready by design
+      </text>
     </box>
   )
 }

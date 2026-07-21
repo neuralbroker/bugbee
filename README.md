@@ -37,6 +37,20 @@ bun run --cwd packages/bugbee --conditions=browser src/index.ts
 ./bin/bugbee providers
 ```
 
+## Bugbee extras (vs upstream OpenCode)
+
+| Feature | Description |
+|---------|-------------|
+| **BUGBEE wordmark** | Distinct logo, terminal titles, home footer brand chip |
+| **Honey/teal theme** | Built-in `bugbee` theme palette |
+| **`bugbee doctor`** | Offline install/path/config health check |
+| **`/doctor`** | Guided readiness checklist in-session |
+
+```bash
+./bin/bugbee doctor
+./bin/bugbee doctor --json
+```
+
 ## Config
 
 - Project: `bugbee.json` / `bugbee.jsonc` and `.bugbee/`

@@ -246,7 +246,8 @@ const TIPS: Tip[] = [
   "Use {highlight}/bugbee{/highlight} in GitHub issues/PRs to trigger AI actions",
   "Run {highlight}bugbee github install{/highlight} to set up the GitHub workflow",
   "Comment {highlight}/bugbee fix this{/highlight} on issues to auto-create PRs",
-  "Comment {highlight}/oc{/highlight} on PR code lines for targeted code reviews",
+  "Comment {highlight}/bugbee{/highlight} on PR code lines for targeted code reviews",
+  'Use {highlight}"theme": "bugbee"{/highlight} for the honey/teal Bugbee palette',
   'Use {highlight}"theme": "system"{/highlight} to match your terminal\'s colors',
   "Create JSON theme files in {highlight}.bugbee/themes/{/highlight} directory",
   "Themes support dark/light variants for both modes",
@@ -264,6 +265,7 @@ const TIPS: Tip[] = [
   "Run {highlight}/unshare{/highlight} to remove a session from public access",
   "Permission {highlight}doom_loop{/highlight} prevents infinite tool call loops",
   "Permission {highlight}external_directory{/highlight} protects files outside project",
+  "Run {highlight}bugbee doctor{/highlight} to verify install paths and config (Bugbee-only)",
   "Run {highlight}bugbee debug config{/highlight} to troubleshoot configuration",
   "Use {highlight}--print-logs{/highlight} flag to see detailed logs in stderr",
   (shortcuts) => `Use ${commandText("/timeline", shortcuts.sessionTimeline())} to jump to specific messages`,
@@ -280,6 +282,7 @@ const TIPS: Tip[] = [
   "Use {highlight}/review{/highlight} to review uncommitted changes, branches, or PRs",
   (shortcuts) => `Use ${commandText("/help", shortcuts.helpShow())} to show the help dialog`,
   "Use {highlight}/rename{/highlight} to rename the current session",
+  "Use {highlight}/doctor{/highlight} for a guided readiness checklist inside the agent",
 ]
 
 const INPUT_UNDO_TIP: Tip = (shortcuts) => press(shortcuts.inputUndo(), "to undo changes in your prompt")

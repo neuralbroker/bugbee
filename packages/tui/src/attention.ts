@@ -45,7 +45,7 @@ const TITLE_LIMIT = 80
 const MESSAGE_LIMIT = 240
 const BUILTIN_PACK: RegisteredSoundPack = {
   id: DEFAULT_PACK_ID,
-  name: "Bugbee Default",
+  name: "BUGBEE",
   builtin: true,
   sounds: {
     default: defaultSoundPath,

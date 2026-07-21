@@ -50,6 +50,7 @@ const TOP_LEVEL = [
   "debug",
   "providers", // aliased to `auth`
   "agent",
+  "doctor",
   "upgrade",
   "uninstall",
   "serve",

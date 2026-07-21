@@ -11,7 +11,7 @@ PKG="$ROOT/packages/bugbee"
 # Subcommands that are not a project path (keep in sync with CLI surface)
 is_command() {
   case "$1" in
-    completion|acp|mcp|attach|run|debug|providers|auth|agent|upgrade|uninstall|serve|web|models|stats|export|import|github|pr|session|plugin|plug|db|help|--help|-h|--version|-v) return 0 ;;
+    completion|acp|mcp|attach|run|debug|providers|auth|agent|doctor|upgrade|uninstall|serve|web|models|stats|export|import|github|pr|session|plugin|plug|db|help|--help|-h|--version|-v) return 0 ;;
     *) return 1 ;;
   esac
 }

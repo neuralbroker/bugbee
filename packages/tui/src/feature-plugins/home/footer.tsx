@@ -1,5 +1,6 @@
 import type { TuiPlugin, TuiPluginApi } from "@bugbee-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
+import { TextAttributes } from "@opentui/core"
 import { createMemo, Match, Show, Switch } from "solid-js"
 import { abbreviateHome } from "../../runtime"
 import { useTuiPaths } from "../../context/runtime"
@@ -51,11 +52,13 @@ function Mcp(props: { api: TuiPluginApi }) {
   )
 }
 
-function Version(props: { api: TuiPluginApi }) {
+function Brand(props: { api: TuiPluginApi }) {
   const theme = () => props.api.theme.current
-
   return (
-    <box flexShrink={0}>
+    <box flexShrink={0} flexDirection="row" gap={1}>
+      <text fg={theme().primary} attributes={TextAttributes.BOLD}>
+        BUGBEE
+      </text>
       <text fg={theme().textMuted}>{props.api.app.version}</text>
     </box>
   )
@@ -76,7 +79,7 @@ function View(props: { api: TuiPluginApi }) {
       <Directory api={props.api} />
       <Mcp api={props.api} />
       <box flexGrow={1} />
-      <Version api={props.api} />
+      <Brand api={props.api} />
     </box>
   )
 }
