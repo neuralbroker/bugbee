@@ -40,3 +40,6 @@ bugbee-results.sarif.json
 package.json.full
 # Generated findings under fixtures when running local hunts
 fixtures/**/.bugbee/
+# Local hunt stores (never commit findings)
+**/.bugbee/findings.json
+packages/bugbee/fixtures/
