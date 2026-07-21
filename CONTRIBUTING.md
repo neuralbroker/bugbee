@@ -1,40 +1,84 @@
 # Contributing to Bugbee
 
-Thank you for helping build a memory-safe security agent.
+Thanks for helping build the AI coding IDE with defensive security built in.
 
-## Principles
+## What we merge readily
 
-1. Read [VISION.md](./VISION.md) — PRs that contradict it need an explicit vision change.
-2. Keep the core in **Rust**. No Node/Python runtime in the agent binary path.
-3. Engine code must stay **offline** (no network in `bugbee-engine`).
-4. Prefer tests + fixtures over screenshots of findings.
+- Bug fixes
+- Additional LSPs / formatters / providers
+- Security engine rules (high-signal, low false-positive)
+- Secret detectors with redaction
+- Documentation improvements
+- Tests and eval fixtures
+- Performance fixes
 
-## Dev setup
+UI or core product features should be discussed with maintainers first (issue or design note).
+
+If unsure, open an issue with labels such as `help wanted`, `good first issue`, `bug`, or `security-engine`.
+
+## Security contributions
+
+When adding rules or detectors:
+
+1. Prefer **evidence-backed heuristics** over noisy keywords.
+2. Always **redact** secret material in output.
+3. Stay **defense-only** — no live exploit helpers, no weaponized payloads.
+4. Add or extend fixtures under `fixtures/` and run:
+
+   ```bash
+   bun packages/bugbee/src/security/selftest.ts
+   ```
+
+5. Document CWE/tags when applicable (`packages/bugbee/src/security/rules.ts`).
+
+## Developing Bugbee
+
+**Requirements:** Bun 1.3+
 
 ```bash
-rustup update stable
-cargo build -p bugbee
-cargo test --workspace
-cargo run -p bugbee -- --root fixtures/python-vuln hunt
+bun install
+bun run dev          # TUI against packages/bugbee by default
+bun run dev .        # TUI against monorepo root
 ```
 
-## Crate map
+### Useful paths
 
-| Crate | Responsibility |
-|-------|----------------|
-| `bugbee-core` | Types, config, store, scoring, redaction, scope |
-| `bugbee-engine` | Deterministic scanners, sandbox |
-| `bugbee-llm` | BYOK model clients |
-| `bugbee-agent` | Roles, tools, permissions, crawl, hunter, swarm orchestration |
-| `bugbee-akg` | Attack Knowledge Graph, kill chains |
-| `bugbee-harness` | gRPC Super Harness (server, client, diff oracle) |
-| `bugbee-nsae` | Neuro-symbolic adjudication engine |
-| `bugbee-ui` | Ratatui workspace |
-| `bugbee` | CLI binary |
-| `vscode/` | VS Code extension |
+| Path | Role |
+|------|------|
+| `packages/bugbee` | CLI entry, tools, security engine |
+| `packages/bugbee/src/security` | Offline scanners, store, SARIF |
+| `packages/bugbee/src/tool` | Agent tools |
+| `packages/core` | Runtime, providers, plugins |
+| `packages/app` | Shared web UI |
+| `packages/desktop` | Desktop shell |
+| `packages/plugin` | `@bugbee-ai/plugin` |
 
-## Style
+### Offline hunt while developing
 
-- `cargo fmt` + `cargo clippy -p bugbee -- -D warnings` before sending a PR
-- Small, reviewable commits
-- New rules go under `rules/` with a clear id and CWE when known
+```bash
+bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt ./fixtures/python-vuln
+bun run --cwd packages/bugbee --conditions=browser src/index.ts findings --directory ./fixtures/python-vuln
+```
+
+### Building a local binary
+
+```bash
+./packages/bugbee/script/build.ts --single
+./packages/bugbee/dist/bugbee-<platform>/bin/bugbee
+```
+
+### Conventions
+
+See [AGENTS.md](./AGENTS.md) for coding style, commits, and branch naming.
+
+- Conventional commits: `feat(scope): …`, `fix: …`, `docs: …`
+- Prefer Bun APIs when reasonable
+- Do not commit secrets, `.bugbee/findings.json`, or local reports
+
+## Providers
+
+Many providers work via configuration without code changes. Upstream model catalog contributions may still go to [models.dev](https://github.com/anomalyco/models.dev) where applicable.
+
+## License
+
+By contributing, you agree that your contributions are licensed under the MIT License (see [LICENSE](./LICENSE) and [NOTICE](./NOTICE)).

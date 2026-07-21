@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Disallow shared content pages
+Disallow: /s/
+Disallow: /share/
+
+Sitemap: https://bugbee.dev/sitemap.xml
+Sitemap: https://bugbee.dev/data/sitemap.xml

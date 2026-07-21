@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Bugbee
+Exec=/opt/Bugbee/ai.bugbee.desktop %U
+Terminal=false
+Type=Application
+Icon=ai.bugbee.desktop
+StartupWMClass=ai.bugbee.desktop
+NoDisplay=true
+Comment=Open source AI coding agent
+Categories=Development;

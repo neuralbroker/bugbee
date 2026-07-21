@@ -1,0 +1,4 @@
+Run deterministic vulnerability heuristics against the workspace (OWASP-inspired rules: injection sinks, weak crypto, unsafe deserialization, XSS sinks, etc.).
+
+Defense-only: produces evidence-backed draft findings. Does not exploit targets or generate weaponized payloads.
+Results are merged into .bugbee/findings.json for human review.

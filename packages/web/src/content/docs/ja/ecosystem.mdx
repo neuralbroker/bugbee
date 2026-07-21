@@ -1,0 +1,78 @@
+---
+title: エコシステム
+description: Bugbee で構築されたプロジェクトと統合。
+---
+
+Bugbee に基づいて構築されたコミュニティプロジェクトのコレクション。
+
+:::note
+Bugbee 関連プロジェクトをこのリストに追加したいですか? PR を送信してください。
+:::
+
+[awesome-bugbee](https://github.com/awesome-bugbee/awesome-bugbee) および [bugbee.cafe](https://bugbee.cafe) もチェックしてください。
+
+---
+
+## プラグイン
+
+| 名前                                                                                               | 説明                                                                                                                 |
+| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| [bugbee-daytona](https://github.com/daytonaio/daytona/tree/main/libs/bugbee-plugin)            | git sync とライブプレビューを使用して、隔離された Daytona サンドボックスで Bugbee セッションを自動的に実行します。 |
+| [bugbee-helicone-session](https://github.com/H2Shami/bugbee-helicone-session)                  | リクエストのグループ化のために Helicone セッションヘッダーを自動的に挿入する                                         |
+| [bugbee-type-inject](https://github.com/nick-vi/bugbee-type-inject)                            | ルックアップツールを使用して TypeScript/Svelte 型をファイル読み取りに自動挿入する                                    |
+| [bugbee-openai-codex-auth](https://github.com/numman-ali/bugbee-openai-codex-auth)             | API クレジットの代わりに ChatGPT Plus/Pro サブスクリプションを使用する                                               |
+| [bugbee-gemini-auth](https://github.com/jenslys/bugbee-gemini-auth)                            | API 課金の代わりに既存の Gemini プランを使用する                                                                     |
+| [bugbee-antigravity-auth](https://github.com/NoeFabris/bugbee-antigravity-auth)                | API 課金の代わりに Antigravity の無料モデルを使用する                                                                |
+| [bugbee-devcontainers](https://github.com/athal7/bugbee-devcontainers)                         | 浅いクローンと自動割り当てポートを使用したマルチブランチ devcontainer の分離                                         |
+| [bugbee-google-antigravity-auth](https://github.com/shekohex/bugbee-google-antigravity-auth)   | Google Antigravity OAuth プラグイン、Google 検索のサポート、およびより堅牢な API 処理                                |
+| [bugbee-dynamic-context-pruning](https://github.com/Tarquinen/bugbee-dynamic-context-pruning)  | 古いツールの出力を削除してトークンの使用を最適化する                                                                 |
+| [bugbee-vibeguard](https://github.com/inkdust2021/bugbee-vibeguard)                            | LLM 呼び出しの前にシークレット/PII を VibeGuard スタイルのプレースホルダーに編集し、ローカルで復元する               |
+| [bugbee-websearch-cited](https://github.com/ghoulr/bugbee-websearch-cited.git)                 | Google ベースのスタイルでサポートされているプロバイダーにネイティブ Web 検索サポートを追加                           |
+| [bugbee-pty](https://github.com/shekohex/bugbee-pty.git)                                       | AI エージェントが PTY でバックグラウンドプロセスを実行し、インタラクティブな入力を送信できるようにします。           |
+| [bugbee-shell-strategy](https://github.com/JRedeker/bugbee-shell-strategy)                     | 非対話型シェルコマンドの手順 - TTY に依存する操作によるハングの防止                                                  |
+| [bugbee-wakatime](https://github.com/angristan/bugbee-wakatime)                                | wakatime で Bugbee の使用状況を追跡する                                                                            |
+| [bugbee-md-table-formatter](https://github.com/franlol/bugbee-md-table-formatter/tree/main)    | LLM によって生成された Markdown テーブルをクリーンアップする                                                         |
+| [bugbee-morph-plugin](https://github.com/morphllm/bugbee-morph-plugin)                         | Morph による Fast Apply 編集、WarpGrep コードベース検索、コンテキスト圧縮                                            |
+| [oh-my-bugbee](https://github.com/code-yeongyu/oh-my-bugbee)                                   | バックグラウンドエージェント、事前構築された LSP/AST/MCP ツール、厳選されたエージェント、Claude Code 互換            |
+| [bugbee-notificator](https://github.com/panta82/bugbee-notificator)                            | Bugbee セッションのデスクトップ通知とサウンドアラート                                                              |
+| [bugbee-notifier](https://github.com/mohak34/bugbee-notifier)                                  | 許可、完了、エラーイベントのデスクトップ通知とサウンドアラート                                                       |
+| [bugbee-zellij-namer](https://github.com/24601/bugbee-zellij-namer)                            | Bugbee コンテキストに基づいた AI による自動 Zellij セッション命名                                                  |
+| [bugbee-skillful](https://github.com/zenobi-us/bugbee-skillful)                                | Bugbee エージェントがスキルの検出と挿入を使用してオンデマンドでプロンプトを遅延ロードできるようにする              |
+| [bugbee-supermemory](https://github.com/supermemoryai/bugbee-supermemory)                      | スーパーメモリを使用したセッション間での永続メモリ                                                                   |
+| [@plannotator/bugbee](https://github.com/backnotprop/plannotator/tree/main/apps/bugbee-plugin) | 視覚的な注釈とプライベート/オフライン共有による対話型の計画レビュー                                                  |
+| [@openspoon/subtask2](https://github.com/spoons-and-mirrors/subtask2)                              | Bugbee/コマンドをきめ細かいフロー制御を備えた強力なオーケストレーションシステムに拡張                              |
+| [bugbee-scheduler](https://github.com/different-ai/bugbee-scheduler)                           | launchd (Mac) または systemd (Linux) を cron 構文で使用して、定期的なジョブをスケジュールする                        |
+| [micode](https://github.com/vtemian/micode)                                                        | 構造化されたブレインストーミング → 計画 → セッション継続性のあるワークフローの実装                                   |
+| [octto](https://github.com/vtemian/octto)                                                          | 複数の質問フォームを使用した AI ブレインストーミング用のインタラクティブなブラウザ UI                                |
+| [bugbee-background-agents](https://github.com/kdcokenny/bugbee-background-agents)              | 非同期委任とコンテキスト永続性を備えた Claude Code スタイルのバックグラウンドエージェント                            |
+| [bugbee-notify](https://github.com/kdcokenny/bugbee-notify)                                    | Bugbee のネイティブ OS 通知 – タスクがいつ完了したかを知る                                                         |
+| [bugbee-workspace](https://github.com/kdcokenny/bugbee-workspace)                              | バンドルされたマルチエージェントオーケストレーションハーネス – 16 コンポーネント、1 回のインストール                 |
+| [bugbee-worktree](https://github.com/kdcokenny/bugbee-worktree)                                | Bugbee 用のゼロフリクション Git ワークツリー                                                                       |
+| [bugbee-sentry-monitor](https://github.com/stolinski/bugbee-sentry-monitor)                    | Sentry AI Monitoring を使用して AI エージェントをトレースおよびデバッグする                                          |
+
+---
+
+## プロジェクト
+
+| 名前                                                                                       | 説明                                                                             |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| [kimaki](https://github.com/remorses/kimaki)                                               | SDK 上に構築された Bugbee セッションを制御する Discord ボット                  |
+| [bugbee.nvim](https://github.com/NickvanDyke/bugbee.nvim)                              | API に基づいて構築された、エディター対応プロンプト用の Neovim プラグイン         |
+| [portal](https://github.com/hosenur/portal)                                                | Tailscale/VPN 上の Bugbee 向けモバイルファースト Web UI                        |
+| [bugbee plugin template](https://github.com/zenobi-us/bugbee-plugin-template/)         | Bugbee プラグインを構築するためのテンプレート                                  |
+| [bugbee.nvim](https://github.com/sudo-tee/bugbee.nvim)                                 | Neovim Bugbee用フロントエンド - ターミナルベースの AI コーディングエージェント |
+| [ai-sdk-provider-bugbee-sdk](https://github.com/ben-vargas/ai-sdk-provider-bugbee-sdk) | @bugbee-ai/sdk 経由で Bugbee を使用するための Vercel AI SDK プロバイダー     |
+| [OpenChamber](https://github.com/btriapitsyn/openchamber)                                  | Bugbee 用の Web/デスクトップアプリと VS Code 拡張機能                          |
+| [Bugbee-Obsidian](https://github.com/mtymek/bugbee-obsidian)                           | Obsidian の UI に Bugbee を埋め込む Obsidian プラグイン                        |
+| [OpenWork](https://github.com/different-ai/openwork)                                       | Bugbee を利用した、Claude Cowork に代わるオープンソース                        |
+| [ocx](https://github.com/kdcokenny/ocx)                                                    | 移植可能な独立したプロファイルを備えた Bugbee 拡張機能マネージャー。           |
+| [CodeNomad](https://github.com/NeuralNomadsAI/CodeNomad)                                   | Bugbee 用のデスクトップ、Web、モバイル、およびリモートクライアントアプリ       |
+
+---
+
+## エージェント
+
+| 名前                                                              | 説明                                                                           |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [Agentic](https://github.com/Cluster444/agentic)                  | 構造化開発のためのモジュール型 AI エージェントとコマンド                       |
+| [bugbee-agents](https://github.com/darrenhinde/bugbee-agents) | 強化されたワークフローのための構成、プロンプト、エージェント、およびプラグイン |

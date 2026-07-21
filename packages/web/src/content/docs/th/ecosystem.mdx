@@ -1,0 +1,78 @@
+---
+title: ระบบนิเวศ
+description: โปรเจ็กต์และการผสานรวมที่สร้างด้วย Bugbee
+---
+
+ชุดโครงการชุมชนที่สร้างขึ้นบน Bugbee
+
+:::note
+ต้องการเพิ่มโครงการที่เกี่ยวข้องกับ Bugbee ของคุณลงในรายการนี้หรือไม่ ส่งพีอาร์.
+:::
+
+คุณยังสามารถลองดู [awesome-bugbee](https://github.com/awesome-bugbee/awesome-bugbee) และ [bugbee.cafe](https://bugbee.cafe) ซึ่งเป็นชุมชนที่รวบรวมระบบนิเวศและชุมชนไว้ด้วยกัน
+
+---
+
+## ปลั๊กอิน
+
+| ชื่อ                                                                                               | คำอธิบาย                                                                                                              |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [bugbee-daytona](https://github.com/daytonaio/daytona/tree/main/libs/bugbee-plugin)            | เรียกใช้เซสชัน Bugbee โดยอัตโนมัติในแซนด์บ็อกซ์ Daytona ที่แยกออกมาพร้อม git sync และการแสดงตัวอย่างแบบสด           |
+| [bugbee-helicone-session](https://github.com/H2Shami/bugbee-helicone-session)                  | แทรกส่วนหัวเซสชัน Helicone โดยอัตโนมัติสำหรับการจัดกลุ่มคำขอ                                                          |
+| [bugbee-type-inject](https://github.com/nick-vi/bugbee-type-inject)                            | ฉีดประเภท TypeScript/Svelte ลงในไฟล์ที่อ่านโดยอัตโนมัติด้วยเครื่องมือค้นหา                                            |
+| [bugbee-openai-codex-auth](https://github.com/numman-ali/bugbee-openai-codex-auth)             | ใช้การสมัครสมาชิก ChatGPT Plus/Pro แทนเครดิต API                                                                      |
+| [bugbee-gemini-auth](https://github.com/jenslys/bugbee-gemini-auth)                            | ใช้แผน Gemini ที่มีอยู่ของคุณแทนการเรียกเก็บเงิน API                                                                  |
+| [bugbee-antigravity-auth](https://github.com/NoeFabris/bugbee-antigravity-auth)                | ใช้โมเดลฟรีของ Antigravity แทนการเรียกเก็บเงิน API                                                                    |
+| [bugbee-devcontainers](https://github.com/athal7/bugbee-devcontainers)                         | การแยกคอนเทนเนอร์ Devcontainer แบบหลายสาขาพร้อมโคลนแบบตื้นและพอร์ตที่กำหนดอัตโนมัติ                                   |
+| [bugbee-google-antigravity-auth](https://github.com/shekohex/bugbee-google-antigravity-auth)   | ปลั๊กอิน Google Antigravity OAuth พร้อมรองรับ Google Search และการจัดการ API ที่แข็งแกร่งยิ่งขึ้น                     |
+| [bugbee-dynamic-context-pruning](https://github.com/Tarquinen/bugbee-dynamic-context-pruning)  | ปรับการใช้โทเค็นให้เหมาะสมโดยการตัดเอาท์พุตของเครื่องมือที่ล้าสมัย                                                    |
+| [bugbee-vibeguard](https://github.com/inkdust2021/bugbee-vibeguard)                            | ปกปิดความลับ/PII เป็นตัวยึดตำแหน่งแบบ VibeGuard ก่อนการเรียก LLM และกู้คืนในเครื่อง                                   |
+| [bugbee-websearch-cited](https://github.com/ghoulr/bugbee-websearch-cited.git)                 | เพิ่มการสนับสนุนการค้นหาเว็บแบบเนทีฟสำหรับผู้ให้บริการที่รองรับด้วยรูปแบบที่มีเหตุผลของ Google                        |
+| [bugbee-pty](https://github.com/shekohex/bugbee-pty.git)                                       | ช่วยให้ตัวแทน AI สามารถเรียกใช้กระบวนการเบื้องหลังใน PTY และส่งข้อมูลเชิงโต้ตอบให้พวกเขาได้                           |
+| [bugbee-shell-strategy](https://github.com/JRedeker/bugbee-shell-strategy)                     | คำแนะนำสำหรับคำสั่ง shell แบบไม่โต้ตอบ - ป้องกันการแฮงค์จากการดำเนินการที่ขึ้นอยู่กับ TTY                             |
+| [bugbee-wakatime](https://github.com/angristan/bugbee-wakatime)                                | ติดตามการใช้งาน Bugbee ด้วย Wakatime                                                                                |
+| [bugbee-md-table-formatter](https://github.com/franlol/bugbee-md-table-formatter/tree/main)    | ทำความสะอาดตาราง Markdown ที่ผลิตโดย LLM                                                                              |
+| [bugbee-morph-plugin](https://github.com/morphllm/bugbee-morph-plugin)                         | การแก้ไข Fast Apply, การค้นหาโค้ดเบส WarpGrep และการบีบอัดบริบทผ่าน Morph                                             |
+| [oh-my-bugbee](https://github.com/code-yeongyu/oh-my-bugbee)                                   | ตัวแทนเบื้องหลัง, เครื่องมือ LSP/AST/MCP ที่สร้างไว้ล่วงหน้า, ตัวแทนที่ได้รับการดูแลจัดการ, เข้ากันได้กับ Claude Code |
+| [bugbee-notificator](https://github.com/panta82/bugbee-notificator)                            | การแจ้งเตือนบนเดสก์ท็อปและเสียงเตือนสำหรับเซสชัน Bugbee                                                             |
+| [bugbee-notifier](https://github.com/mohak34/bugbee-notifier)                                  | การแจ้งเตือนบนเดสก์ท็อปและเสียงเตือนสำหรับการอนุญาต การดำเนินการเสร็จสิ้น และเหตุการณ์ข้อผิดพลาด                      |
+| [bugbee-zellij-namer](https://github.com/24601/bugbee-zellij-namer)                            | การตั้งชื่อเซสชัน Zellij อัตโนมัติที่ขับเคลื่อนด้วย AI ตามบริบทของ Bugbee                                           |
+| [bugbee-skillful](https://github.com/zenobi-us/bugbee-skillful)                                | อนุญาตให้ตัวแทน Bugbee โหลดแบบ Lazy Load ตามความต้องการพร้อมการค้นพบทักษะและการแทรก                                 |
+| [bugbee-supermemory](https://github.com/supermemoryai/bugbee-supermemory)                      | หน่วยความจำถาวรตลอดเซสชันโดยใช้ Supermemory                                                                           |
+| [@plannotator/bugbee](https://github.com/backnotprop/plannotator/tree/main/apps/bugbee-plugin) | การตรวจสอบแผนเชิงโต้ตอบพร้อมคำอธิบายประกอบแบบภาพและการแชร์ส่วนตัว/offline                                             |
+| [@openspoon/subtask2](https://github.com/spoons-and-mirrors/subtask2)                              | ขยาย bugbee /commands ไปสู่ระบบการประสานที่มีประสิทธิภาพพร้อมการควบคุมโฟลว์แบบละเอียด                               |
+| [bugbee-scheduler](https://github.com/different-ai/bugbee-scheduler)                           | กำหนดเวลางานที่เกิดซ้ำโดยใช้ launchd (Mac) หรือ systemd (Linux) ด้วยไวยากรณ์ cron                                     |
+| [micode](https://github.com/vtemian/micode)                                                        | ระดมความคิดอย่างมีโครงสร้าง → วางแผน → นำเวิร์กโฟลว์ไปใช้ด้วยความต่อเนื่องของเซสชัน                                   |
+| [octto](https://github.com/vtemian/octto)                                                          | UI เบราว์เซอร์แบบโต้ตอบสำหรับการระดมความคิด AI ด้วยแบบฟอร์มคำถามหลายข้อ                                               |
+| [bugbee-background-agents](https://github.com/kdcokenny/bugbee-background-agents)              | เอเจนต์พื้นหลังสไตล์ Claude Code พร้อมการมอบหมายแบบอะซิงก์และการคงอยู่ของบริบท                                        |
+| [bugbee-notify](https://github.com/kdcokenny/bugbee-notify)                                    | การแจ้งเตือนระบบปฏิบัติการดั้งเดิมสำหรับ Bugbee – ทราบเมื่องานเสร็จสมบูรณ์                                          |
+| [bugbee-workspace](https://github.com/kdcokenny/bugbee-workspace)                              | ชุดสายรัดประสานหลายเอเจนต์ที่ให้มา – ส่วนประกอบ 16 ชิ้น ติดตั้งเพียงครั้งเดียว                                        |
+| [bugbee-worktree](https://github.com/kdcokenny/bugbee-worktree)                                | เวิร์กทรีคอมไพล์ไร้แรงเสียดทานสำหรับ Bugbee                                                                         |
+| [bugbee-sentry-monitor](https://github.com/stolinski/bugbee-sentry-monitor)                    | ติดตามและแก้ไขข้อบกพร่องเอเจนต์ AI ของคุณด้วย Sentry AI Monitoring                                                    |
+
+---
+
+## โครงการ
+
+| ชื่อ                                                                                       | คำอธิบาย                                                                  |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| [kimaki](https://github.com/remorses/kimaki)                                               | บอท Discord เพื่อควบคุมเซสชัน Bugbee สร้างขึ้นบน SDK                    |
+| [bugbee.nvim](https://github.com/NickvanDyke/bugbee.nvim)                              | ปลั๊กอิน Neovim สำหรับข้อความแจ้งที่ทราบโดยบรรณาธิการ ซึ่งสร้างขึ้นบน API |
+| [portal](https://github.com/hosenur/portal)                                                | UI เว็บบนมือถือเป็นครั้งแรกสำหรับ Bugbee บน Tailscale/VPN               |
+| [bugbee plugin template](https://github.com/zenobi-us/bugbee-plugin-template/)         | เทมเพลตสำหรับสร้างปลั๊กอิน Bugbee                                       |
+| [bugbee.nvim](https://github.com/sudo-tee/bugbee.nvim)                                 | ส่วนหน้า Neovim สำหรับ bugbee - เอเจนต์การเข้ารหัส AI ที่ใช้ terminal   |
+| [ai-sdk-provider-bugbee-sdk](https://github.com/ben-vargas/ai-sdk-provider-bugbee-sdk) | ผู้ให้บริการ Vercel AI SDK สำหรับการใช้งาน Bugbee ผ่าน @bugbee-ai/sdk |
+| [OpenChamber](https://github.com/btriapitsyn/openchamber)                                  | แอพเว็บ / เดสก์ท็อปและส่วนขยาย VS Code สำหรับ Bugbee                    |
+| [Bugbee-Obsidian](https://github.com/mtymek/bugbee-obsidian)                           | ปลั๊กอิน Obsidian ที่ฝัง Bugbee ไว้ใน UI ของ Obsidian                   |
+| [OpenWork](https://github.com/different-ai/openwork)                                       | ทางเลือกโอเพ่นซอร์สแทน Claude Cowork ซึ่งขับเคลื่อนโดย Bugbee           |
+| [ocx](https://github.com/kdcokenny/ocx)                                                    | ตัวจัดการส่วนขยาย Bugbee พร้อมโปรไฟล์แบบพกพาและแยกส่วน                  |
+| [CodeNomad](https://github.com/NeuralNomadsAI/CodeNomad)                                   | แอปเดสก์ท็อป เว็บ มือถือ และไคลเอ็นต์ระยะไกลสำหรับ Bugbee               |
+
+---
+
+## ตัวแทน
+
+| ชื่อ                                                              | คำอธิบาย                                                                 |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [Agentic](https://github.com/Cluster444/agentic)                  | เอเจนต์ AI แบบแยกส่วนและคำสั่งสำหรับการพัฒนาแบบมีโครงสร้าง               |
+| [bugbee-agents](https://github.com/darrenhinde/bugbee-agents) | กำหนดค่า พรอมต์ เอเจนต์ และปลั๊กอินสำหรับเวิร์กโฟลว์ที่ได้รับการปรับปรุง |

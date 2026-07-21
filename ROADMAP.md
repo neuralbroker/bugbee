@@ -1,60 +1,42 @@
-# Roadmap
+# Bugbee Roadmap
 
-Aligned with [VISION.md](./VISION.md). Versions are intentional, not calendar promises.
+Status legend: **shipped** · **next** · **later**
 
-## v0.1 — Foundation (current target)
+## Shipped (foundation)
 
-- [x] Greenfield Rust workspace with stable crate boundaries
-- [x] Domain types: findings, evidence, scores, review status, PoC, adjudication
-- [x] Project config (`bugbee.toml`) + `bugbee init`
-- [x] SQLite-backed local store + checkpoint resume
-- [x] Secrets + YAML rule engine
-- [x] Headless `hunt` / `findings` / `report` (SARIF + bounty)
-- [x] OpenCode-style interactive workspace (slash commands)
-- [x] Provider trait + OpenAI-compatible client with **tool calling**
-- [x] Redaction helpers for outbound prompts
-- [x] **Godmode harness**: tools, budgets, doom-loop
-- [x] **Neuro-symbolic swarm**: Recon → Hunter → NSAE → Prover → Chain → Scribe
-- [x] Attack Knowledge Graph (`bugbee-akg`)
-- [x] NSAE matrix + static IR prover (`bugbee-nsae`)
-- [x] Carlini refine loop + bounty ScribeAgent
-- [x] `bugbee swarm` / `bugbee godmode` + TUI `/swarm`
-- [x] gRPC Super Harness (Unix socket, DiffOracle, typed errors)
-- [x] Authorization gate HARD RULE (`--i-have-permission` + scope)
-- [x] Hunter Agent (`parseHypotheses`, mock LLM, hunt prompt)
-- [x] HTTP crawler (robots.txt, cycle detection, API spec discovery)
-- [x] AKG kill-chain topology tests (difficulty scoring, pivot, synthesis)
-- [x] VS Code extension (security sidebar, SARIF import/export)
-- [x] E2E validation against `fixtures/python-vuln/`
-- [x] CI workflow
-- [ ] Installer script + release binaries
+- [x] OpenCode monorepo forked and rebranded to Bugbee (CLI, packages, env, config dirs)
+- [x] Dual-mandate default `build` agent (coding + defensive security)
+- [x] `hunt` primary agent + `security-review` subagent
+- [x] Tools: `secrets_scan`, `vuln_scan`, `findings`, `security_report`
+- [x] Offline CLI: `bugbee hunt`, `bugbee findings`
+- [x] Findings store (`.bugbee/findings.json`) with draft / confirmed / FP / fixed
+- [x] SARIF 2.1.0 + markdown export
+- [x] Slash commands: `/hunt`, `/findings`, `/report`
+- [x] Defense-only constitution in system prompts
+- [x] Fixture: `fixtures/python-vuln` + security selftest
 
-## v0.2 — Hunter quality
+## Next
 
-- [ ] Tree-sitter taint for Python / JS / TS
-- [ ] WASM prover microVM (authorized targets only)
-- [ ] OWASP Top 10 + India AppSec rule packs
-- [ ] Fixture regression suite (DVWA/VAmPI offline packs)
-- [ ] `bugbee connect` + OS keychain storage
-- [ ] OpenAPI/GraphQL deep recon
-
-## v0.3 — Agent depth
-
-- [ ] Full tool loop: read, grep, edit (gated), shell (gated)
-- [ ] Multi-role sessions (Scout → Taint → Reviewer → Patchsmith)
-- [ ] Permission prompts in TUI
-- [ ] Session resume + audit log export
-- [ ] `/ask` grounded on repo index + findings
-
-## v0.4 — Enterprise path
-
-- [ ] Policy packs (enterprise template)
-- [ ] Offline / air-gap mode docs + tests
-- [ ] GitHub Action + SARIF upload path
-- [ ] Signed releases + SLSA provenance (stretch)
+- [ ] Deeper language packs (JS/TS, Python, Go, Java, PHP rule depth)
+- [ ] Dependency / SCA reachability hints (lockfile-aware)
+- [ ] VS Code / editor security panel (findings list + jump-to-line)
+- [ ] CI GitHub Action: `bugbee hunt --format sarif` on PRs
+- [ ] Eval harness: precision/recall gates on golden fixtures in CI
+- [ ] Policy packs as data (enterprise YAML rule sets)
+- [ ] Publish install path (`install` script, npm/binary) under Bugbee identity
 
 ## Later
 
-- Language expansion (Go, PHP, Java, Rust self-analysis)
-- Team queues and finding ownership
-- Optional policy control plane
+- [ ] Attack Knowledge Graph (kill-chain linking of findings)
+- [ ] Language-aware taint / dataflow (tree-sitter or engine adapters)
+- [ ] Enterprise SSO / policy-gated cloud console (optional)
+- [ ] Desktop security workspace polish
+- [ ] Multi-repo / monorepo-scoped continuous hunt
+
+## Non-goals (hard)
+
+- Live exploitation modules against third-party systems
+- Weaponized payload generation for unauthorized targets
+- Replacing professional human AppSec review for high-assurance systems
+
+See [VISION.md](./VISION.md) for the long-term north star.

@@ -1,194 +1,261 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Rust-1.75%2B-orange" alt="Rust">
-  <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License">
-  <img src="https://img.shields.io/badge/tests-passing-green" alt="Tests">
-  <img src="https://img.shields.io/badge/clippy-0%20warnings-brightgreen" alt="Clippy">
-  <img src="https://img.shields.io/badge/PRs-welcome-purple" alt="PRs">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
+  <img src="https://img.shields.io/badge/runtime-Bun-black" alt="Bun">
+  <img src="https://img.shields.io/badge/agents-coding%20%2B%20security-purple" alt="Agents">
+  <img src="https://img.shields.io/badge/defense--only-yes-green" alt="Defense only">
 </p>
 
 <h1 align="center">Bugbee</h1>
 
 <p align="center">
-  <strong>Terminal-native security engineering.</strong><br>
-  Discover vulnerabilities. Prove them with evidence. Resolve them safely.
+  <strong>The AI coding IDE that also hunts vulnerabilities.</strong><br>
+  Build software. Prove risks with evidence. Patch safely.
 </p>
 
 <p align="center">
-  <code>cargo install --path crates/bugbee --locked</code> ·
-  <code>bugbee init</code> ·
-  <code>bugbee hunt</code>
+  <code>bun install</code> ·
+  <code>bun run dev</code> ·
+  <code>bugbee hunt</code> ·
+  <code>/hunt</code>
 </p>
 
 <p align="center">
-  <i>Memory-safe (Rust) · Deterministic engines · BYOK models · Terminal-first · Human-in-the-loop review</i>
+  <i>Terminal · Desktop · IDE · Deterministic scanners · BYOK models · Human-in-the-loop</i>
+</p>
+
+<p align="center">
+  <a href="README.md">English</a> ·
+  <a href="VISION.md">Vision</a> ·
+  <a href="ROADMAP.md">Roadmap</a> ·
+  <a href="SECURITY.md">Security</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 ---
 
-## Features
+## Why Bugbee
 
-| | |
-|---|---|
-| **Smart hunts** | Deterministic rules engine + secrets scanning + multi-agent LLM swarm |
-| **AI-powered** | Bring your own key (OpenAI, Anthropic, Ollama, xAI, 10+ providers) |
-| **Kill chains** | Attack Knowledge Graph links individual findings into exploitable attack paths |
-| **Safe by design** | No live exploits · secrets redacted before outbound calls · defense-only tooling |
-| **Interactive TUI** | Full workspace with slash commands, finding review, live streaming events |
-| **Single binary** | `cargo install` · air-gap ready · no Node.js or Python runtime required |
-| **SARIF export** | CI-ready output · bounty reports · compliance pack generation |
-| **Tests** | CLI integration, crawler, kill-chain topology, engine, harness, E2E validation |
+Most AI coding agents stop at “write the feature.”  
+Most AppSec tools stop at “here’s a PDF of alerts.”
+
+**Bugbee is both:** an agent runtime with OpenCode-class UX, specialized for **security-native development**.
+
+| Mode | What you get |
+|------|----------------|
+| **Build** | Pair-programming agent with LSP, multi-agent tasks, plan mode, permissions |
+| **Hunt** | Deterministic secrets + OWASP-style rule scanners → evidence store |
+| **Review** | Adversarial read-only subagent that kills weak findings |
+| **Report** | Markdown reports + SARIF 2.1.0 for CI |
+
+Hard product law: **defense only**. No live exploitation modules. No weaponized payloads against third-party systems. Fixtures and PoCs stay local, synthetic, and educational.
 
 ---
 
 ## Quick start
 
+### Prerequisites
+
+- [Bun](https://bun.sh) 1.3+
+- A model provider key when using agentic mode (Anthropic, OpenAI, Ollama, xAI, …)
+
+### Install & run (from source)
+
 ```bash
-# Install
-cargo install --path crates/bugbee --locked
+git clone https://github.com/neuralbroker/bugbee.git
+cd bugbee
+bun install
 
-# Initialize in your project
-cd /your/repo
-bugbee init
+# Interactive TUI
+bun run dev
 
-# Run a hunt
-bugbee hunt
-
-# Review findings
-bugbee findings
-
-# Export a report
-bugbee report --format bounty -o report.md
+# CLI help
+bun run --cwd packages/bugbee --conditions=browser src/index.ts --help
 ```
 
-No accounts, no cloud services, no configuration required. All deterministic engines work fully offline — the LLM is optional.
+### Offline security hunt (no LLM required)
+
+```bash
+# Scan a directory with secrets + rule engines
+bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt /path/to/project
+
+# List findings
+bun run --cwd packages/bugbee --conditions=browser src/index.ts findings --directory /path/to/project
+
+# SARIF for CI
+bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt /path/to/project \
+  --format sarif -o bugbee-results.sarif.json
+
+# Markdown report
+bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt /path/to/project \
+  --format markdown -o bugbee-report.md
+```
+
+Try the intentional fixture:
+
+```bash
+bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt ./fixtures/python-vuln
+```
+
+### Interactive agent (with model)
+
+```bash
+bun run dev
+```
+
+Inside a project session:
+
+```text
+/hunt                 # defensive hunt: scanners + evidence triage
+/findings             # list & triage open findings
+/report               # markdown or SARIF export
+```
+
+Or chat:
+
+```text
+Hunt this repo for injection and secrets, then patch the top confirmed issues.
+```
+
+Config: `bugbee.json` / `bugbee.jsonc` and `.bugbee/`.  
+Findings store: `.bugbee/findings.json`.  
+XDG paths: `~/.config/bugbee`, `~/.local/share/bugbee`, `~/.cache/bugbee`.
 
 ---
 
-## Commands
+## CLI surface
 
-```bash
-bugbee                    # Launch interactive TUI workspace
-bugbee init               # Configure bugbee.toml and local state
-bugbee hunt               # Deterministic rules + secrets scan
-bugbee findings           # List all findings
-bugbee review <id> confirm|fp|fixed   # Human review
-bugbee report --format bounty -o r.md # Markdown report
-bugbee report --output results.sarif.json  # SARIF for CI
-bugbee doctor             # Check configuration readiness
-bugbee connect --provider ollama --model qwen2.5-coder  # Add LLM
-bugbee ask "What are the top risks?"   # Query AI about your repository
-bugbee swarm -v           # Full neuro-symbolic pipeline
-bugbee godmode            # Multi-phase AI harness
-bugbee super "goal"       # SuperHarness agent loop
-```
-
-### TUI workspace
-
-| Key | Action |
-|-----|--------|
-| `/hunt` or `h` | Run local hunt |
-| `/findings` | Browse findings |
-| `/review <id> confirm\|fp\|fixed` | Human review |
-| `c` / `f` / `x` | Confirm / false-positive / fixed |
-| `Tab` | Switch between hunt and review roles |
-| `/doctor` | Configuration check |
-| `/report` | Export SARIF report |
-| `q` | Quit |
+| Command | Purpose |
+|---------|---------|
+| `bugbee` | Interactive TUI (default) |
+| `bugbee hunt [dir]` | Offline deterministic scan (secrets + rules) |
+| `bugbee findings` | List / update finding status |
+| `bugbee run …` | Non-interactive agent turn |
+| `bugbee agent list` | List agents (`build`, `hunt`, `security-review`, …) |
+| `bugbee providers` | Configure BYOK credentials |
+| `bugbee serve` / `web` | Headless server / web UI |
 
 ---
 
-## Connect an AI model (optional)
+## Security tools (agent-facing)
 
-```bash
-# OpenAI
-bugbee connect --provider openai --model gpt-4o
-export OPENAI_API_KEY=sk-...
+| Tool | Purpose |
+|------|---------|
+| `secrets_scan` | High-signal credential detectors (values redacted) |
+| `vuln_scan` | OWASP-inspired heuristics (injection sinks, weak crypto, XSS, …) |
+| `findings` | `list` / `get` / `set_status` (`draft` → `confirmed` \| `false_positive` \| `fixed`) |
+| `security_report` | Markdown or SARIF 2.1.0 export |
 
-# Anthropic Claude
-bugbee connect --provider anthropic --model claude-3-5-haiku-latest
-export ANTHROPIC_API_KEY=...
+### Agents
 
-# Ollama (local, free)
-bugbee connect --provider ollama --model qwen2.5-coder
-# No API key required — runs entirely on your machine
-
-# Other supported providers:
-# xAI · DeepSeek · OpenRouter · HuggingFace · GLM · custom
-```
-
-When connected, Bugbee operates as an AI security engineer — it reads files, runs targeted hunts, correlates findings across modules, and writes evidence-backed reports. Without a model, all deterministic engines function fully offline.
+| Agent | Role |
+|-------|------|
+| `build` | Default — coding + defensive security dual mandate |
+| `plan` | Plan mode (no edits) |
+| `hunt` | Security hunt lead (primary) |
+| `security-review` | Read-only adversarial reviewer (subagent) |
+| `explore` / `general` | Codebase exploration / parallel tasks |
 
 ---
 
 ## Architecture
 
 ```
-bugbee              CLI entry point
-bugbee-ui           Terminal UI (Ratatui)
-bugbee-agent        Swarm orchestration · harness · tools · crawler · hunter
-bugbee-nsae         Neuro-symbolic adjudication and prover
-bugbee-akg          Attack Knowledge Graph (kill chain topology)
-bugbee-engine       Rules engine · secrets detection · sandbox
-bugbee-llm          BYOK provider abstraction with tool-calling support
-bugbee-core         Types · store · config · scope enforcement · redaction
-bugbee-harness      gRPC Super Harness (differential oracle, verification)
+packages/
+  bugbee/     CLI, TUI entry, tools, security engine
+  core/       Agent runtime, providers, permissions, plugins
+  app/        Shared web UI
+  desktop/    Desktop shell
+  tui/ ui/    Terminal & shared components
+  sdk/ schema/  Public types & client SDK
+  plugin/     Plugin surface
 ```
 
-**Dependency rule:** `ui -> agent -> {engine, llm, harness} -> core`
+Security engine (`packages/bugbee/src/security/`):
 
-The engine never calls the network. Secrets are redacted before any outbound LLM call.
+```
+rules + secrets → scanner → .bugbee/findings.json → SARIF / markdown
+         ↑                           ↑
+  vuln_scan / secrets_scan    findings / security_report / bugbee hunt
+```
 
-### Key modules
+Deterministic engines run fully offline. LLMs are optional for correlation, patches, and explanation.
 
-| Module | Description |
-|--------|-------------|
-| **Hunter** | Parses LLM vulnerability hypotheses; mock provider for testing |
-| **Crawler** | HTTP crawler with robots.txt, cycle detection, API discovery |
-| **Super Harness** | gRPC Unix-socket verification server with differential oracle |
-| **Authorization** | Hard-rule enforcement: `--i-have-permission` flag + scope file for live targets |
-| **AKG** | Attack Knowledge Graph — kill chains, pivot suggestions, topology analysis |
-| **VS Code** | Sidebar extension for SARIF import, finding navigation, and verification |
-
----
-
-## Security and trust
-
-- **Defense only.** No exploitation modules. No weaponized payloads.
-- **Authorization gate.** Live-target commands require `--i-have-permission` and a scope file.
-- **Redacted by default.** Secrets and credentials are stripped before any outbound LLM call.
-- **Sensitive path protection.** Tool reads respect policy-blocked paths.
-- **Audit trail.** All findings carry evidence, location, and status history.
-- **Rust single binary.** Memory-safe, reproducible builds.
-
----
-
-## Documentation
-
-| Document | Contents |
-|----------|----------|
-| [SPEC.md](./SPEC.md) | Full implementation specification with success criteria |
-| [HARNESS.md](./HARNESS.md) | SuperHarness architecture and integration map |
-| [VISION.md](./VISION.md) | Product constitution and long-term direction |
-| [ROADMAP.md](./ROADMAP.md) | Versioned milestones and future horizons |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | Build, test, and contribution guide |
-| [SECURITY.md](./SECURITY.md) | Reporting vulnerabilities in Bugbee itself |
-
----
-
-## Test suite
+Self-test:
 
 ```bash
-cargo test --workspace   # all tests passing
-cargo clippy --workspace # zero warnings
+bun packages/bugbee/src/security/selftest.ts
 ```
 
 ---
 
-<p align="center">
-  <i>Bugbee is inspired by <a href="https://opencode.ai">OpenCode</a> but is an independent project — not affiliated with the OpenCode team.</i>
-</p>
+## Differentiation
 
-<p align="center">
-  <a href="https://github.com/neuralbroker/bugbee">GitHub</a> ·
-  <a href="./LICENSE">Apache 2.0</a>
-</p>
+1. **One agent for ship + secure** — no context switch between a coding IDE and a separate scanner SaaS.
+2. **Evidence completeness** — findings without path/line/snippet stay draft; adversarial review is first-class.
+3. **Deterministic + LLM hybrid** — cheap scanners first; models for dataflow and patches, not inventing CVEs.
+4. **Defense-only constitution** — safe for enterprise source and regulated environments.
+5. **BYOK / local models** — no forced cloud for core hunts.
+6. **CI-native artifacts** — SARIF + store under `.bugbee/` for PR gates.
+7. **Proven agent UX lineage** — OpenCode-class interaction model, specialized into a distinct product.
+
+---
+
+## Configuration
+
+```jsonc
+// bugbee.jsonc
+{
+  "$schema": "https://bugbee.dev/config.json",
+  "model": "anthropic/claude-sonnet-4-5"
+  // "default_agent": "hunt"
+}
+```
+
+Environment flags use the `BUGBEE_*` prefix (see `packages/core/src/flag/flag.ts`).
+
+---
+
+## Development
+
+```bash
+bun install
+bun run dev                          # TUI
+bun run typecheck                    # turbo typecheck (when workspaces fully installed)
+bun run --cwd packages/bugbee test   # package tests
+bun packages/bugbee/src/security/selftest.ts
+```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) and [AGENTS.md](./AGENTS.md).
+
+---
+
+## Documentation map
+
+| Doc | Contents |
+|-----|----------|
+| [VISION.md](./VISION.md) | North star, moat, constitution |
+| [ROADMAP.md](./ROADMAP.md) | Near-term product plan |
+| [SECURITY.md](./SECURITY.md) | Product posture + vulnerability reporting |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute |
+| [AGENTS.md](./AGENTS.md) | Conventions for human and AI contributors |
+| [NOTICE](./NOTICE) | Upstream OpenCode attribution |
+| [LICENSE](./LICENSE) | MIT |
+
+Localized READMEs (`README.*.md`) link back to this English product README.
+
+---
+
+## Lineage & license
+
+Bugbee is a **product fork** of [OpenCode](https://github.com/anomalyco/opencode) (MIT).  
+Upstream credit belongs to the OpenCode authors and contributors.  
+Bugbee is an independent project and is **not affiliated** with the OpenCode team.
+
+Licensed under the **MIT License** — see [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
+
+---
+
+## Security policy
+
+See [SECURITY.md](./SECURITY.md). Report product vulnerabilities privately.  
+**Do not** use Bugbee to attack systems you do not own or lack authorization to test.

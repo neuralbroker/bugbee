@@ -1,0 +1,33 @@
+{
+  "$schema": "https://v2-8-13.turborepo.dev/schema.json",
+  "globalEnv": ["CI", "BUGBEE_DISABLE_SHARE"],
+  "globalPassThroughEnv": ["CI", "BUGBEE_DISABLE_SHARE"],
+  "tasks": {
+    "typecheck": {},
+    "build": {
+      "dependsOn": [],
+      "outputs": ["dist/**"]
+    },
+    "bugbee#test": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "passThroughEnv": ["*"]
+    },
+    "@bugbee-ai/core#test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "@bugbee-ai/app#test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "@bugbee-ai/ui#test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "@bugbee-ai/session-ui#test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    }
+  }
+}

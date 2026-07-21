@@ -1,35 +1,40 @@
 # Security Policy
 
-## Defensive use only
+## Product posture
 
-Bugbee is designed for **authorized, defensive** assessment of codebases you own
-or have explicit permission to test. It does not include live exploitation
-tooling against third-party systems.
+Bugbee is a **defense-only** AI coding and security engineering tool.
 
-## Reporting vulnerabilities in Bugbee
+| Principle | Practice |
+|-----------|----------|
+| Authorized use | Intended for repos/systems you own or are authorized to assess |
+| Evidence first | Scanners produce draft findings with path/line/snippet |
+| Secret safety | Detectors redact matched values in tool output |
+| No weapons | No modules for live exploitation of third-party systems |
 
-If you discover a security issue **in Bugbee itself** (the agent, store,
-redaction, or install path), please report it privately:
+Hard laws are also encoded in agent system prompts and the `hunt` / `security-review` agent constitutions.
 
-- Email: security@neuralbroker.dev (or open a private security advisory on GitHub)
-- Do not file public issues for unfixed critical vulnerabilities
+## Reporting a vulnerability in Bugbee itself
 
-Please include:
+If you find a security issue in Bugbee (CLI, agent runtime, desktop, server, or scanners):
 
-1. Affected version / commit
-2. Reproduction steps
-3. Impact assessment
-4. Any suggested fix
+1. **Do not** open a public GitHub issue with exploit details.
+2. Prefer a [private security advisory](https://github.com/neuralbroker/bugbee/security/advisories/new) on the repository, or contact maintainers via the GitHub organization.
+3. Include: impact, affected versions/commits, reproduction steps, and any suggested fix.
 
-We aim to acknowledge reports within 72 hours.
+We aim to acknowledge reports within **7 days** and ship fixes as quickly as practical.
 
-## Secrets and keys
+## Using Bugbee safely
 
-- Prefer environment variables or OS keychain via `bugbee connect` (when available)
-- Never commit API keys or `.bugbee/` state containing credentials
-- Outbound LLM prompts should pass through redaction before leaving the host
+- Run hunts only on authorized targets.
+- Treat automated findings as **draft** until verified.
+- Rotate any real secrets discovered; do not paste them into tickets or chat logs.
+- Review patches before applying to production.
 
-## Supply chain
+## Authorized use only
 
-- Prefer `cargo install --locked` or signed release binaries
-- Review third-party crate updates carefully; core stays Rust / memory-safe
+Users are responsible for ensuring their use of Bugbee complies with law and organizational policy. Unauthorized scanning or access of systems is prohibited.
+
+## Related
+
+- [VISION.md](./VISION.md) — product constitution
+- [NOTICE](./NOTICE) — upstream attribution

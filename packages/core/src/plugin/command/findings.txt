@@ -1,0 +1,8 @@
+Triage security findings for ${path}.
+
+1. Use the findings tool with action=list (optionally filter by severity if the user asked).
+2. For each notable finding, use action=get and verify the snippet still exists with Read.
+3. Recommend status changes (confirmed / false_positive / fixed) with one-line rationale.
+4. Apply set_status only when the user agrees or evidence is unambiguous.
+
+Present a clean table-like summary: severity, id, title, location, recommended status.

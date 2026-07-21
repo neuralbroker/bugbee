@@ -2,31 +2,22 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
-
-env:
-  CARGO_TERM_COLOR: always
-  RUSTFLAGS: -D warnings
+    branches: [main, dev]
 
 jobs:
-  test:
+  security-engine:
+    name: Security engine selftest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - name: Format
-        run: cargo fmt --all -- --check
-      - name: Build
-        run: cargo build --workspace
-      - name: Test
-        run: cargo test --workspace
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: Fixture hunt smoke
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - name: Run security selftest
+        run: bun packages/bugbee/src/security/selftest.ts
+      - name: Offline hunt on fixture
         run: |
-          cargo run -p bugbee -- --root fixtures/python-vuln init --name python-vuln
-          cargo run -p bugbee -- --root fixtures/python-vuln hunt
-          cargo run -p bugbee -- --root fixtures/python-vuln findings
+          bun run --cwd packages/bugbee --conditions=browser src/index.ts hunt ./fixtures/python-vuln
+          bun run --cwd packages/bugbee --conditions=browser src/index.ts findings --directory ./fixtures/python-vuln

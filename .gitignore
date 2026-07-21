@@ -1,29 +1,42 @@
-# Rust
-/target/
-**/*.rs.bk
-Cargo.lock.bak
-
-# Bugbee local state
-.bugbee/
-*.sarif.json
-findings.json
-
-# IDE / OS
-.idea/
-.vscode/
-*.swp
-*~
 .DS_Store
-
-# Env / secrets
+node_modules
+.worktrees
+.sst
 .env
-.env.*
-!.env.example
+.env.local
+.idea
+.vscode
+.codex
+*~
+playground
+tmp
+dist
+ts-dist
+.turbo
+**/.serena
+.serena/
+**/.omo
+.omo/
+/result
+refs
+Session.vim
+/bugbee.json
+a.out
+target
+.scripts
+.direnv/
 
-# Node (site may return later)
-node_modules/
-.next/
-site/out/
+# Local dev files
+bugbee-dev
+UPCOMING_CHANGELOG.md
+logs/
+*.bun-build
+tsconfig.tsbuildinfo
 
-# Reference clones (local only)
-/reference/
+# Bugbee local security store (keep findings out of git by default)
+.bugbee/findings.json
+bugbee-report.md
+bugbee-results.sarif.json
+package.json.full
+# Generated findings under fixtures when running local hunts
+fixtures/**/.bugbee/

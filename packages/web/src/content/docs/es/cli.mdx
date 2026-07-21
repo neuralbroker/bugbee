@@ -1,0 +1,616 @@
+---
+title: CLI
+description: Opciones y comandos de la CLI de Bugbee.
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components"
+
+La CLI de Bugbee de forma predeterminada inicia el [TUI](/docs/tui) cuando se ejecuta sin ningún argumento.
+
+```bash
+bugbee
+```
+
+Pero también acepta comandos como se documenta en esta página. Esto le permite interactuar con Bugbee mediante programación.
+
+```bash
+bugbee run "Explain how closures work in JavaScript"
+```
+
+---
+
+### tui
+
+Inicie la interfaz de usuario del terminal Bugbee.
+
+```bash
+bugbee [project]
+```
+
+#### Opciones
+
+| Opción                                   | Corta | Descripción                                                           |
+| ---------------------------------------- | ----- | --------------------------------------------------------------------- |
+| <nobr><code>{"--continue"}</code></nobr> | `-c`  | Continuar la última sesión                                            |
+| <nobr><code>{"--session"}</code></nobr>  | `-s`  | ID de sesión para continuar                                           |
+| <nobr><code>{"--fork"}</code></nobr>     |       | Bifurcar la sesión al continuar (usar con `--continue` o `--session`) |
+| <nobr><code>{"--prompt"}</code></nobr>   |       | Aviso de uso                                                          |
+| <nobr><code>{"--model"}</code></nobr>    | `-m`  | Modelo a utilizar en forma de proveedor/modelo                        |
+| <nobr><code>{"--agent"}</code></nobr>    |       | Agente a utilizar                                                     |
+| <nobr><code>{"--port"}</code></nobr>     |       | Puerto para escuchar                                                  |
+| <nobr><code>{"--hostname"}</code></nobr> |       | Nombre de host para escuchar                                          |
+
+---
+
+## Comandos
+
+La CLI de Bugbee también tiene los siguientes comandos.
+
+---
+
+### agent
+
+Administrar agentes para Bugbee.
+
+```bash
+bugbee agent [command]
+```
+
+---
+
+### attach
+
+Conecte una terminal a un servidor backend Bugbee que ya se esté ejecutando y iniciado mediante los comandos `serve` o `web`.
+
+```bash
+bugbee attach [url]
+```
+
+Esto permite usar TUI con un backend remoto Bugbee. Por ejemplo:
+
+```bash
+# Start the backend server for web/mobile access
+bugbee web --port 4096 --hostname 0.0.0.0
+
+# In another terminal, attach the TUI to the running backend
+bugbee attach http://10.20.30.40:4096
+```
+
+#### Opciones
+
+| Opción                                   | Corta | Descripción                                                                               |
+| ---------------------------------------- | ----- | ----------------------------------------------------------------------------------------- |
+| <nobr><code>{"--dir"}</code></nobr>      |       | Directorio de trabajo para iniciar TUI en                                                 |
+| <nobr><code>{"--continue"}</code></nobr> | `-c`  | Continuar la última sesión                                                                |
+| <nobr><code>{"--session"}</code></nobr>  | `-s`  | ID de sesión para continuar                                                               |
+| <nobr><code>{"--fork"}</code></nobr>     |       | Bifurcar la sesión al continuar (usar con `--continue` o `--session`)                     |
+| <nobr><code>{"--password"}</code></nobr> | `-p`  | Contraseña de autenticación básica (predeterminada: `BUGBEE_SERVER_PASSWORD`)           |
+| <nobr><code>{"--username"}</code></nobr> | `-u`  | Usuario de autenticación básica (predeterminado: `BUGBEE_SERVER_USERNAME` u `bugbee`) |
+
+---
+
+#### create
+
+Cree un nuevo agente con configuración personalizada.
+
+```bash
+bugbee agent create
+```
+
+Este comando lo guiará en la creación de un nuevo agente con un mensaje del sistema personalizado y una configuración de herramientas.
+
+---
+
+#### list
+
+Enumere todos los agentes disponibles.
+
+```bash
+bugbee agent list
+```
+
+---
+
+### auth
+
+Comando para administrar credenciales e iniciar sesión para proveedores.
+
+```bash
+bugbee auth [command]
+```
+
+---
+
+#### login
+
+Bugbee funciona con la lista de proveedores en [Models.dev](https://models.dev), por lo que puede usar `bugbee auth login` para configurar las claves API para cualquier proveedor que desee utilizar. Esto se almacena en `~/.local/share/bugbee/auth.json`.
+
+```bash
+bugbee auth login
+```
+
+Cuando se inicia Bugbee, carga los proveedores desde el archivo de credenciales. Y si hay claves definidas en sus entornos o un archivo `.env` en su proyecto.
+
+---
+
+#### list
+
+Enumera todos los proveedores autenticados tal como están almacenados en el archivo de credenciales.
+
+```bash
+bugbee auth list
+```
+
+O la versión corta.
+
+```bash
+bugbee auth ls
+```
+
+---
+
+#### logout
+
+Cierra tu sesión de un proveedor eliminándolo del archivo de credenciales.
+
+```bash
+bugbee auth logout
+```
+
+---
+
+### github
+
+Administre el agente GitHub para la automatización del repositorio.
+
+```bash
+bugbee github [command]
+```
+
+---
+
+#### install
+
+Instale el agente GitHub en su repositorio.
+
+```bash
+bugbee github install
+```
+
+Esto configura el flujo de trabajo de acciones GitHub necesario y lo guía a través del proceso de configuración. [Más información](/docs/github).
+
+---
+
+#### run
+
+Ejecute el agente GitHub. Esto se usa normalmente en acciones GitHub.
+
+```bash
+bugbee github run
+```
+
+##### Opciones
+
+| Opción                                | Descripción                                    |
+| ------------------------------------- | ---------------------------------------------- |
+| <nobr><code>{"--event"}</code></nobr> | GitHub evento simulado para ejecutar el agente |
+| <nobr><code>{"--token"}</code></nobr> | GitHub token de acceso personal                |
+
+---
+
+### mcp
+
+Administrar servidores de protocolo de contexto modelo.
+
+```bash
+bugbee mcp [command]
+```
+
+---
+
+#### add
+
+Agregue un servidor MCP a su configuración.
+
+```bash
+bugbee mcp add
+```
+
+Este comando lo guiará para agregar un servidor MCP local o remoto.
+
+---
+
+#### list
+
+Enumere todos los servidores MCP configurados y su estado de conexión.
+
+```bash
+bugbee mcp list
+```
+
+O utilice la versión corta.
+
+```bash
+bugbee mcp ls
+```
+
+---
+
+#### auth
+
+Autentíquese con un servidor MCP habilitado para OAuth.
+
+```bash
+bugbee mcp auth [name]
+```
+
+Si no proporciona un nombre de servidor, se le pedirá que seleccione entre los servidores compatibles con OAuth disponibles.
+
+También puede enumerar los servidores compatibles con OAuth y su estado de autenticación.
+
+```bash
+bugbee mcp auth list
+```
+
+O utilice la versión corta.
+
+```bash
+bugbee mcp auth ls
+```
+
+---
+
+#### logout
+
+Elimine las credenciales OAuth para un servidor MCP.
+
+```bash
+bugbee mcp logout [name]
+```
+
+---
+
+#### debug
+
+Depurar problemas de conexión OAuth para un servidor MCP.
+
+```bash
+bugbee mcp debug <name>
+```
+
+---
+
+### models
+
+Enumere todos los modelos disponibles de los proveedores configurados.
+
+```bash
+bugbee models [provider]
+```
+
+Este comando muestra todos los modelos disponibles en sus proveedores configurados en el formato `provider/model`.
+
+Esto es útil para determinar el nombre exacto del modelo que se usará en [su configuración](/docs/config/).
+
+Opcionalmente, puede pasar un ID de proveedor para filtrar modelos por ese proveedor.
+
+```bash
+bugbee models anthropic
+```
+
+#### Opciones
+
+| Opción                                  | Descripción                                                                 |
+| --------------------------------------- | --------------------------------------------------------------------------- |
+| <nobr><code>{"--refresh"}</code></nobr> | Actualizar la caché de modelos desde models.dev                             |
+| <nobr><code>{"--verbose"}</code></nobr> | Utilice una salida del modelo más detallada (incluye metadatos como costos) |
+
+Utilice el indicador `--refresh` para actualizar la lista de modelos almacenados en caché. Esto es útil cuando se han agregado nuevos modelos a un proveedor y desea verlos en Bugbee.
+
+```bash
+bugbee models --refresh
+```
+
+---
+
+### run
+
+Ejecute bugbee en modo no interactivo pasando un mensaje directamente.
+
+```bash
+bugbee run [message..]
+```
+
+Esto es útil para secuencias de comandos, automatización o cuando desea una respuesta rápida sin iniciar el TUI completo. Por ejemplo.
+
+```bash "bugbee run"
+bugbee run Explain the use of context in Go
+```
+
+También puede conectarse a una instancia `bugbee serve` en ejecución para evitar tiempos de arranque en frío del servidor MCP en cada ejecución:
+
+```bash
+# Start a headless server in one terminal
+bugbee serve
+
+# In another terminal, run commands that attach to it
+bugbee run --attach http://localhost:4096 "Explain async/await in JavaScript"
+```
+
+#### Opciones
+
+| Opción                                   | Corta | Descripción                                                                               |
+| ---------------------------------------- | ----- | ----------------------------------------------------------------------------------------- |
+| <nobr><code>{"--command"}</code></nobr>  |       | El comando a ejecutar, use mensaje para args                                              |
+| <nobr><code>{"--continue"}</code></nobr> | `-c`  | Continuar la última sesión                                                                |
+| <nobr><code>{"--session"}</code></nobr>  | `-s`  | ID de sesión para continuar                                                               |
+| <nobr><code>{"--fork"}</code></nobr>     |       | Bifurcar la sesión al continuar (usar con `--continue` o `--session`)                     |
+| <nobr><code>{"--share"}</code></nobr>    |       | Comparte la sesión                                                                        |
+| <nobr><code>{"--model"}</code></nobr>    | `-m`  | Modelo a utilizar en forma de proveedor/modelo                                            |
+| <nobr><code>{"--agent"}</code></nobr>    |       | Agente a utilizar                                                                         |
+| <nobr><code>{"--file"}</code></nobr>     | `-f`  | Archivo(s) para adjuntar al mensaje                                                       |
+| <nobr><code>{"--format"}</code></nobr>   |       | Formato: predeterminado (formateado) o json (eventos JSON sin formato)                    |
+| <nobr><code>{"--title"}</code></nobr>    |       | Título de la sesión (utiliza un mensaje truncado si no se proporciona ningún valor)       |
+| <nobr><code>{"--attach"}</code></nobr>   |       | Adjuntar a un servidor bugbee en ejecución (por ejemplo, http://localhost:4096)         |
+| <nobr><code>{"--password"}</code></nobr> | `-p`  | Contraseña de autenticación básica (predeterminada: `BUGBEE_SERVER_PASSWORD`)           |
+| <nobr><code>{"--username"}</code></nobr> | `-u`  | Usuario de autenticación básica (predeterminado: `BUGBEE_SERVER_USERNAME` u `bugbee`) |
+| <nobr><code>{"--dir"}</code></nobr>      |       | Directorio de ejecución, o ruta en el servidor remoto al adjuntar                         |
+| <nobr><code>{"--variant"}</code></nobr>  |       | Variante del modelo (esfuerzo de razonamiento específico del proveedor)                   |
+| <nobr><code>{"--thinking"}</code></nobr> |       | Mostrar bloques de pensamiento                                                            |
+| <nobr><code>{"--port"}</code></nobr>     |       | Puerto para el servidor local (el puerto predeterminado es aleatorio)                     |
+
+---
+
+### serve
+
+Inicie un servidor Bugbee sin cabeza para acceso API. Consulte los [documentos del servidor](/docs/server) para conocer la interfaz HTTP completa.
+
+```bash
+bugbee serve
+```
+
+Esto inicia un servidor HTTP que proporciona acceso API a la funcionalidad bugbee sin la interfaz TUI. Configure `BUGBEE_SERVER_PASSWORD` para habilitar la autenticación básica HTTP (el nombre de usuario predeterminado es `bugbee`).
+
+#### Opciones
+
+| Opción                                   | Descripción                                          |
+| ---------------------------------------- | ---------------------------------------------------- |
+| <nobr><code>{"--port"}</code></nobr>     | Puerto para escuchar                                 |
+| <nobr><code>{"--hostname"}</code></nobr> | Nombre de host para escuchar                         |
+| <nobr><code>{"--mdns"}</code></nobr>     | Habilitar el descubrimiento de mDNS                  |
+| <nobr><code>{"--cors"}</code></nobr>     | Orígenes de navegador adicionales para permitir CORS |
+
+---
+
+### session
+
+Administrar Bugbee sesiones.
+
+```bash
+bugbee session [command]
+```
+
+---
+
+#### list
+
+Enumere todas las sesiones Bugbee.
+
+```bash
+bugbee session list
+```
+
+##### Opciones
+
+| Opción                                    | Corta | Descripción                             |
+| ----------------------------------------- | ----- | --------------------------------------- |
+| <nobr><code>{"--max-count"}</code></nobr> | `-n`  | Limitar a N sesiones más recientes      |
+| <nobr><code>{"--format"}</code></nobr>    |       | Formato de salida: tabla o json (tabla) |
+
+---
+
+### stats
+
+Muestre el uso de tokens y las estadísticas de costos para sus sesiones Bugbee.
+
+```bash
+bugbee stats
+```
+
+#### Opciones
+
+| Opción                                  | Descripción                                                                                                              |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| <nobr><code>{"--days"}</code></nobr>    | Mostrar estadísticas de los últimos N días (todo el tiempo)                                                              |
+| <nobr><code>{"--tools"}</code></nobr>   | Número de herramientas para mostrar (todas)                                                                              |
+| <nobr><code>{"--models"}</code></nobr>  | Mostrar el desglose del uso del modelo (oculto de forma predeterminada). Pase un número para mostrar la parte superior N |
+| <nobr><code>{"--project"}</code></nobr> | Filtrar por proyecto (todos los proyectos, cadena vacía: proyecto actual)                                                |
+
+---
+
+### export
+
+Exportar datos de la sesión como JSON.
+
+```bash
+bugbee export [sessionID]
+```
+
+Si no proporciona una ID de sesión, se le pedirá que seleccione entre las sesiones disponibles.
+
+---
+
+### import
+
+Importe datos de sesión desde un archivo JSON o una URL compartida Bugbee.
+
+```bash
+bugbee import <file>
+```
+
+Puede importar desde un archivo local o una URL compartida Bugbee.
+
+```bash
+bugbee import session.json
+bugbee import https://opncd.ai/s/abc123
+```
+
+---
+
+### web
+
+Inicie un servidor Bugbee sin cabeza con una interfaz web.
+
+```bash
+bugbee web
+```
+
+Esto inicia un servidor HTTP y abre un navegador web para acceder a Bugbee a través de una interfaz web. Configure `BUGBEE_SERVER_PASSWORD` para habilitar la autenticación básica HTTP (el nombre de usuario predeterminado es `bugbee`).
+
+#### Opciones
+
+| Opción                                   | Descripción                                          |
+| ---------------------------------------- | ---------------------------------------------------- |
+| <nobr><code>{"--port"}</code></nobr>     | Puerto para escuchar                                 |
+| <nobr><code>{"--hostname"}</code></nobr> | Nombre de host para escuchar                         |
+| <nobr><code>{"--mdns"}</code></nobr>     | Habilitar el descubrimiento de mDNS                  |
+| <nobr><code>{"--cors"}</code></nobr>     | Orígenes de navegador adicionales para permitir CORS |
+
+---
+
+### acp
+
+Inicie un servidor ACP (Agent Client Protocol).
+
+```bash
+bugbee acp
+```
+
+Este comando inicia un servidor ACP que se comunica a través de stdin/stdout usando nd-JSON.
+
+#### Opciones
+
+| Opción                                   | Descripción                  |
+| ---------------------------------------- | ---------------------------- |
+| <nobr><code>{"--cwd"}</code></nobr>      | Directorio de trabajo        |
+| <nobr><code>{"--port"}</code></nobr>     | Puerto para escuchar         |
+| <nobr><code>{"--hostname"}</code></nobr> | Nombre de host para escuchar |
+
+---
+
+### uninstall
+
+Desinstale Bugbee y elimine todos los archivos relacionados.
+
+```bash
+bugbee uninstall
+```
+
+#### Opciones
+
+| Opción                                      | Corta | Descripción                               |
+| ------------------------------------------- | ----- | ----------------------------------------- |
+| <nobr><code>{"--keep-config"}</code></nobr> | `-c`  | Mantener archivos de configuración        |
+| <nobr><code>{"--keep-data"}</code></nobr>   | `-d`  | Conservar datos de sesión e instantáneas  |
+| <nobr><code>{"--dry-run"}</code></nobr>     |       | Mostrar lo que se eliminaría sin eliminar |
+| <nobr><code>{"--force"}</code></nobr>       | `-f`  | Saltar mensajes de confirmación           |
+
+---
+
+### upgrade
+
+Actualiza bugbee a la última versión o a una versión específica.
+
+```bash
+bugbee upgrade [target]
+```
+
+Para actualizar a la última versión.
+
+```bash
+bugbee upgrade
+```
+
+Para actualizar a una versión específica.
+
+```bash
+bugbee upgrade v0.1.48
+```
+
+#### Opciones
+
+| Opción                                 | Corta | Descripción                                                         |
+| -------------------------------------- | ----- | ------------------------------------------------------------------- |
+| <nobr><code>{"--method"}</code></nobr> | `-m`  | El método de instalación que se utilizó; curl, npm, pnpm, bun, brew |
+
+---
+
+## Opciones globales
+
+La CLI de Bugbee toma las siguientes banderas globales.
+
+| Opción                                     | Corta | Descripción                                  |
+| ------------------------------------------ | ----- | -------------------------------------------- |
+| <nobr><code>{"--help"}</code></nobr>       | `-h`  | Mostrar ayuda                                |
+| <nobr><code>{"--version"}</code></nobr>    | `-v`  | Número de versión de impresión               |
+| <nobr><code>{"--print-logs"}</code></nobr> |       | Imprimir registros en stderr                 |
+| <nobr><code>{"--log-level"}</code></nobr>  |       | Nivel de registro (DEBUG, INFO, WARN, ERROR) |
+
+---
+
+## Variables de entorno
+
+Bugbee se puede configurar mediante variables de entorno.
+
+| Variable                              | Type     | Description                                                                     |
+| ------------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| `BUGBEE_AUTO_SHARE`                 | booleano | Compartir sesiones automáticamente                                              |
+| `BUGBEE_GIT_BASH_PATH`              | cadena   | Ruta al ejecutable de Git Bash en Windows                                       |
+| `BUGBEE_CONFIG`                     | cadena   | Ruta al archivo de configuración                                                |
+| `BUGBEE_CONFIG_DIR`                 | cadena   | Ruta al directorio de configuración                                             |
+| `BUGBEE_CONFIG_CONTENT`             | cadena   | Contenido de configuración json en línea                                        |
+| `BUGBEE_DISABLE_AUTOUPDATE`         | booleano | Deshabilitar las comprobaciones automáticas de actualizaciones                  |
+| `BUGBEE_DISABLE_PRUNE`              | booleano | Deshabilitar la poda de datos antiguos                                          |
+| `BUGBEE_DISABLE_TERMINAL_TITLE`     | booleano | Deshabilitar las actualizaciones automáticas de títulos de terminal             |
+| `BUGBEE_PERMISSION`                 | cadena   | Configuración de permisos json incorporados                                     |
+| `BUGBEE_DISABLE_DEFAULT_PLUGINS`    | booleano | Deshabilitar complementos predeterminados                                       |
+| `BUGBEE_DISABLE_LSP_DOWNLOAD`       | booleano | Deshabilitar las descargas automáticas del servidor LSP                         |
+| `BUGBEE_ENABLE_EXPERIMENTAL_MODELS` | booleano | Habilitar modelos experimentales                                                |
+| `BUGBEE_DISABLE_AUTOCOMPACT`        | booleano | Deshabilitar la compactación automática de contexto                             |
+| `BUGBEE_DISABLE_CLAUDE_CODE`        | booleano | Deshabilitar la lectura desde `.claude` (mensaje + habilidades)                 |
+| `BUGBEE_DISABLE_CLAUDE_CODE_PROMPT` | booleano | Desactivar lectura `~/.claude/CLAUDE.md`                                        |
+| `BUGBEE_DISABLE_CLAUDE_CODE_SKILLS` | booleano | Deshabilitar la carga `.claude/skills`                                          |
+| `BUGBEE_DISABLE_MODELS_FETCH`       | booleano | Deshabilitar la recuperación de modelos desde fuentes remotas                   |
+| `BUGBEE_FAKE_VCS`                   | cadena   | Proveedor de VCS falso para fines de prueba                                     |
+| `BUGBEE_CLIENT`                     | cadena   | Identificador de cliente (por defecto `cli`)                                    |
+| `BUGBEE_ENABLE_EXA`                 | booleano | Habilitar las herramientas de búsqueda web de Exa                               |
+| `BUGBEE_SERVER_PASSWORD`            | cadena   | Habilite la autenticación básica para `serve`/`web`                             |
+| `BUGBEE_SERVER_USERNAME`            | cadena   | Anular el nombre de usuario de autenticación básica (predeterminado `bugbee`) |
+| `BUGBEE_MODELS_URL`                 | cadena   | URL personalizada para buscar la configuración de modelos                       |
+
+---
+
+### Experimental
+
+Estas variables de entorno habilitan funciones experimentales que pueden cambiar o eliminarse.
+
+| Variable                                        | Type     | Description                                                |
+| ----------------------------------------------- | -------- | ---------------------------------------------------------- |
+| `BUGBEE_EXPERIMENTAL`                         | booleano | Habilitar funciones experimentales de la bandera global    |
+| `BUGBEE_EXPERIMENTAL_ICON_DISCOVERY`          | booleano | Habilitar descubrimiento de íconos                         |
+| `BUGBEE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT`  | booleano | Deshabilitar copia al seleccionar en TUI                   |
+| `BUGBEE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS` | número   | Tiempo de espera predeterminado para comandos bash en ms   |
+| `BUGBEE_EXPERIMENTAL_OUTPUT_TOKEN_MAX`        | número   | Tokens de salida máximos para respuestas LLM               |
+| `BUGBEE_EXPERIMENTAL_FILEWATCHER`             | booleano | Habilite el observador de archivos para todo el directorio |
+| `BUGBEE_EXPERIMENTAL_OXFMT`                   | booleano | Habilitar el formateador oxfmt                             |
+| `BUGBEE_EXPERIMENTAL_LSP_TOOL`                | booleano | Habilitar herramienta experimental LSP                     |
+| `BUGBEE_EXPERIMENTAL_DISABLE_FILEWATCHER`     | booleano | Deshabilitar el observador de archivos                     |
+| `BUGBEE_EXPERIMENTAL_EXA`                     | booleano | Habilitar funciones experimentales de Exa                  |
+| `BUGBEE_EXPERIMENTAL_LSP_TY`                  | booleano | Habilitar Habilitar TY LSP para archivos python            |
+| `BUGBEE_EXPERIMENTAL_PLAN_MODE`               | booleano | Habilitar modo de plan                                     |
+| `BUGBEE_EXPERIMENTAL_BACKGROUND_SUBAGENTS`    | booleano | Habilitar tareas de subagentes en segundo plano            |
+| `BUGBEE_EXPERIMENTAL_EVENT_SYSTEM`            | booleano | Habilitar sistema de eventos experimental                  |
+| `BUGBEE_EXPERIMENTAL_NATIVE_LLM`              | booleano | Habilitar ruta nativa de solicitud LLM                     |
+| `BUGBEE_EXPERIMENTAL_PARALLEL`                | booleano | Habilitar ejecución paralela de búsqueda web               |
+| `BUGBEE_EXPERIMENTAL_SCOUT`                   | booleano | Habilitar subagente Scout                                  |
+| `BUGBEE_EXPERIMENTAL_WORKSPACES`              | booleano | Habilitar soporte de espacios de trabajo                   |
