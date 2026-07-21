@@ -1,5 +1,33 @@
 #!/usr/bin/env bash
+# Monorepo runner for Bugbee (OpenCode fork).
+# Must run with --cwd packages/bugbee so bunfig preload (@opentui/solid) is applied.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export PATH="${HOME}/.bun/bin:${PATH}"
-exec bun --conditions=browser "$ROOT/packages/bugbee/src/index.ts" "$@"
+
+CALLER_CWD="$(pwd -P)"
+PKG="$ROOT/packages/bugbee"
+
+# Subcommands that are not a project path (keep in sync with CLI surface)
+is_command() {
+  case "$1" in
+    completion|acp|mcp|attach|run|debug|providers|auth|agent|upgrade|uninstall|serve|web|models|stats|export|import|github|pr|session|plugin|plug|db|help|--help|-h|--version|-v) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+args=("$@")
+if [ ${#args[@]} -eq 0 ]; then
+  # Default TUI in the directory the user ran from
+  args=("$CALLER_CWD")
+elif [ "${args[0]:0:1}" = "-" ]; then
+  # Flags only → still bind project to caller cwd
+  args=("$CALLER_CWD" "${args[@]}")
+elif ! is_command "${args[0]}"; then
+  # Project path: make absolute if relative
+  if [ "${args[0]:0:1}" != "/" ]; then
+    args[0]="$CALLER_CWD/${args[0]}"
+  fi
+fi
+
+exec bun run --cwd "$PKG" --conditions=browser src/index.ts "${args[@]}"

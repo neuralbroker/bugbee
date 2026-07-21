@@ -23,16 +23,18 @@ git clone https://github.com/neuralbroker/bugbee.git
 cd bugbee
 bun install --ignore-scripts
 
-# CLI / TUI
+# CLI / TUI (must use packages/bugbee cwd for OpenTUI JSX preload)
 bun run dev
 # or
-bun --conditions=browser packages/bugbee/src/index.ts
+./bin/bugbee
+# or
+bun run --cwd packages/bugbee --conditions=browser src/index.ts
 ```
 
 ```bash
-bugbee --help
-bugbee agents list
-bugbee providers
+./bin/bugbee --help
+./bin/bugbee agent list
+./bin/bugbee providers
 ```
 
 ## Config
