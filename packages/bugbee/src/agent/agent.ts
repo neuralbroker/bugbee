@@ -14,6 +14,9 @@ import PROMPT_COMPACTION from "./prompt/compaction.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
 import PROMPT_SUMMARY from "./prompt/summary.txt"
 import PROMPT_TITLE from "./prompt/title.txt"
+import PROMPT_REVIEW from "./prompt/review.txt"
+import { DEFAULT_MAX_STEPS } from "@/harness/types"
+import { readHarness } from "@/harness/config"
 import { Permission } from "@/permission"
 import { mergeDeep, pipe, sortBy, values } from "remeda"
 import { Global } from "@bugbee-ai/core/global"
@@ -137,6 +140,9 @@ const layer = Layer.effect(
 
         const user = Permission.fromConfig(cfg.permission ?? {})
 
+        const harness = readHarness(cfg)
+        const defaultSteps = harness.max_steps || DEFAULT_MAX_STEPS
+
         const agents: Record<string, Info> = {
           build: {
             name: "build",
@@ -152,6 +158,7 @@ const layer = Layer.effect(
             ),
             mode: "primary",
             native: true,
+            steps: defaultSteps,
           },
           plan: {
             name: "plan",
@@ -178,6 +185,31 @@ const layer = Layer.effect(
             ),
             mode: "primary",
             native: true,
+            steps: defaultSteps,
+          },
+          review: {
+            name: "review",
+            description:
+              "Read-only review agent. Challenges weak changes and reports issues with evidence. Use after build work.",
+            prompt: PROMPT_REVIEW,
+            options: {},
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                "*": "deny",
+                grep: "allow",
+                glob: "allow",
+                list: "allow",
+                read: "allow",
+                webfetch: "allow",
+                websearch: "allow",
+                external_directory: readonlyExternalDirectory,
+              }),
+              user,
+            ),
+            mode: "subagent",
+            native: true,
+            steps: Math.min(defaultSteps, 40),
           },
           general: {
             name: "general",
@@ -288,6 +320,7 @@ const layer = Layer.effect(
           item.color = value.color ?? item.color
           item.hidden = value.hidden ?? item.hidden
           item.name = value.name ?? item.name
+          // User steps override harness default; keep defaultSteps for natives when unset
           item.steps = value.steps ?? item.steps
           item.options = mergeDeep(item.options, value.options ?? {})
           item.permission = Permission.merge(item.permission, Permission.fromConfig(value.permission ?? {}))

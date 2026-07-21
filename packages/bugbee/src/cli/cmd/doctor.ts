@@ -5,6 +5,8 @@ import { cmd } from "./cmd"
 import { UI } from "../ui"
 import { Global } from "@bugbee-ai/core/global"
 import { InstallationVersion } from "@bugbee-ai/core/installation/version"
+import { readHarness } from "@/harness/config"
+import { DEFAULT_MEMORY_DIR, DEFAULT_TRACE_PATH } from "@/harness/types"
 
 type Check = {
   name: string
@@ -100,6 +102,46 @@ export const DoctorCommand = cmd({
       detail: `node=${process.version} platform=${process.platform}/${process.arch} home=${os.homedir()}`,
     })
 
+    // Superharness surface
+    let harnessCfg
+    try {
+      const cfgPath = found.find((f) => f.endsWith("bugbee.json") || f.endsWith("bugbee.jsonc"))
+      if (cfgPath) {
+        const raw = await fs.readFile(cfgPath, "utf8")
+        const json = JSON.parse(raw.replace(/^\uFEFF/, "").replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, ""))
+        harnessCfg = readHarness(json)
+      } else {
+        harnessCfg = readHarness(undefined)
+      }
+    } catch {
+      harnessCfg = readHarness(undefined)
+    }
+
+    checks.push({
+      name: "harness.max_steps",
+      ok: true,
+      detail: String(harnessCfg.max_steps),
+    })
+    checks.push({
+      name: "harness.memory",
+      ok: true,
+      detail: harnessCfg.memory.enabled
+        ? `on dir=${harnessCfg.memory.dir || DEFAULT_MEMORY_DIR}`
+        : "off",
+    })
+    checks.push({
+      name: "harness.verify",
+      ok: true,
+      detail: harnessCfg.verify.enabled
+        ? `on commands=${harnessCfg.verify.commands.length}`
+        : "off (opt-in via harness.verify)",
+    })
+    checks.push({
+      name: "harness.trace",
+      ok: true,
+      detail: harnessCfg.trace.enabled ? `on → ${DEFAULT_TRACE_PATH}` : "off",
+    })
+
     const failed = checks.filter((c) => !c.ok)
     if (args.json) {
       process.stdout.write(
@@ -123,7 +165,7 @@ export const DoctorCommand = cmd({
     UI.empty()
     for (const check of checks) {
       const mark = check.ok ? UI.Style.TEXT_SUCCESS_BOLD + "ok  " : UI.Style.TEXT_DANGER_BOLD + "fail"
-      UI.println(`${mark}${UI.Style.TEXT_NORMAL} ${check.name.padEnd(16)} ${check.detail}`)
+      UI.println(`${mark}${UI.Style.TEXT_NORMAL} ${check.name.padEnd(20)} ${check.detail}`)
     }
     UI.empty()
     if (failed.length) {

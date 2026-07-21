@@ -149,6 +149,27 @@ const layer: Layer.Layer<
         }
       }
 
+      // Superharness M2: project memory notes (.bugbee/memory/*.md)
+      if (!Flag.BUGBEE_DISABLE_PROJECT_CONFIG) {
+        const harness = (config as { harness?: { memory?: { enabled?: boolean; dir?: string } } }).harness
+        const expHarness = (
+          config as { experimental?: { harness?: { memory?: { enabled?: boolean; dir?: string } } } }
+        ).experimental?.harness
+        const mem = { enabled: true, dir: ".bugbee/memory", ...expHarness?.memory, ...harness?.memory }
+        if (mem.enabled !== false) {
+          const memDir = path.isAbsolute(mem.dir!)
+            ? mem.dir!
+            : path.join(ctx.worktree || ctx.directory, mem.dir || ".bugbee/memory")
+          const notes = yield* fs
+            .glob("*.{md,txt}", { cwd: memDir, absolute: true, include: "file" })
+            .pipe(Effect.catch(() => Effect.succeed([] as string[])))
+          for (const note of notes.slice(0, 20)) {
+            // skip template readme-only noise? keep all user notes
+            paths.add(path.resolve(note))
+          }
+        }
+      }
+
       return paths
     })
 

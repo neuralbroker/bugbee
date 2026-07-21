@@ -185,8 +185,62 @@ export const Info = Schema.Struct({
       policies: Schema.optional(Schema.mutable(Schema.Array(ConfigExperimental.Policy))).annotate({
         description: "Policy statements applied to supported resources, such as provider access",
       }),
+      harness: Schema.optional(
+        Schema.Struct({
+          max_steps: Schema.optional(PositiveInt).annotate({
+            description: "Default max agent steps when agent.steps is unset",
+          }),
+          memory: Schema.optional(
+            Schema.Struct({
+              enabled: Schema.optional(Schema.Boolean),
+              dir: Schema.optional(Schema.String),
+            }),
+          ),
+          verify: Schema.optional(
+            Schema.Struct({
+              enabled: Schema.optional(Schema.Boolean),
+              commands: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),
+              after_tools: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),
+              max_output_chars: Schema.optional(PositiveInt),
+              timeout_ms: Schema.optional(PositiveInt),
+            }),
+          ),
+          trace: Schema.optional(
+            Schema.Struct({
+              enabled: Schema.optional(Schema.Boolean),
+            }),
+          ),
+        }),
+      ).annotate({ description: "Superharness settings (also accepted as top-level harness)" }),
     }),
   ),
+  harness: Schema.optional(
+    Schema.Struct({
+      max_steps: Schema.optional(PositiveInt),
+      memory: Schema.optional(
+        Schema.Struct({
+          enabled: Schema.optional(Schema.Boolean),
+          dir: Schema.optional(Schema.String),
+        }),
+      ),
+      verify: Schema.optional(
+        Schema.Struct({
+          enabled: Schema.optional(Schema.Boolean),
+          commands: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),
+          after_tools: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),
+          max_output_chars: Schema.optional(PositiveInt),
+          timeout_ms: Schema.optional(PositiveInt),
+        }),
+      ),
+      trace: Schema.optional(
+        Schema.Struct({
+          enabled: Schema.optional(Schema.Boolean),
+        }),
+      ),
+    }),
+  ).annotate({
+    description: "Superharness: loop limits, memory dir, post-edit verify, step tracing",
+  }),
 }).annotate({ identifier: "Config" })
 
 export type Info = DeepMutable<Schema.Schema.Type<typeof Info>>

@@ -82,25 +82,38 @@ Ship in this order — each module independently useful and testable.
 - Loud marketing surfaces  
 - Another full IDE fork before harness quality is proven  
 
-## Immediate alignment with current codebase
+## Shipped in codebase
 
-Bugbee already has (from OpenCode lineage):
+| Module | Status | Where |
+|--------|--------|--------|
+| M1 Loop integrity | shipped | `doom_loop` permission; default `agent.steps` via `harness.max_steps` (80) |
+| M2 Context / memory | shipped | `.bugbee/memory/*.md` loaded as instructions when enabled |
+| M3 Control hooks | shipped | Internal `HarnessPlugin` on `tool.execute.after` |
+| M4 Multi-agent | shipped | native `review` subagent (read-only) |
+| M5 Verify | shipped | opt-in `harness.verify.commands` after edit/write/apply_patch |
+| M6 Observability | shipped | opt-in `harness.trace` → `.bugbee/harness/trace.jsonl`; `bugbee doctor` |
 
-- Agent loop + tools + permissions  
-- plan / build / explore / general agents  
-- Compaction, MCP, skills, sessions  
+### Config example
 
-Gaps to close for “superharness”:
+```jsonc
+// bugbee.jsonc
+{
+  "harness": {
+    "max_steps": 80,
+    "memory": { "enabled": true, "dir": ".bugbee/memory" },
+    "verify": {
+      "enabled": true,
+      "commands": ["bun test --timeout 30000"]
+    },
+    "trace": { "enabled": true }
+  }
+}
+```
 
-- Verify loop (M5) after tool batches  
-- Hook surface (M3) as first-class  
-- Durable memory (M2) beyond AGENTS.md  
+## Later
+
 - Eval fixtures + CI harness scores  
-
-## Next implementation slice
-
-1. **Verify hook**: after N file edits, optionally run `test`/`typecheck` command from config  
-2. **Review agent default**: subagent that only reads + reports  
-3. **Run export**: `bugbee export` already exists — attach step traces  
+- Pre-tool hooks (format/lint/secret scan packs)  
+- Parallel review workers with merge report  
 
 Keep UI minimal. Prefer correctness and control over features that shout.

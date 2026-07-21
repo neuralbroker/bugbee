@@ -48,6 +48,35 @@ Default theme is `bugbee`. Transparent terminal background:
 { "theme": "transparent" }
 ```
 
+## Superharness
+
+Optional agent-loop controls (see [docs/SUPERHARNESS.md](./docs/SUPERHARNESS.md)):
+
+```jsonc
+// bugbee.jsonc
+{
+  "harness": {
+    "max_steps": 80,
+    "memory": { "enabled": true },
+    "verify": {
+      "enabled": true,
+      "commands": ["bun test"]
+    },
+    "trace": { "enabled": true }
+  }
+}
+```
+
+- **memory** — loads `.bugbee/memory/*.md` into context  
+- **verify** — runs commands after edit/write/apply_patch (opt-in)  
+- **trace** — appends tool steps to `.bugbee/harness/trace.jsonl`  
+- **review** agent — read-only subagent for adversarial review  
+
+```bash
+./bin/bugbee doctor
+./bin/bugbee agent list   # includes review
+```
+
 ## Config
 
 - Project: `bugbee.json` / `bugbee.jsonc` and `.bugbee/`
