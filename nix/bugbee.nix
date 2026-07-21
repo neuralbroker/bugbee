@@ -101,7 +101,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   meta = {
     description = "The open source coding agent";
-    homepage = "https://bugbee.dev";
+    homepage = "https://github.com/neuralbroker/bugbee";
     license = lib.licenses.mit;
     mainProgram = "bugbee";
     inherit (node_modules.meta) platforms;

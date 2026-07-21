@@ -32,14 +32,3 @@ UPCOMING_CHANGELOG.md
 logs/
 *.bun-build
 tsconfig.tsbuildinfo
-
-# Bugbee local security store (keep findings out of git by default)
-.bugbee/findings.json
-bugbee-report.md
-bugbee-results.sarif.json
-package.json.full
-# Generated findings under fixtures when running local hunts
-fixtures/**/.bugbee/
-# Local hunt stores (never commit findings)
-**/.bugbee/findings.json
-packages/bugbee/fixtures/

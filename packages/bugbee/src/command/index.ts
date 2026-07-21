@@ -9,9 +9,6 @@ import { MCP } from "../mcp"
 import { Skill } from "../skill"
 import PROMPT_INITIALIZE from "./template/initialize.txt"
 import PROMPT_REVIEW from "./template/review.txt"
-import PROMPT_HUNT from "./template/hunt.txt"
-import PROMPT_FINDINGS from "./template/findings.txt"
-import PROMPT_REPORT from "./template/report.txt"
 import { LegacyEvent } from "@bugbee-ai/schema/legacy-event"
 
 type State = {
@@ -49,9 +46,6 @@ export function hints(template: string) {
 export const Default = {
   INIT: "init",
   REVIEW: "review",
-  HUNT: "hunt",
-  FINDINGS: "findings",
-  REPORT: "report",
 } as const
 
 export interface Interface {
@@ -91,34 +85,6 @@ const layer = Layer.effect(
         },
         subtask: true,
         hints: hints(PROMPT_REVIEW),
-      }
-      commands[Default.HUNT] = {
-        name: Default.HUNT,
-        description: "defensive security hunt: scanners + evidence triage",
-        agent: "hunt",
-        source: "command",
-        get template() {
-          return PROMPT_HUNT.replace("${path}", ctx.worktree)
-        },
-        hints: hints(PROMPT_HUNT),
-      }
-      commands[Default.FINDINGS] = {
-        name: Default.FINDINGS,
-        description: "list and triage open security findings",
-        source: "command",
-        get template() {
-          return PROMPT_FINDINGS.replace("${path}", ctx.worktree)
-        },
-        hints: hints(PROMPT_FINDINGS),
-      }
-      commands[Default.REPORT] = {
-        name: Default.REPORT,
-        description: "export security report (markdown or SARIF)",
-        source: "command",
-        get template() {
-          return PROMPT_REPORT.replace("${path}", ctx.worktree)
-        },
-        hints: hints(PROMPT_REPORT),
       }
 
       for (const [name, command] of Object.entries(cfg.command ?? {})) {

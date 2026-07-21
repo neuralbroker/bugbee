@@ -14,8 +14,6 @@ import PROMPT_COMPACTION from "./prompt/compaction.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
 import PROMPT_SUMMARY from "./prompt/summary.txt"
 import PROMPT_TITLE from "./prompt/title.txt"
-import PROMPT_HUNT from "./prompt/hunt.txt"
-import PROMPT_SECURITY_REVIEW from "./prompt/security-review.txt"
 import { Permission } from "@/permission"
 import { mergeDeep, pipe, sortBy, values } from "remeda"
 import { Global } from "@bugbee-ai/core/global"
@@ -142,18 +140,13 @@ const layer = Layer.effect(
         const agents: Record<string, Info> = {
           build: {
             name: "build",
-            description:
-              "Default agent. Full-stack coding plus defensive security (hunt, review, patch) under configured permissions.",
+            description: "The default agent. Executes tools based on configured permissions.",
             options: {},
             permission: Permission.merge(
               defaults,
               Permission.fromConfig({
                 question: "allow",
                 plan_enter: "allow",
-                secrets_scan: "allow",
-                vuln_scan: "allow",
-                findings: "allow",
-                security_report: "allow",
               }),
               user,
             ),
@@ -180,62 +173,11 @@ const layer = Layer.effect(
                   [path.join(".bugbee", "plans", "*.md")]: "allow",
                   [path.relative(ctx.worktree, path.join(Global.Path.data, path.join("plans", "*.md")))]: "allow",
                 },
-                secrets_scan: "allow",
-                vuln_scan: "allow",
-                findings: "allow",
-                security_report: "allow",
               }),
               user,
             ),
             mode: "primary",
             native: true,
-          },
-          hunt: {
-            name: "hunt",
-            description:
-              "Security hunt mode. Deterministic scanners + evidence-first vulnerability research. Prefer vuln_scan/secrets_scan before deep reasoning.",
-            prompt: PROMPT_HUNT,
-            options: {},
-            permission: Permission.merge(
-              defaults,
-              Permission.fromConfig({
-                question: "allow",
-                secrets_scan: "allow",
-                vuln_scan: "allow",
-                findings: "allow",
-                security_report: "allow",
-                edit: "ask",
-              }),
-              user,
-            ),
-            mode: "primary",
-            native: true,
-            color: "error",
-          },
-          "security-review": {
-            name: "security-review",
-            description:
-              "Read-only adversarial reviewer. Tries to kill weak findings and strengthen real ones with evidence.",
-            prompt: PROMPT_SECURITY_REVIEW,
-            options: {},
-            permission: Permission.merge(
-              defaults,
-              Permission.fromConfig({
-                "*": "deny",
-                grep: "allow",
-                glob: "allow",
-                list: "allow",
-                read: "allow",
-                findings: "allow",
-                webfetch: "allow",
-                websearch: "allow",
-                external_directory: readonlyExternalDirectory,
-              }),
-              user,
-            ),
-            mode: "subagent",
-            native: true,
-            color: "warning",
           },
           general: {
             name: "general",

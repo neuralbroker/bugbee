@@ -293,8 +293,7 @@ describe("HttpApi Server.listen", () => {
       return true
     }) as typeof process.stderr.write
     try {
-      // /global/health is the root health endpoint (legacy /status is not routed).
-      const response = await Server.Default().app.request("/global/health")
+      const response = await Server.Default().app.request("/status")
       expect(response.status).toBe(200)
     } finally {
       process.stderr.write = original

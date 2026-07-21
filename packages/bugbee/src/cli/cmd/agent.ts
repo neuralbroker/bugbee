@@ -28,10 +28,6 @@ const AVAILABLE_PERMISSIONS = [
   "websearch",
   "lsp",
   "skill",
-  "secrets_scan",
-  "vuln_scan",
-  "findings",
-  "security_report",
 ]
 
 const AgentCreateCommand = effectCmd({

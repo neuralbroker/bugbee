@@ -1,8 +1,0 @@
-Export a security report for ${path}.
-
-1. Ensure findings exist (run vuln_scan if the store is empty).
-2. Call security_report with format markdown by default, or sarif if the user asked for CI/SARIF.
-3. Write the file to a sensible path (bugbee-report.md or bugbee-results.sarif.json) unless the user specified one.
-4. Summarize open counts by severity and point to the written artifact.
-
-Defense-only: reports are for authorized assessment and remediation, not for attacking third parties.

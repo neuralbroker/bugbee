@@ -1,8 +1,0 @@
-List, filter, or update security findings stored in .bugbee/findings.json.
-
-Actions:
-- list: show open findings (optional severity filter)
-- get: show one finding by id with full evidence
-- set_status: mark a finding confirmed | false_positive | fixed | draft
-
-Always prefer evidence over vibes. Do not claim a vulnerability is confirmed without reviewing the snippet and dataflow.

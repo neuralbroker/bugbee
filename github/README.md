@@ -1,6 +1,6 @@
 # bugbee GitHub Action
 
-A GitHub Action that integrates [bugbee](https://bugbee.dev) directly into your GitHub workflow.
+A GitHub Action that integrates [bugbee](https://github.com/neuralbroker/bugbee) directly into your GitHub workflow.
 
 Mention `/bugbee` in your comment, and bugbee will execute tasks within your GitHub Actions runner.
 

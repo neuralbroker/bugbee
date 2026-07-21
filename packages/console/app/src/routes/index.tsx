@@ -125,7 +125,7 @@ export default function Home() {
                     <button data-copy data-slot="command" onClick={handleCopyClick}>
                       <span>
                         <span data-slot="protocol">npm i -g </span>
-                        <span data-slot="highlight">bugbee</span>
+                        <span data-slot="highlight">bugbee-ai</span>
                       </span>
                       <CopyStatus />
                     </button>
@@ -134,7 +134,7 @@ export default function Home() {
                     <button data-copy data-slot="command" onClick={handleCopyClick}>
                       <span>
                         <span data-slot="protocol">bun add -g </span>
-                        <span data-slot="highlight">bugbee</span>
+                        <span data-slot="highlight">bugbee-ai</span>
                       </span>
                       <CopyStatus />
                     </button>

@@ -35,7 +35,7 @@ config.
 
 ```json title="bugbee.json" {6}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "anthropic": {
       "options": {
@@ -57,7 +57,7 @@ bugbee ile iyi çalıştığı test edilip doğrulandı. [Daha fazla bilgi](/doc
 Yeniyseniz Bugbee Zen ile başlamanızı öneririz.
 :::
 
-1. TUI'de `/connect` komutunu çalıştırın, bugbee'u seçin ve [bugbee.dev/auth](https://bugbee.dev/auth)'ye gidin.
+1. TUI'de `/connect` komutunu çalıştırın, bugbee'u seçin ve [bugbee.dev/auth](https://github.com/neuralbroker/bugbee/auth)'ye gidin.
 
    ```txt
    /connect
@@ -88,7 +88,7 @@ bugbee'daki diğer sağlayıcılar gibi çalışır ve kullanımı tamamen iste�
 
 Bugbee Go, bugbee ile iyi çalıştığı test edilmiş ve doğrulanmış, bugbee ekibi tarafından sağlanan popüler açık kodlama modellerine güvenilir erişim sağlayan düşük maliyetli bir abonelik planıdır.
 
-1. TUI'de `/connect` komutunu çalıştırın, `Bugbee Go`'yu seçin ve [bugbee.dev/auth](https://bugbee.dev/zen) adresine gidin.
+1. TUI'de `/connect` komutunu çalıştırın, `Bugbee Go`'yu seçin ve [bugbee.dev/auth](https://github.com/neuralbroker/bugbee/zen) adresine gidin.
 
    ```txt
    /connect
@@ -194,7 +194,7 @@ Amazon Bedrock'u bugbee ile kullanmak için:
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "amazon-bedrock": {
          "options": {
@@ -221,7 +221,7 @@ Bedrock için VPC uç noktaları kullanıyorsanız:
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "amazon-bedrock": {
       "options": {
@@ -267,7 +267,7 @@ Bir taşıyıcı belirteç ayarlandığında (`/connect` veya `AWS_BEARER_TOKEN_
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "amazon-bedrock": {
       // ...
@@ -329,7 +329,7 @@ bugbee'u, yerel LLM'leri OpenAI uyumlu bir API sunucusunun arkasında çalışt�
 
 ```json title="bugbee.json" "atomic-chat" {5, 6, 8, 10-14}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "atomic-chat": {
       "npm": "@ai-sdk/openai-compatible",
@@ -557,7 +557,7 @@ Cloudflare AI Gateway, OpenAI, Anthropic, Workers AI ve daha fazlasındaki model
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "cloudflare-ai-gateway": {
          "models": {
@@ -763,7 +763,7 @@ yalnızca kendi GitLab tarafından barındırılan örneğinizi kullanmak için 
 
 ```json
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "small_model": "gitlab/duo-chat-haiku-4-5",
   "share": "disabled"
 }
@@ -817,7 +817,7 @@ Then expose application ID as environment variable:
 export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 ```
 
-Daha fazla belge [bugbee-gitlab-auth](https://www.npmjs.com/package/bugbee-gitlab-auth) ana sayfasında.
+Daha fazla belge [opencode-gitlab-auth](https://www.npmjs.com/package/opencode-gitlab-auth) ana sayfasında.
 
 ##### Yapılandırma
 
@@ -825,7 +825,7 @@ Daha fazla belge [bugbee-gitlab-auth](https://www.npmjs.com/package/bugbee-gitla
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "gitlab": {
       "options": {
@@ -842,7 +842,7 @@ GitLab araçlarına (birleştirme istekleri, sorunlar, işlem hatları, CI/CD vb
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "plugin": ["bugbee-gitlab-plugin"]
 }
 ```
@@ -1024,7 +1024,7 @@ Helicone'un bugbee aracılığıyla otomatik olarak yapılandırılmayan bir öz
 
 ```jsonc title="~/.config/bugbee/bugbee.jsonc"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "helicone": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1052,7 +1052,7 @@ Helicone, önbelleğe alma, kullanıcı izleme ve oturum yönetimi gibi özellik
 
 ```jsonc title="~/.config/bugbee/bugbee.jsonc"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "helicone": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1106,7 +1106,7 @@ bugbee'u yerel modelleri kullanacak şekilde [llama.cpp's](https://github.com/gg
 
 ```json title="bugbee.json" "llama.cpp" {5, 6, 8, 10-15}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "llama.cpp": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1173,7 +1173,7 @@ LM Studio aracılığıyla bugbee'u yerel modelleri kullanacak şekilde yapılan
 
 ```json title="bugbee.json" "lmstudio" {5, 6, 8, 10-14}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1294,7 +1294,7 @@ Ollama kendisini bugbee için otomatik olarak yapılandırabilir. Ayrıntılar i
 
 ```json title="bugbee.json" "ollama" {5, 6, 8, 10-14}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1456,7 +1456,7 @@ Bugbee Zen, bugbee ekibinin test edip doğruladığı modellerin bir listesidir.
 
    ```json title="bugbee.json" {6}
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "openrouter": {
          "models": {
@@ -1471,7 +1471,7 @@ Bugbee Zen, bugbee ekibinin test edip doğruladığı modellerin bir listesidir.
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "openrouter": {
          "models": {
@@ -1720,7 +1720,7 @@ Modelleri bugbee yapılandırmanız aracılığıyla da özelleştirebilirsiniz.
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "vercel": {
       "models": {
@@ -1830,7 +1830,7 @@ Bazı yararlı yönlendirme seçenekleri:
 
    ```json title="bugbee.json" {6}
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "zenmux": {
          "models": {
@@ -1898,7 +1898,7 @@ OpenAI uyumlu herhangi bir sağlayıcıyı bugbee ile kullanabilirsiniz. Çoğu 
 
    ```json title="bugbee.json" ""myprovider"" {5-15}
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "myprovider": {
          "npm": "@ai-sdk/openai-compatible",
@@ -1936,7 +1936,7 @@ Burada `apiKey`, `headers` ve model `limit` seçeneklerini ayarlayan bir örnek 
 
 ```json title="bugbee.json" {9,11,17-20}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "myprovider": {
       "npm": "@ai-sdk/openai-compatible",

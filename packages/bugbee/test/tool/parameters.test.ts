@@ -25,10 +25,6 @@ import { Parameters as Todo } from "../../src/tool/todo"
 import { Parameters as WebFetch } from "../../src/tool/webfetch"
 import { Parameters as WebSearch } from "../../src/tool/websearch"
 import { Parameters as Write } from "../../src/tool/write"
-import { Parameters as SecretsScan } from "../../src/tool/secrets_scan"
-import { Parameters as VulnScan } from "../../src/tool/vuln_scan"
-import { Parameters as Findings } from "../../src/tool/findings"
-import { Parameters as SecurityReport } from "../../src/tool/security_report"
 
 const parse = <S extends Schema.Decoder<unknown>>(schema: S, input: unknown): S["Type"] =>
   Schema.decodeUnknownSync(schema)(input)
@@ -56,10 +52,6 @@ describe("tool parameters", () => {
     test("webfetch", () => expect(toJsonSchema(WebFetch)).toMatchSnapshot())
     test("websearch", () => expect(toJsonSchema(WebSearch)).toMatchSnapshot())
     test("write", () => expect(toJsonSchema(Write)).toMatchSnapshot())
-    test("secrets_scan", () => expect(toJsonSchema(SecretsScan)).toMatchSnapshot())
-    test("vuln_scan", () => expect(toJsonSchema(VulnScan)).toMatchSnapshot())
-    test("findings", () => expect(toJsonSchema(Findings)).toMatchSnapshot())
-    test("security_report", () => expect(toJsonSchema(SecurityReport)).toMatchSnapshot())
 
     test("inlines named child schemas for provider compatibility", () => {
       const schema = toJsonSchema(Question)

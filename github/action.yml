@@ -58,7 +58,7 @@ runs:
     - name: Install bugbee
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      run: curl -fsSL https://bugbee.dev/install | bash
+      run: curl -fsSL https://github.com/neuralbroker/bugbee/install | bash
 
     - name: Add bugbee to PATH
       shell: bash

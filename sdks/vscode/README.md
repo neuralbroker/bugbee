@@ -1,10 +1,10 @@
 # bugbee VS Code Extension
 
-A Visual Studio Code extension that integrates [bugbee](https://bugbee.dev) directly into your development workflow.
+A Visual Studio Code extension that integrates [bugbee](https://github.com/neuralbroker/bugbee) directly into your development workflow.
 
 ## Prerequisites
 
-This extension requires the [bugbee CLI](https://bugbee.dev) to be installed on your system. Visit [bugbee.dev](https://bugbee.dev) for installation instructions.
+This extension requires the [bugbee CLI](https://github.com/neuralbroker/bugbee) to be installed on your system. Visit [bugbee.dev](https://github.com/neuralbroker/bugbee) for installation instructions.
 
 ## Features
 

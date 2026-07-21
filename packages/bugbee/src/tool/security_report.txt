@@ -1,7 +1,0 @@
-Export security findings as markdown or SARIF for CI, bug bounty, or compliance.
-
-Formats:
-- markdown (default): human-readable report
-- sarif: SARIF 2.1.0 JSON for GitHub Advanced Security / Code scanning
-
-Optional path writes the report to disk. Defense-only artifact generation.

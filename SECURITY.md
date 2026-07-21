@@ -1,40 +1,47 @@
-# Security Policy
+# Security
 
-## Product posture
+## IMPORTANT
 
-Bugbee is a **defense-only** AI coding and security engineering tool.
+We do not accept AI generated security reports. We receive a large number of
+these and we absolutely do not have the resources to review them all. If you
+submit one that will be an automatic ban from the project.
 
-| Principle | Practice |
-|-----------|----------|
-| Authorized use | Intended for repos/systems you own or are authorized to assess |
-| Evidence first | Scanners produce draft findings with path/line/snippet |
-| Secret safety | Detectors redact matched values in tool output |
-| No weapons | No modules for live exploitation of third-party systems |
+## Threat Model
 
-Hard laws are also encoded in agent system prompts and the `hunt` / `security-review` agent constitutions.
+### Overview
 
-## Reporting a vulnerability in Bugbee itself
+Bugbee is an AI-powered coding assistant that runs locally on your machine. It provides an agent system with access to powerful tools including shell execution, file operations, and web access.
 
-If you find a security issue in Bugbee (CLI, agent runtime, desktop, server, or scanners):
+### No Sandbox
 
-1. **Do not** open a public GitHub issue with exploit details.
-2. Prefer a [private security advisory](https://github.com/neuralbroker/bugbee/security/advisories/new) on the repository, or contact maintainers via the GitHub organization.
-3. Include: impact, affected versions/commits, reproduction steps, and any suggested fix.
+Bugbee does **not** sandbox the agent. The permission system exists as a UX feature to help users stay aware of what actions the agent is taking - it prompts for confirmation before executing commands, writing files, etc. However, it is not designed to provide security isolation.
 
-We aim to acknowledge reports within **7 days** and ship fixes as quickly as practical.
+If you need true isolation, run Bugbee inside a Docker container or VM.
 
-## Using Bugbee safely
+### Server Mode
 
-- Run hunts only on authorized targets.
-- Treat automated findings as **draft** until verified.
-- Rotate any real secrets discovered; do not paste them into tickets or chat logs.
-- Review patches before applying to production.
+Server mode is opt-in only. When enabled, set `BUGBEE_SERVER_PASSWORD` to require HTTP Basic Auth. Without this, the server runs unauthenticated (with a warning). It is the end user's responsibility to secure the server - any functionality it provides is not a vulnerability.
 
-## Authorized use only
+### Out of Scope
 
-Users are responsible for ensuring their use of Bugbee complies with law and organizational policy. Unauthorized scanning or access of systems is prohibited.
+| Category                        | Rationale                                                               |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| **Server access when opted-in** | If you enable server mode, API access is expected behavior              |
+| **Sandbox escapes**             | The permission system is not a sandbox (see above)                      |
+| **LLM provider data handling**  | Data sent to your configured LLM provider is governed by their policies |
+| **MCP server behavior**         | External MCP servers you configure are outside our trust boundary       |
+| **Malicious config files**      | Users control their own config; modifying it is not an attack vector    |
 
-## Related
+---
 
-- [VISION.md](./VISION.md) — product constitution
-- [NOTICE](./NOTICE) — upstream attribution
+# Reporting Security Issues
+
+We appreciate your efforts to responsibly disclose your findings, and will make every effort to acknowledge your contributions.
+
+To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/neuralbroker/bugbee/security/advisories/new) tab.
+
+The team will send a response indicating the next steps in handling your report. After the initial reply to your report, the security team will keep you informed of the progress towards a fix and full announcement, and may ask for additional information or guidance.
+
+## Escalation
+
+If you do not receive an acknowledgement of your report within 6 business days, you may send an email to security@anoma.ly

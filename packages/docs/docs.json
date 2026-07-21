@@ -16,7 +16,7 @@
           {
             "group": "Getting started",
             "pages": ["index", "quickstart", "development"],
-            "openapi": "https://bugbee.dev/openapi.json"
+            "openapi": "https://github.com/neuralbroker/bugbee/openapi.json"
           }
         ]
       }

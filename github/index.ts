@@ -363,7 +363,7 @@ function useIssueId() {
 }
 
 function useShareUrl() {
-  return isMock() ? "https://dev.bugbee.ai" : "https://bugbee.dev"
+  return isMock() ? "https://dev.bugbee.ai" : "https://github.com/neuralbroker/bugbee"
 }
 
 async function getAccessToken() {

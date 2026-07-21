@@ -34,7 +34,7 @@ export const console = config.console
 
 ```json title="bugbee.json" {6}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "anthropic": {
       "options": {
@@ -56,7 +56,7 @@ Bugbee Zen هي قائمة نماذج يوفّرها فريق Bugbee وقد تم
 إذا كنت جديدا، فننصح بالبدء مع Bugbee Zen.
 :::
 
-1. شغّل الأمر `/connect` في TUI، واختر bugbee، ثم انتقل إلى [bugbee.dev/auth](https://bugbee.dev/auth).
+1. شغّل الأمر `/connect` في TUI، واختر bugbee، ثم انتقل إلى [bugbee.dev/auth](https://github.com/neuralbroker/bugbee/auth).
 
    ```txt
    /connect
@@ -87,7 +87,7 @@ Bugbee Zen هي قائمة نماذج يوفّرها فريق Bugbee وقد تم
 
 Bugbee Go هي خطة اشتراك منخفضة التكلفة توفّر وصولا موثوقا إلى نماذج البرمجة المفتوحة الشهيرة المقدّمة من فريق Bugbee، والتي تم اختبارها والتحقق من أنها تعمل بشكل جيد مع Bugbee.
 
-1. شغّل الأمر `/connect` في TUI، واختر `Bugbee Go`، ثم انتقل إلى [bugbee.dev/auth](https://bugbee.dev/zen).
+1. شغّل الأمر `/connect` في TUI، واختر `Bugbee Go`، ثم انتقل إلى [bugbee.dev/auth](https://github.com/neuralbroker/bugbee/zen).
 
    ```txt
    /connect
@@ -193,7 +193,7 @@ Bugbee Go هي خطة اشتراك منخفضة التكلفة توفّر وصو
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "amazon-bedrock": {
          "options": {
@@ -220,7 +220,7 @@ Bugbee Go هي خطة اشتراك منخفضة التكلفة توفّر وصو
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "amazon-bedrock": {
          "options": {
@@ -263,7 +263,7 @@ Bugbee Go هي خطة اشتراك منخفضة التكلفة توفّر وصو
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "amazon-bedrock": {
       // ...
@@ -325,7 +325,7 @@ Bugbee Go هي خطة اشتراك منخفضة التكلفة توفّر وصو
 
 ```json title="bugbee.json" "atomic-chat" {5, 6, 8, 10-14}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "atomic-chat": {
       "npm": "@ai-sdk/openai-compatible",
@@ -553,7 +553,7 @@ Bugbee Go هي خطة اشتراك منخفضة التكلفة توفّر وصو
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "cloudflare-ai-gateway": {
          "models": {
@@ -758,7 +758,7 @@ Bugbee Go هي خطة اشتراك منخفضة التكلفة توفّر وصو
 
 ```json
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "small_model": "gitlab/duo-chat-haiku-4-5",
   "share": "disabled"
 }
@@ -812,7 +812,7 @@ callback URL ‏`http://127.0.0.1:8080/callback` ونطاقات الصلاحيا
 export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 ```
 
-مزيد من التوثيق على صفحة [bugbee-gitlab-auth](https://www.npmjs.com/package/bugbee-gitlab-auth).
+مزيد من التوثيق على صفحة [opencode-gitlab-auth](https://www.npmjs.com/package/opencode-gitlab-auth).
 
 ##### التهيئة
 
@@ -820,7 +820,7 @@ export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "gitlab": {
       "options": {
@@ -837,7 +837,7 @@ export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "plugin": ["bugbee-gitlab-plugin"]
 }
 ```
@@ -1019,7 +1019,7 @@ export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 
 ```jsonc title="~/.config/bugbee/bugbee.jsonc"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "helicone": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1047,7 +1047,7 @@ export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 
 ```jsonc title="~/.config/bugbee/bugbee.jsonc"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "helicone": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1101,7 +1101,7 @@ npm install -g bugbee-helicone-session
 
 ```json title="bugbee.json" "llama.cpp" {5, 6, 8, 10-15}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "llama.cpp": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1168,7 +1168,7 @@ npm install -g bugbee-helicone-session
 
 ```json title="bugbee.json" "lmstudio" {5, 6, 8, 10-14}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1289,7 +1289,7 @@ npm install -g bugbee-helicone-session
 
 ```json title="bugbee.json" "ollama" {5, 6, 8, 10-14}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1451,7 +1451,7 @@ Bugbee Zen هي قائمة من النماذج التي تم اختبارها و
 
    ```json title="bugbee.json" {6}
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "openrouter": {
          "models": {
@@ -1466,7 +1466,7 @@ Bugbee Zen هي قائمة من النماذج التي تم اختبارها و
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "openrouter": {
          "models": {
@@ -1715,7 +1715,7 @@ Bugbee Zen هي قائمة من النماذج التي تم اختبارها و
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "vercel": {
       "models": {
@@ -1825,7 +1825,7 @@ Bugbee Zen هي قائمة من النماذج التي تم اختبارها و
 
    ```json title="bugbee.json" {6}
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "zenmux": {
          "models": {
@@ -1893,7 +1893,7 @@ Bugbee Zen هي قائمة من النماذج التي تم اختبارها و
 
    ```json title="bugbee.json" ""myprovider"" {5-15}
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "myprovider": {
          "npm": "@ai-sdk/openai-compatible",
@@ -1931,7 +1931,7 @@ Bugbee Zen هي قائمة من النماذج التي تم اختبارها و
 
 ```json title="bugbee.json" {9,11,17-20}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "myprovider": {
       "npm": "@ai-sdk/openai-compatible",

@@ -3,7 +3,7 @@
  */
 export const config = {
   // Base URL
-  baseUrl: "https://bugbee.dev",
+  baseUrl: "https://github.com/neuralbroker/bugbee",
 
   // GitHub
   github: {

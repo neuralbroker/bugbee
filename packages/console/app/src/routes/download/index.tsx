@@ -120,22 +120,22 @@ export default function Download() {
             <div data-component="section-content">
               <button
                 data-component="cli-row"
-                onClick={handleCopyClick("curl -fsSL https://bugbee.dev/install | bash")}
+                onClick={handleCopyClick("curl -fsSL https://github.com/neuralbroker/bugbee/install | bash")}
               >
                 <code>
                   curl -fsSL https://<strong>bugbee.dev/install</strong> | bash
                 </code>
                 <CopyStatus />
               </button>
-              <button data-component="cli-row" onClick={handleCopyClick("npm i -g bugbee")}>
+              <button data-component="cli-row" onClick={handleCopyClick("npm i -g bugbee-ai")}>
                 <code>
-                  npm i -g <strong>bugbee</strong>
+                  npm i -g <strong>bugbee-ai</strong>
                 </code>
                 <CopyStatus />
               </button>
-              <button data-component="cli-row" onClick={handleCopyClick("bun add -g bugbee")}>
+              <button data-component="cli-row" onClick={handleCopyClick("bun add -g bugbee-ai")}>
                 <code>
-                  bun add -g <strong>bugbee</strong>
+                  bun add -g <strong>bugbee-ai</strong>
                 </code>
                 <CopyStatus />
               </button>

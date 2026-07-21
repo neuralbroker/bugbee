@@ -52,7 +52,7 @@ const bootstrapFixture = Effect.gen(function* () {
     Bun.write(
       path.join(dir, "bugbee.json"),
       JSON.stringify({
-        $schema: "https://bugbee.dev/config.json",
+        $schema: "https://github.com/neuralbroker/bugbee/config.json",
         plugin: [pathToFileURL(pluginFile).href],
       }),
     ),

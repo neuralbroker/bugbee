@@ -1,5 +1,5 @@
 {
-  "$schema": "https://bugbee.dev/theme.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/theme.json",
   "defs": {
     "darkBg": "#263238",
     "darkBgAlt": "#1e272c",

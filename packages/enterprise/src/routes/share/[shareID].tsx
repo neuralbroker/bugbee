@@ -274,7 +274,7 @@ export default function () {
                         <div class="relative bg-background-stronger w-screen h-screen overflow-hidden flex flex-col">
                           <header class="h-12 px-6 py-2 flex items-center justify-between self-stretch bg-background-base border-b border-border-weak-base">
                             <div class="">
-                              <a href="https://bugbee.dev">
+                              <a href="https://github.com/neuralbroker/bugbee">
                                 <Mark />
                               </a>
                             </div>
@@ -288,7 +288,7 @@ export default function () {
                               />
                               <IconButton
                                 as={"a"}
-                                href="https://bugbee.dev/discord"
+                                href="https://github.com/neuralbroker/bugbee/discord"
                                 target="_blank"
                                 icon="discord"
                                 variant="ghost"

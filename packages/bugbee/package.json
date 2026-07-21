@@ -154,6 +154,5 @@
   },
   "overrides": {
     "drizzle-orm": "catalog:"
-  },
-  "description": "Bugbee \u2014 AI coding agent with defensive security (hunt, evidence, SARIF)"
+  }
 }

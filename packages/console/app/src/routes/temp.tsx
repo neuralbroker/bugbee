@@ -113,7 +113,7 @@ export default function Home() {
             <h3 data-component="title">npm</h3>
             <button data-copy data-slot="button">
               <span>
-                npm install -g <strong>bugbee</strong>
+                npm install -g <strong>bugbee-ai</strong>
               </span>
               <CopyStatus />
             </button>
@@ -122,7 +122,7 @@ export default function Home() {
             <h3 data-component="title">bun</h3>
             <button data-copy data-slot="button">
               <span>
-                bun install -g <strong>bugbee</strong>
+                bun install -g <strong>bugbee-ai</strong>
               </span>
               <CopyStatus />
             </button>
@@ -164,7 +164,7 @@ export default function Home() {
             <a href="https://github.com/neuralbroker/bugbee">{i18n.t("footer.github")}</a>
           </div>
           <div data-slot="cell">
-            <a href="https://bugbee.dev/discord">{i18n.t("footer.discord")}</a>
+            <a href="https://github.com/neuralbroker/bugbee/discord">{i18n.t("footer.discord")}</a>
           </div>
         </footer>
       </div>

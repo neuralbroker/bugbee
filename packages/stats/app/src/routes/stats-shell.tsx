@@ -132,7 +132,7 @@ export function Header(props: { githubStars: string; links?: readonly HeaderLink
             <strong>{i18n.t("header.github")}</strong>
             <span>[{props.githubStars}]</span>
           </a>
-          <a data-slot="header-button" data-variant="contrast" href="https://bugbee.dev/">
+          <a data-slot="header-button" data-variant="contrast" href="https://github.com/neuralbroker/bugbee/">
             <strong>{i18n.t("header.tryBugbee")}</strong>
           </a>
           <button
@@ -232,12 +232,12 @@ export function Footer(props: {
     { href: "#geo-breakdown", label: i18n.t("nav.geoBreakdown") },
   ]
   const legal = [
-    { href: "https://bugbee.dev/legal/terms-of-service", label: i18n.t("footer.terms") },
-    { href: "https://bugbee.dev/legal/privacy-policy", label: i18n.t("footer.privacy") },
+    { href: "https://github.com/neuralbroker/bugbee/legal/terms-of-service", label: i18n.t("footer.terms") },
+    { href: "https://github.com/neuralbroker/bugbee/legal/privacy-policy", label: i18n.t("footer.privacy") },
   ]
   const connect = [
     { href: "mailto:hello@bugbee.dev", label: i18n.t("footer.contact") },
-    { href: "https://bugbee.dev/discord", label: i18n.t("footer.community") },
+    { href: "https://github.com/neuralbroker/bugbee/discord", label: i18n.t("footer.community") },
     { href: "https://x.com/bugbee", label: "X" },
     { href: githubLink.href, label: i18n.t("header.github") },
     { href: "https://www.youtube.com/@anomaly-co", label: i18n.t("footer.youtube") },
@@ -251,7 +251,7 @@ export function Footer(props: {
     <footer data-component="footer">
       <Show when={bridge()}>{(link) => <SectionBridge label={link().label} href={link().href} />}</Show>
       <div data-slot="footer-grid">
-        <a data-slot="footer-mark" href="https://bugbee.dev" aria-label={i18n.t("footer.homeAria")}>
+        <a data-slot="footer-mark" href="https://github.com/neuralbroker/bugbee" aria-label={i18n.t("footer.homeAria")}>
           <BugbeeMark />
         </a>
         <FooterColumn title={i18n.t("footer.modelData")} links={modelStats} localHref={localHref} />

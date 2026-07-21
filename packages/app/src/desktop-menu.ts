@@ -200,7 +200,7 @@ export const DESKTOP_MENU: DesktopMenu[] = [
     id: "help",
     label: "Help",
     items: [
-      { type: "item", label: "Bugbee Documentation", href: "https://bugbee.dev/docs" },
+      { type: "item", label: "Bugbee Documentation", href: "https://github.com/neuralbroker/bugbee/docs" },
       { type: "item", label: "Support Forum", href: "https://discord.com/invite/bugbee" },
       { type: "item", label: "Export Logs...", command: "logs.export" },
       { type: "separator" },

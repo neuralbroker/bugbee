@@ -9,63 +9,8 @@ import { Location } from "../location"
 import { PermissionV2 } from "../permission"
 
 const TRUNCATION_GLOB = path.join(Global.Path.data, "tool-output", "*")
-const BUILD_SYSTEM = `You are Bugbee — an AI coding agent with first-class security engineering capabilities.
-
-You help the user accomplish software engineering tasks AND defensive security work on codebases they own or are authorized to assess.
-
-## Dual mandate
-1. **Build** — inspect the workspace, make targeted changes, run tools under configured permissions.
-2. **Secure** — hunt vulnerabilities with evidence, review claims adversarially, propose minimal safe patches.
-
-## Security constitution (hard laws)
-- Defense only: never live-exploit third-party systems; never generate weaponized payloads for unauthorized targets.
-- Evidence first: every vulnerability claim needs path, line, snippet, and reasoning (source→sink when applicable).
-- Secrets: never echo full credentials; use secrets_scan (redacted). Urge rotation when real secrets appear.
-- Prefer deterministic tools first: vuln_scan, secrets_scan, findings, then deep agent reasoning.
-- Findings stay draft until the user confirms; use findings set_status for confirm/fp/fixed.
-- Patches must be minimal, reviewable, and must not silently change behavior.
-- Scope: only the local workspace / authorized targets.
-
-## Security tools
-- secrets_scan — redacted credential detectors
-- vuln_scan — OWASP-inspired heuristic hunt (merges into .bugbee/findings.json)
-- findings — list/get/update finding status
-- security_report — markdown or SARIF export
-
-When the user asks to hunt, audit, review security, or "find vulns", start with vuln_scan (include secrets), then triage top findings with evidence before proposing fixes.`
-
-const PROMPT_HUNT = `You are Bugbee Hunt Lead — a defensive application security agent.
-
-Mission: discover real vulnerabilities in the authorized local workspace, prove them with evidence, and never over-claim.
-
-Workflow:
-1. Run vuln_scan (include secrets) to populate .bugbee/findings.json.
-2. Use findings list to prioritize critical/high.
-3. For each top finding, use Read/Grep to validate dataflow (source → sink) and gather evidence.
-4. Mark false positives with findings set_status; confirm only when evidence is solid.
-5. Propose minimal patches with tests when asked; do not apply destructive changes without clear user intent.
-6. Export with security_report (markdown or SARIF) when the hunt concludes.
-
-Hard rules:
-- Defense only. No live exploitation. No weaponized payloads against third parties.
-- Every claim needs path:line + snippet + rationale.
-- Redact secrets. Prefer rotation guidance over repeating secret material.
-- Prefer deterministic scanners before speculative LLM guesses.
-- Be adversarial toward weak findings — better a miss than a false critical.
-
-Output style: concise, severity-ordered, evidence-heavy. Avoid emoji.`
-
-const PROMPT_SECURITY_REVIEW = `You are Bugbee Adversarial Reviewer — a read-only security reviewer.
-
-Your job is to kill weak findings and strengthen real ones.
-
-- You may use Read, Grep, Glob, findings, and webfetch.
-- You must NOT edit files, run destructive shell, or exploit systems.
-- Challenge every critical/high: is there a real source? real sink? reachable path?
-- Recommend status: confirmed | false_positive | needs_more_evidence.
-- Cite exact file:line evidence.
-
-Defense only. No payload generation for unauthorized targets.`
+const BUILD_SYSTEM =
+  "You are an AI coding agent. Help the user accomplish software engineering tasks by inspecting the workspace, making targeted changes, and using tools according to the configured permissions."
 
 const PROMPT_EXPLORE = `You are a file search specialist. You excel at thoroughly navigating and exploring codebases.
 
@@ -178,18 +123,13 @@ export const Plugin = define({
 
     yield* ctx.agent.transform((draft) => {
       draft.update(AgentV2.defaultID, (item) => {
-        item.description =
-          "Default agent. Full-stack coding plus defensive security (hunt, review, patch) under configured permissions."
+        item.description = "The default agent. Executes tools based on configured permissions."
         item.system ??= BUILD_SYSTEM
         item.mode = "primary"
         item.permissions.push(
           ...PermissionV2.merge(defaults, [
             { action: "question", resource: "*", effect: "allow" },
             { action: "plan_enter", resource: "*", effect: "allow" },
-            { action: "secrets_scan", resource: "*", effect: "allow" },
-            { action: "vuln_scan", resource: "*", effect: "allow" },
-            { action: "findings", resource: "*", effect: "allow" },
-            { action: "security_report", resource: "*", effect: "allow" },
           ]),
         )
       })
@@ -209,51 +149,7 @@ export const Plugin = define({
               resource: path.relative(worktree, path.join(Global.Path.data, "plans", "*.md")),
               effect: "allow",
             },
-            { action: "secrets_scan", resource: "*", effect: "allow" },
-            { action: "vuln_scan", resource: "*", effect: "allow" },
-            { action: "findings", resource: "*", effect: "allow" },
-            { action: "security_report", resource: "*", effect: "allow" },
           ]),
-        )
-      })
-
-      draft.update(AgentV2.ID.make("hunt"), (item) => {
-        item.description =
-          "Security hunt mode. Deterministic scanners + evidence-first vulnerability research. Prefer vuln_scan/secrets_scan before deep reasoning."
-        item.system = PROMPT_HUNT
-        item.mode = "primary"
-        item.permissions.push(
-          ...PermissionV2.merge(defaults, [
-            { action: "question", resource: "*", effect: "allow" },
-            { action: "secrets_scan", resource: "*", effect: "allow" },
-            { action: "vuln_scan", resource: "*", effect: "allow" },
-            { action: "findings", resource: "*", effect: "allow" },
-            { action: "security_report", resource: "*", effect: "allow" },
-            // Hunt may draft patches but prefer user confirmation for broad edits
-            { action: "edit", resource: "*", effect: "ask" },
-          ]),
-        )
-      })
-
-      draft.update(AgentV2.ID.make("security-review"), (item) => {
-        item.description =
-          "Read-only adversarial reviewer. Tries to kill weak findings and strengthen real ones with evidence."
-        item.system = PROMPT_SECURITY_REVIEW
-        item.mode = "subagent"
-        item.permissions.push(
-          ...PermissionV2.merge(
-            defaults,
-            [
-              { action: "*", resource: "*", effect: "deny" },
-              { action: "grep", resource: "*", effect: "allow" },
-              { action: "glob", resource: "*", effect: "allow" },
-              { action: "read", resource: "*", effect: "allow" },
-              { action: "findings", resource: "*", effect: "allow" },
-              { action: "webfetch", resource: "*", effect: "allow" },
-              { action: "websearch", resource: "*", effect: "allow" },
-            ],
-            readonlyExternalDirectory,
-          ),
         )
       })
 

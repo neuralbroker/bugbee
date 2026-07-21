@@ -1209,7 +1209,7 @@ export type Config = {
     diff_style?: "auto" | "stacked"
   }
   /**
-   * Command configuration, see https://bugbee.dev/docs/commands
+   * Command configuration, see https://github.com/neuralbroker/bugbee/docs/commands
    */
   command?: {
     [key: string]: {
@@ -1266,7 +1266,7 @@ export type Config = {
     [key: string]: AgentConfig | undefined
   }
   /**
-   * Agent configuration, see https://bugbee.dev/docs/agent
+   * Agent configuration, see https://github.com/neuralbroker/bugbee/docs/agent
    */
   agent?: {
     plan?: AgentConfig

@@ -29,10 +29,6 @@ import { WebSearchTool } from "./websearch"
 import { LspTool } from "./lsp"
 import * as Truncate from "./truncate"
 import { ApplyPatchTool } from "./apply_patch"
-import { SecretsScanTool } from "./secrets_scan"
-import { VulnScanTool } from "./vuln_scan"
-import { FindingsTool } from "./findings"
-import { SecurityReportTool } from "./security_report"
 import { Glob } from "@bugbee-ai/core/util/glob"
 import path from "path"
 import { pathToFileURL } from "url"
@@ -113,10 +109,6 @@ const layer = Layer.effect(
     const greptool = yield* GrepTool
     const patchtool = yield* ApplyPatchTool
     const skilltool = yield* SkillTool
-    const secretsScan = yield* SecretsScanTool
-    const vulnScan = yield* VulnScanTool
-    const findingsTool = yield* FindingsTool
-    const securityReport = yield* SecurityReportTool
     const agent = yield* Agent.Service
     const codeMode = flags.experimentalCodeMode ? yield* Effect.promise(() => import("./code-mode")) : undefined
     const codeModeTool = codeMode ? yield* codeMode.CodeModeTool : undefined
@@ -226,10 +218,6 @@ const layer = Layer.effect(
           question: Tool.init(question),
           lsp: Tool.init(lsptool),
           plan: Tool.init(plan),
-          secrets_scan: Tool.init(secretsScan),
-          vuln_scan: Tool.init(vulnScan),
-          findings: Tool.init(findingsTool),
-          security_report: Tool.init(securityReport),
           ...(codeModeTool ? { execute: Tool.init(codeModeTool) } : {}),
         })
 
@@ -250,10 +238,6 @@ const layer = Layer.effect(
             tool.search,
             tool.skill,
             tool.patch,
-            tool.secrets_scan,
-            tool.vuln_scan,
-            tool.findings,
-            tool.security_report,
             ...(tool.execute ? [tool.execute] : []),
             ...(flags.experimentalLspTool ? [tool.lsp] : []),
             ...(flags.experimentalPlanMode && flags.client === "cli" ? [tool.plan] : []),

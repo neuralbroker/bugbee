@@ -34,7 +34,7 @@ Bugbee 使用 [AI SDK](https://ai-sdk.dev/) 和 [Models.dev](https://models.dev)
 
 ```json title="bugbee.json" {6}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "anthropic": {
       "options": {
@@ -55,7 +55,7 @@ Bugbee Zen 是由 Bugbee 團隊提供的模型列表，這些模型已經過測�
 如果您是新使用者，我們建議從 Bugbee Zen 開始。
 :::
 
-1. 在 TUI 中執行 `/connect` 指令，選擇 `Bugbee Zen`，然後前往 [bugbee.dev/auth](https://bugbee.dev/zen)。
+1. 在 TUI 中執行 `/connect` 指令，選擇 `Bugbee Zen`，然後前往 [bugbee.dev/auth](https://github.com/neuralbroker/bugbee/zen)。
 
    ```txt
    /connect
@@ -86,7 +86,7 @@ Bugbee Zen 是由 Bugbee 團隊提供的模型列表，這些模型已經過測�
 
 Bugbee Go 是一個低成本的訂閱計畫，提供對 Bugbee 團隊提供的流行開放編碼模型的可靠存取，這些模型已經過測試和驗證，能夠與 Bugbee 良好配合使用。
 
-1. 在 TUI 中執行 `/connect` 指令，選擇 `Bugbee Go`，然後前往 [bugbee.dev/auth](https://bugbee.dev/zen)。
+1. 在 TUI 中執行 `/connect` 指令，選擇 `Bugbee Go`，然後前往 [bugbee.dev/auth](https://github.com/neuralbroker/bugbee/zen)。
 
    ```txt
    /connect
@@ -190,7 +190,7 @@ Bugbee Go 是一個低成本的訂閱計畫，提供對 Bugbee 團隊提供的�
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "amazon-bedrock": {
          "options": {
@@ -217,7 +217,7 @@ Bugbee Go 是一個低成本的訂閱計畫，提供對 Bugbee 團隊提供的�
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "amazon-bedrock": {
          "options": {
@@ -261,7 +261,7 @@ Bugbee Go 是一個低成本的訂閱計畫，提供對 Bugbee 團隊提供的�
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "amazon-bedrock": {
       // ...
@@ -322,7 +322,7 @@ Bugbee Go 是一個低成本的訂閱計畫，提供對 Bugbee 團隊提供的�
 
 ```json title="bugbee.json" "atomic-chat" {5, 6, 8, 10-14}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "atomic-chat": {
       "npm": "@ai-sdk/openai-compatible",
@@ -550,7 +550,7 @@ Cloudflare AI Gateway 允許您透過統一端點存取來自 OpenAI、Anthropic
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "cloudflare-ai-gateway": {
          "models": {
@@ -752,7 +752,7 @@ Bugbee 會使用一個小模型來執行部分 AI 任務，例如產生工作階
 
 ```json
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "small_model": "gitlab/duo-chat-haiku-4-5",
   "share": "disabled"
 }
@@ -804,7 +804,7 @@ export GITLAB_TOKEN=glpat-...
 export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 ```
 
-更多文件請參閱 [bugbee-gitlab-auth](https://www.npmjs.com/package/bugbee-gitlab-auth) 首頁。
+更多文件請參閱 [opencode-gitlab-auth](https://www.npmjs.com/package/opencode-gitlab-auth) 首頁。
 
 ##### 設定
 
@@ -812,7 +812,7 @@ export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "gitlab": {
       "options": {
@@ -829,7 +829,7 @@ export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "plugin": ["bugbee-gitlab-plugin"]
 }
 ```
@@ -1008,7 +1008,7 @@ export GITLAB_OAUTH_CLIENT_ID=your_application_id_here
 
 ```jsonc title="~/.config/bugbee/bugbee.jsonc"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "helicone": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1036,7 +1036,7 @@ Helicone 支援用於快取、使用者追蹤和工作階段管理等功能的�
 
 ```jsonc title="~/.config/bugbee/bugbee.jsonc"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "helicone": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1090,7 +1090,7 @@ npm install -g bugbee-helicone-session
 
 ```json title="bugbee.json" "llama.cpp" {5, 6, 8, 10-15}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "llama.cpp": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1157,7 +1157,7 @@ IO.NET 提供 17 個針對不同使用情境最佳化的模型：
 
 ```json title="bugbee.json" "lmstudio" {5, 6, 8, 10-14}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1278,7 +1278,7 @@ Ollama 可以自動為 Bugbee 進行設定。詳見 [Ollama 整合文件](https:
 
 ```json title="bugbee.json" "ollama" {5, 6, 8, 10-14}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
@@ -1439,7 +1439,7 @@ Bugbee Zen 是由 Bugbee 團隊提供的經過測試和驗證的模型列表。[
 
    ```json title="bugbee.json" {6}
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "openrouter": {
          "models": {
@@ -1454,7 +1454,7 @@ Bugbee Zen 是由 Bugbee 團隊提供的經過測試和驗證的模型列表。[
 
    ```json title="bugbee.json"
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "openrouter": {
          "models": {
@@ -1703,7 +1703,7 @@ Vercel AI Gateway 允許您透過統一端點存取來自 OpenAI、Anthropic、G
 
 ```json title="bugbee.json"
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "vercel": {
       "models": {
@@ -1813,7 +1813,7 @@ Vercel AI Gateway 允許您透過統一端點存取來自 OpenAI、Anthropic、G
 
    ```json title="bugbee.json" {6}
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "zenmux": {
          "models": {
@@ -1881,7 +1881,7 @@ Vercel AI Gateway 允許您透過統一端點存取來自 OpenAI、Anthropic、G
 
    ```json title="bugbee.json" ""myprovider"" {5-15}
    {
-     "$schema": "https://bugbee.dev/config.json",
+     "$schema": "https://github.com/neuralbroker/bugbee/config.json",
      "provider": {
        "myprovider": {
          "npm": "@ai-sdk/openai-compatible",
@@ -1919,7 +1919,7 @@ Vercel AI Gateway 允許您透過統一端點存取來自 OpenAI、Anthropic、G
 
 ```json title="bugbee.json" {9,11,17-20}
 {
-  "$schema": "https://bugbee.dev/config.json",
+  "$schema": "https://github.com/neuralbroker/bugbee/config.json",
   "provider": {
     "myprovider": {
       "npm": "@ai-sdk/openai-compatible",

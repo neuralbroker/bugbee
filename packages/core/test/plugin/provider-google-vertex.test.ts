@@ -95,7 +95,7 @@ describe("GoogleVertexPlugin", () => {
           provider.api = {
             type: "aisdk",
             package: "@ai-sdk/openai-compatible",
-            url: "https://bugbee.dev/zen/v1",
+            url: "https://github.com/neuralbroker/bugbee/zen/v1",
           }
         }),
       )

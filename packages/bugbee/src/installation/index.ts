@@ -144,7 +144,7 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
 
     const upgradeCurl = Effect.fnUntraced(
       function* (target: string) {
-        const response = yield* httpOk.execute(HttpClientRequest.get("https://bugbee.dev/install"))
+        const response = yield* httpOk.execute(HttpClientRequest.get("https://github.com/neuralbroker/bugbee/install"))
         const body = yield* response.text
         const bodyBytes = new TextEncoder().encode(body)
         const shell = yield* upgradeScriptShell()
@@ -197,7 +197,7 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
         for (const check of checks) {
           const output = yield* check.command()
           const installedName =
-            check.name === "brew" || check.name === "choco" || check.name === "scoop" ? "bugbee" : "bugbee"
+            check.name === "brew" || check.name === "choco" || check.name === "scoop" ? "bugbee" : "bugbee-ai"
           if (output.includes(installedName)) {
             return check.name
           }
@@ -227,7 +227,7 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
         if (detectedMethod === "npm" || detectedMethod === "bun" || detectedMethod === "pnpm") {
           const response = yield* httpOk.execute(
             HttpClientRequest.get(
-              `${yield* NpmConfig.registry(process.cwd())}/bugbee/${InstallationChannel}`,
+              `${yield* NpmConfig.registry(process.cwd())}/bugbee-ai/${InstallationChannel}`,
             ).pipe(HttpClientRequest.acceptJson),
           )
           const data = yield* HttpClientResponse.schemaBodyJson(NpmPackage)(response)
@@ -269,13 +269,13 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
             upgradeResult = yield* upgradeCurl(target)
             break
           case "npm":
-            upgradeResult = yield* run(["npm", "install", "-g", `bugbee@${target}`])
+            upgradeResult = yield* run(["npm", "install", "-g", `bugbee-ai@${target}`])
             break
           case "pnpm":
-            upgradeResult = yield* run(["pnpm", "install", "-g", `bugbee@${target}`])
+            upgradeResult = yield* run(["pnpm", "install", "-g", `bugbee-ai@${target}`])
             break
           case "bun":
-            upgradeResult = yield* run(["bun", "install", "-g", `bugbee@${target}`])
+            upgradeResult = yield* run(["bun", "install", "-g", `bugbee-ai@${target}`])
             break
           case "brew": {
             const formula = yield* getBrewFormula()
