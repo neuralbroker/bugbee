@@ -90,16 +90,16 @@
       "light": "lightStep3"
     },
     "border": {
-      "dark": "#f0a53a",
-      "light": "#c47a12"
-    },
-    "borderActive": {
-      "dark": "#f5b942",
-      "light": "#a86810"
-    },
-    "borderSubtle": {
       "dark": "darkStep6",
       "light": "lightStep6"
+    },
+    "borderActive": {
+      "dark": "darkStep9",
+      "light": "lightStep9"
+    },
+    "borderSubtle": {
+      "dark": "darkStep5",
+      "light": "lightStep5"
     },
     "diffAdded": {
       "dark": "#4fd6be",

@@ -1,31 +1,24 @@
-/** Bugbee wordmark glyphs for TUI + CLI.
- * Special marks used by the renderer:
- *   _ = full block with shadow bg
- *   ^ = half-block mix (▀ with fg+bg)
- *   ~ = top-half shadow only
- *   , = bottom half shadow only (▄)
+/** Bugbee wordmark glyphs.
+ * Marks: _ full shadow bg · ^ half mix · ~ top shadow · , bottom shadow
  */
 export const logo = {
-  // Muted bee-wing accent (left column)
   left: [
-    "      ▄▄▄      ",
-    "    ▀▀███▀▀    ",
-    "      ▐█▌      ",
-    "    ═══════    ",
+    "                ",
+    "█▀▀▄ █  █ █▀▀▀  ",
+    "█▀▀▄ █  █ █ ▄▄  ",
+    "▀▀▀  ▀▀▀▀ ▀▀▀▀  ",
   ],
-  // Bold BUGBEE wordmark
   right: [
-    "                              ",
-    "█▀▀▄ █  █ █▀▀▀ █▀▀▄ █▀▀▀ █▀▀▀ ",
-    "█▀▀▄ █  █ █ ▄▄ █▀▀▄ █▀▀  █▀▀  ",
-    "▀▀▀  ▀▀▀▀ ▀▀▀▀ ▀▀▀  ▀▀▀▀ ▀▀▀▀ ",
+    "               ",
+    "█▀▀▄ █▀▀▀ █▀▀▀ ",
+    "█▀▀▄ █▀▀  █▀▀  ",
+    "▀▀▀  ▀▀▀▀ ▀▀▀▀ ",
   ],
 }
 
-/** Compact badge used for splash / exit marks */
 export const go = {
-  left: ["    ", "█▀▀▄", "█▀▀▄", "▀▀▀ "],
-  right: ["    ", "█▀▀▄", "█▀▀▄", "▀▀▀ "],
+  left: ["   ", "█▀▀", "█▄▄", "▀  "],
+  right: ["   ", "█▀▀", "█▄▄", "▀  "],
 }
 
 export const marks = "_^~,"

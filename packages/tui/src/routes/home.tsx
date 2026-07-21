@@ -71,8 +71,8 @@ export function Home() {
     <HomeSessionDestinationProvider>
       <box flexGrow={1} alignItems="center" paddingLeft={2} paddingRight={2}>
         <box flexGrow={1} minHeight={0} />
-        <box height={4} minHeight={0} flexShrink={1} />
-        <box flexShrink={0}>
+        <box height={2} minHeight={0} flexShrink={1} />
+        <box flexShrink={0} alignItems="center">
           <pluginRuntime.Slot name="home_logo" mode="replace">
             <Logo />
           </pluginRuntime.Slot>

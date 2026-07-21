@@ -31,7 +31,7 @@ export const DoctorCommand = cmd({
     checks.push({
       name: "identity",
       ok: true,
-      detail: `binary brand=BUGBEE version=${InstallationVersion}`,
+      detail: `brand=bugbee version=${InstallationVersion}`,
     })
 
     const paths = [
@@ -105,7 +105,7 @@ export const DoctorCommand = cmd({
       process.stdout.write(
         JSON.stringify(
           {
-            brand: "BUGBEE",
+            brand: "bugbee",
             version: InstallationVersion,
             ok: failed.length === 0,
             checks,
@@ -118,7 +118,7 @@ export const DoctorCommand = cmd({
       return
     }
 
-    UI.println(UI.Style.TEXT_NORMAL_BOLD + "BUGBEE doctor" + UI.Style.TEXT_NORMAL)
+    UI.println(UI.Style.TEXT_NORMAL_BOLD + "bugbee doctor" + UI.Style.TEXT_NORMAL)
     UI.println(`version ${InstallationVersion}`)
     UI.empty()
     for (const check of checks) {

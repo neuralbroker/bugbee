@@ -454,24 +454,24 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
     if (!terminalTitleEnabled() || Flag.BUGBEE_DISABLE_TERMINAL_TITLE) return
 
     if (route.data.type === "home") {
-      renderer.setTerminalTitle("BUGBEE")
+      renderer.setTerminalTitle("bugbee")
       return
     }
 
     if (route.data.type === "session") {
       const session = sync.session.get(route.data.sessionID)
       if (!session || isDefaultTitle(session.title)) {
-        renderer.setTerminalTitle("BUGBEE")
+        renderer.setTerminalTitle("bugbee")
         return
       }
 
       const title = session.title.length > 40 ? session.title.slice(0, 37) + "..." : session.title
-      renderer.setTerminalTitle(`BUGBEE | ${title}`)
+      renderer.setTerminalTitle(`bugbee · ${title}`)
       return
     }
 
     if (route.data.type === "plugin") {
-      renderer.setTerminalTitle(`BUGBEE | ${route.data.id}`)
+      renderer.setTerminalTitle(`bugbee · ${route.data.id}`)
     }
   })
 

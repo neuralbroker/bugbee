@@ -32,23 +32,20 @@ bun run --cwd packages/bugbee --conditions=browser src/index.ts
 ```
 
 ```bash
+./bin/bugbee doctor
 ./bin/bugbee --help
 ./bin/bugbee agent list
 ./bin/bugbee providers
 ```
 
-## Bugbee extras (vs upstream OpenCode)
 
-| Feature | Description |
-|---------|-------------|
-| **BUGBEE wordmark** | Distinct logo, terminal titles, home footer brand chip |
-| **Honey/teal theme** | Built-in `bugbee` theme palette |
-| **`bugbee doctor`** | Offline install/path/config health check |
-| **`/doctor`** | Guided readiness checklist in-session |
+## Themes
 
-```bash
-./bin/bugbee doctor
-./bin/bugbee doctor --json
+Default theme is `bugbee`. Transparent terminal background:
+
+```jsonc
+// tui.json / ~/.config/bugbee/tui.json
+{ "theme": "transparent" }
 ```
 
 ## Config
