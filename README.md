@@ -11,8 +11,7 @@
 
 Bugbee is an **AI coding agent** for the terminal, desktop, and IDE.
 
-This repository is a **product fork** of [OpenCode](https://github.com/anomalyco/opencode) (MIT), rebranded and published as **Bugbee**.  
-Not affiliated with the OpenCode team. Upstream credit belongs to OpenCode authors and contributors — see [NOTICE](./NOTICE) and [LICENSE](./LICENSE).
+Bugbee is published under the MIT License. See [LICENSE](./LICENSE) for details.
 
 ## Install (from source)
 
@@ -108,4 +107,4 @@ bun run --cwd packages/bugbee test
 
 ## License
 
-MIT. Portions derived from OpenCode — see [NOTICE](./NOTICE).
+MIT. See [LICENSE](./LICENSE) for details.
