@@ -1,18 +1,18 @@
-/** Bugbee wordmark glyphs.
- * Marks: _ full shadow bg · ^ half mix · ~ top shadow · , bottom shadow
+/** Bugbee wordmark — 4-line block ASCII, left muted / right bold.
+ * Marks: _ full shadow · ^ half mix · ~ top shadow · , bottom shadow
  */
 export const logo = {
   left: [
-    "                ",
-    "█▀▀▄ █  █ █▀▀▀  ",
-    "█▀▀▄ █  █ █ ▄▄  ",
-    "▀▀▀  ▀▀▀▀ ▀▀▀▀  ",
+    "█▀▀▀█ █  █ █▀▀▀█ ",
+    "█▄▄▄█ █  █ █     ",
+    "█   █ █  █ █  ▀█ ",
+    "▀▀▀▀▀ ▀▀▀▀ ▀▀▀▀▀ ",
   ],
   right: [
-    "               ",
-    "█▀▀▄ █▀▀▀ █▀▀▀ ",
-    "█▀▀▄ █▀▀  █▀▀  ",
-    "▀▀▀  ▀▀▀▀ ▀▀▀▀ ",
+    "█▀▀▀█ █▀▀▀█ █▀▀▀█",
+    "█▄▄▄█ █▄▄▄  █▄▄▄ ",
+    "█   █ █     █    ",
+    "▀▀▀▀▀ ▀▀▀▀▀ ▀▀▀▀▀",
   ],
 }
 
