@@ -6,6 +6,7 @@ import { UI } from "../ui"
 import { Global } from "@bugbee-ai/core/global"
 import { InstallationVersion } from "@bugbee-ai/core/installation/version"
 import { readHarness } from "@/harness/config"
+import { ensureMemoryDir } from "@/harness/memory"
 import { DEFAULT_MEMORY_DIR, DEFAULT_TRACE_PATH } from "@/harness/types"
 
 type Check = {
@@ -122,13 +123,29 @@ export const DoctorCommand = cmd({
       ok: true,
       detail: String(harnessCfg.max_steps),
     })
-    checks.push({
-      name: "harness.memory",
-      ok: true,
-      detail: harnessCfg.memory.enabled
-        ? `on dir=${harnessCfg.memory.dir || DEFAULT_MEMORY_DIR}`
-        : "off",
-    })
+    let memoryDetail = harnessCfg.memory.enabled
+      ? `on dir=${harnessCfg.memory.dir || DEFAULT_MEMORY_DIR}`
+      : "off"
+    if (harnessCfg.memory.enabled) {
+      try {
+        const memDir = await ensureMemoryDir(cwd, harnessCfg.memory.dir || DEFAULT_MEMORY_DIR)
+        memoryDetail = `on ${memDir}`
+      } catch (error) {
+        checks.push({
+          name: "harness.memory",
+          ok: false,
+          detail: error instanceof Error ? error.message : String(error),
+        })
+        memoryDetail = ""
+      }
+    }
+    if (memoryDetail) {
+      checks.push({
+        name: "harness.memory",
+        ok: true,
+        detail: memoryDetail,
+      })
+    }
     checks.push({
       name: "harness.verify",
       ok: true,

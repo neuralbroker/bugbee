@@ -1,0 +1,9 @@
+Run verification for ${path}.
+
+1. Detect the project toolchain (package.json scripts, cargo, go test, pytest, etc.).
+2. Prefer existing scripts: test, typecheck, lint, build — run the smallest useful set.
+3. If harness.verify.commands is configured in bugbee.json, use those commands.
+4. Report: pass/fail per command, then top failures with file:line when available.
+5. Propose minimal fixes only if the user asked to fix; otherwise stop after the report.
+
+Keep output tight. No filler.

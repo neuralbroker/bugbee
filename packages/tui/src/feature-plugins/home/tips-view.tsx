@@ -190,11 +190,14 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
     return NO_MODELS_PARTS
   }, NO_MODELS_PARTS)
 
-  // First principles: stable chrome (keys) above rotating tip so layout doesn't jump
-  // and always-available actions stay scannable.
+  // Stable keybind chrome above the rotating tip (always-available actions first).
+  // Fallbacks match default keybinds when bindings are empty/unformatted.
+  const agentKey = createMemo(() => shortcuts.agentCycle() || "tab")
+  const commandKey = createMemo(() => shortcuts.commandList() || "ctrl+p")
+
   return (
     <box flexDirection="column" maxWidth="100%" width="100%" alignItems="flex-start">
-      <KeybindStrip agent={shortcuts.agentCycle()} commands={shortcuts.commandList()} />
+      <KeybindStrip agent={agentKey()} commands={commandKey()} />
       <TipLine parts={parts()} />
     </box>
   )
@@ -237,6 +240,7 @@ const TIPS: Tip[] = [
   (shortcuts) => `Help · ${commandText("/help", shortcuts.helpShow())}`,
   "Use {highlight}/review{/highlight} for branch or PR review",
   "Use {highlight}/doctor{/highlight} for a readiness checklist",
+  "Use {highlight}/verify{/highlight} to run tests after changes",
 ]
 
 const INPUT_UNDO_TIP: Tip = (shortcuts) => press(shortcuts.inputUndo(), "undo prompt edits")

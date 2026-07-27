@@ -10,6 +10,7 @@ import { Skill } from "../skill"
 import PROMPT_INITIALIZE from "./template/initialize.txt"
 import PROMPT_REVIEW from "./template/review.txt"
 import PROMPT_DOCTOR from "./template/doctor.txt"
+import PROMPT_VERIFY from "./template/verify.txt"
 import { LegacyEvent } from "@bugbee-ai/schema/legacy-event"
 
 type State = {
@@ -48,6 +49,7 @@ export const Default = {
   INIT: "init",
   REVIEW: "review",
   DOCTOR: "doctor",
+  VERIFY: "verify",
 } as const
 
 export interface Interface {
@@ -96,6 +98,15 @@ const layer = Layer.effect(
           return PROMPT_DOCTOR.replace("${path}", ctx.worktree)
         },
         hints: hints(PROMPT_DOCTOR),
+      }
+      commands[Default.VERIFY] = {
+        name: Default.VERIFY,
+        description: "run project tests / typecheck and report failures",
+        source: "command",
+        get template() {
+          return PROMPT_VERIFY.replace("${path}", ctx.worktree)
+        },
+        hints: hints(PROMPT_VERIFY),
       }
 
       for (const [name, command] of Object.entries(cfg.command ?? {})) {
