@@ -122,6 +122,46 @@ bun run dev
 bun run --cwd packages/bugbee test
 ```
 
+## Maintainers: cut a public release
+
+Global users install **your** builds from GitHub Releases + npm (`bugbee`).
+
+### One-time setup
+
+1. Create an [npm](https://www.npmjs.com) account (2FA recommended).
+2. Create an npm **Automation** token (Access Tokens).
+3. Add it to this repo:
+
+```bash
+gh secret set NPM_TOKEN -R neuralbroker/bugbee
+```
+
+4. Ensure GitHub Actions are enabled for the repo.
+
+### Publish CLI (npm + curl install assets)
+
+```bash
+gh workflow run release-cli.yml -R neuralbroker/bugbee -f version=1.0.0
+```
+
+This builds platform binaries, attaches them to `v1.0.0`, and runs `npm publish` for `bugbee` plus platform packages (`bugbee-linux-x64`, …).
+
+After it finishes:
+
+```bash
+# anyone on the internet
+curl -fsSL https://github.com/neuralbroker/bugbee/install | bash
+npm install -g bugbee
+bugbee --version
+bugbee doctor
+```
+
+### Notes
+
+- Claim the bare npm name **`bugbee`** with the first successful publish (it was free when this pipeline was added).
+- Homebrew / Scoop / Chocolatey / AUR are optional later; they should point at the same GitHub Release assets.
+- The full `publish.yml` workflow is for desktop + signing + extras and needs more secrets/runners.
+
 ## Docs for contributors
 
 - [AGENTS.md](./AGENTS.md) — repo conventions

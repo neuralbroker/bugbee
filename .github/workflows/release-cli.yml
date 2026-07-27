@@ -1,0 +1,156 @@
+# MVP: build CLI binaries, GitHub Release assets, npm publish as `bugbee`.
+# Does not build desktop, sign binaries, or push Homebrew/AUR.
+#
+# Setup (once):
+#   1. npm account + Automation token
+#   2. gh secret set NPM_TOKEN -R neuralbroker/bugbee
+#
+# Cut a release:
+#   gh workflow run release-cli.yml -f version=1.0.0
+
+name: release-cli
+run-name: "release-cli ${{ inputs.version }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semver to publish (e.g. 1.0.0)"
+        required: true
+        type: string
+      skip_npm:
+        description: "Skip npm publish (upload GitHub release assets only)"
+        required: false
+        type: boolean
+        default: false
+      skip_embed_web_ui:
+        description: "Skip embedding the web UI (faster build)"
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: release-cli-${{ github.ref }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+
+jobs:
+  release:
+    if: github.repository == 'neuralbroker/bugbee'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Validate version
+        run: |
+          if ! [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version: ${{ inputs.version }}"
+            exit 1
+          fi
+
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: ./.github/actions/setup-bun
+        with:
+          # Cross-compile needs native optional deps for all platforms
+          install-flags: --ignore-scripts
+
+      - name: Install multi-platform native deps
+        run: |
+          bun install --os="*" --cpu="*" @opentui/core
+          bun install --os="*" --cpu="*" @parcel/watcher
+          bun install --os="*" --cpu="*" @ff-labs/fff-bun
+
+      - name: Setup Node (npm publish)
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Ensure zip is available
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Create draft GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="v${{ inputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists"
+          else
+            gh release create "$TAG" \
+              --draft \
+              --title "Bugbee ${{ inputs.version }}" \
+              --notes "CLI release ${{ inputs.version }}
+
+          Install:
+          \`\`\`bash
+          curl -fsSL https://github.com/neuralbroker/bugbee/install | bash
+          # or
+          npm install -g bugbee@${{ inputs.version }}
+          \`\`\`"
+          fi
+
+      - name: Build CLI binaries
+        working-directory: packages/bugbee
+        env:
+          BUGBEE_VERSION: ${{ inputs.version }}
+          BUGBEE_RELEASE: "1"
+          BUGBEE_CHANNEL: latest
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FLAGS="--skip-install"
+          if [ "${{ inputs.skip_embed_web_ui }}" = "true" ]; then
+            FLAGS="$FLAGS --skip-embed-web-ui"
+          fi
+          bun run script/build.ts $FLAGS
+
+      - name: List release artifacts
+        run: ls -lah packages/bugbee/dist/*.{tar.gz,zip} 2>/dev/null || ls -lah packages/bugbee/dist/
+
+      - name: Publish to npm
+        if: ${{ !inputs.skip_npm }}
+        working-directory: packages/bugbee
+        env:
+          BUGBEE_VERSION: ${{ inputs.version }}
+          BUGBEE_RELEASE: "1"
+          BUGBEE_CHANNEL: latest
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN secret is not set. Add it under repo Settings → Secrets."
+            exit 1
+          fi
+          bun run script/mvp-publish.ts
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="v${{ inputs.version }}"
+          # Ensure archives are on the release even if build upload was partial
+          shopt -s nullglob
+          assets=(packages/bugbee/dist/bugbee-*.tar.gz packages/bugbee/dist/bugbee-*.zip)
+          if ((${#assets[@]} > 0)); then
+            gh release upload "$TAG" "${assets[@]}" --clobber
+          fi
+          gh release edit "$TAG" --draft=false --latest
+
+      - name: Summary
+        run: |
+          echo "## Bugbee ${{ inputs.version }} released" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release: https://github.com/${{ github.repository }}/releases/tag/v${{ inputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ inputs.skip_npm }}" != "true" ]; then
+            echo "- npm: \`npm install -g bugbee@${{ inputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "- curl: \`curl -fsSL https://github.com/neuralbroker/bugbee/install | bash\`" >> "$GITHUB_STEP_SUMMARY"

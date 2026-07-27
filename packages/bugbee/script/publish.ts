@@ -83,8 +83,9 @@ const platforms = "linux/amd64,linux/arm64"
 const tags = [`${image}:${version}`, `${image}:${Script.channel}`]
 const tagFlags = tags.flatMap((t) => ["-t", t])
 
-// registries
-if (!Script.preview) {
+// Docker / AUR / Homebrew — only when explicitly requested (full product release).
+// MVP CLI releases use script/mvp-publish.ts instead.
+if (!Script.preview && process.env.BUGBEE_PUBLISH_EXTRAS === "1") {
   await $`docker buildx build --platform ${platforms} ${tagFlags} --push .`
   // Calculate SHA values
   const arm64Sha = await $`sha256sum ./dist/bugbee-linux-arm64.tar.gz | cut -d' ' -f1`.text().then((x) => x.trim())
