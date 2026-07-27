@@ -13,7 +13,31 @@ Bugbee is an **AI coding agent** for the terminal, desktop, and IDE.
 
 Bugbee is published under the MIT License. See [LICENSE](./LICENSE) for details.
 
-## Install (from source)
+## Install
+
+**Install script (recommended):**
+
+```bash
+curl -fsSL https://github.com/neuralbroker/bugbee/install | bash
+```
+
+**Package managers:**
+
+```bash
+npm install -g bugbee
+# or: bun install -g bugbee
+# or: pnpm install -g bugbee
+# or: brew install neuralbroker/tap/bugbee
+```
+
+Then run:
+
+```bash
+bugbee
+bugbee doctor
+```
+
+### From source
 
 **Requirements:** [Bun](https://bun.sh) 1.3+
 
@@ -36,7 +60,6 @@ bun run --cwd packages/bugbee --conditions=browser src/index.ts
 ./bin/bugbee agent list
 ./bin/bugbee providers
 ```
-
 
 ## Themes
 

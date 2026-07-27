@@ -51,7 +51,7 @@ jobs:
 
       - name: Install Bugbee
         if: inputs.bump || inputs.version
-        run: bun i -g bugbee-ai
+        run: bun i -g bugbee
 
       - id: version
         run: |

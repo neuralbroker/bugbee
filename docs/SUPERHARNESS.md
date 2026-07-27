@@ -18,7 +18,7 @@ Recurring wants:
 | Multi-session / worktrees | Parallel tasks without context mash |
 | Persistent memory / skills | Don’t re-teach every session |
 
-Sources include r/AI_Agents, r/vibecoding, r/GithubCopilot discussions and X posts comparing OpenCode, Claude Code, Codex, Cursor.
+Sources include r/AI_Agents, r/vibecoding, r/GithubCopilot discussions and X posts comparing Claude Code, Codex, Cursor, and similar agents.
 
 ## Harness = Model + control plane
 
@@ -37,7 +37,7 @@ Fowler-style: *Agent = Model + Harness*. The model is commodity; the harness is 
 |--------|---------------------------|
 | **Claude Code** | Strong project memory (`CLAUDE.md`), hooks (pre/post tool), permission allow/deny, session logs |
 | **Codex CLI** | Tight sandbox defaults; long-running batch style tasks |
-| **OpenCode (upstream)** | Dual plan/build agents, BYOK, provider switch, permissions |
+| **Peer OSS agents** | Dual plan/build agents, BYOK, provider switch, permissions |
 | **Cline** | Multi-editor surface; explicit approval on edits |
 | **Aider / OpenHands / SWE-agent** | Benchmark-driven loops, repo-level evaluation |
 | **Cursor** | Fast context + agent mode; users still want less surprise edits |

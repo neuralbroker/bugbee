@@ -1,9 +1,9 @@
 Bugbee
 Copyright (c) Bugbee contributors
 
-This product is a fork of OpenCode:
+This product includes software originally developed under the MIT License
+by the contributors of the open source project at:
   https://github.com/anomalyco/opencode
-  Licensed under the MIT License.
-  Copyright (c) OpenCode / Anomaly contributors.
 
-Bugbee is an independent project and is not affiliated with the OpenCode team.
+Bugbee is an independent project and is not affiliated with that project
+or its maintainers.

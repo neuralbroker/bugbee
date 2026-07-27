@@ -3,7 +3,7 @@
   "displayName": "bugbee",
   "description": "bugbee for VS Code",
   "version": "1.18.4",
-  "publisher": "sst-dev",
+  "publisher": "neuralbroker",
   "repository": {
     "type": "git",
     "url": "https://github.com/neuralbroker/bugbee"

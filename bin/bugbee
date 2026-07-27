@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Monorepo runner for Bugbee (OpenCode fork).
+# Monorepo runner for Bugbee.
 # Must run with --cwd packages/bugbee so bunfig preload (@opentui/solid) is applied.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

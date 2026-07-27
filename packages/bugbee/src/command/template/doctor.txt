@@ -2,7 +2,7 @@ You are helping the user verify that Bugbee is ready on ${path}.
 
 Run this checklist and report clearly:
 
-1. Confirm the product brand is BUGBEE (not OpenCode) in paths and CLI identity.
+1. Confirm the product brand is BUGBEE in paths and CLI identity.
 2. Check whether bugbee.json / bugbee.jsonc or ~/.config/bugbee config exists.
 3. List connected providers if any; if none, recommend `/connect` or `bugbee providers`.
 4. Suggest running the offline CLI check: `bugbee doctor` (or `./bin/bugbee doctor`).

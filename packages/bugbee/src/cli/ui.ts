@@ -12,7 +12,7 @@ const wordmark = [
 export class CancelledError extends Schema.TaggedErrorClass<CancelledError>()("UICancelledError", {}) {}
 
 export const Style = {
-  // Honey/amber highlight (Bugbee brand) instead of cyan-only OpenCode look
+  // Honey/amber highlight (Bugbee brand)
   TEXT_HIGHLIGHT: "\x1b[38;5;214m",
   TEXT_HIGHLIGHT_BOLD: "\x1b[38;5;214m\x1b[1m",
   TEXT_DIM: "\x1b[90m",

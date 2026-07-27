@@ -16,7 +16,7 @@ type Check = {
 }
 
 /**
- * Bugbee-only readiness check. OpenCode does not ship this command.
+ * Bugbee readiness check.
  * Offline, no LLM required — validates install identity, paths, and config surface.
  */
 export const DoctorCommand = cmd({
@@ -89,7 +89,7 @@ export const DoctorCommand = cmd({
       detail: found.length ? found.join(", ") : "none yet (run /connect or edit bugbee.json)",
     })
 
-    // Brand guard: XDG app dir must be bugbee, not opencode
+    // Brand guard: XDG app dir must be bugbee
     const appOk = Global.Path.config.includes(`${path.sep}bugbee`) || Global.Path.config.endsWith("bugbee")
     checks.push({
       name: "brand.paths",

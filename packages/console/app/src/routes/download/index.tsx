@@ -127,15 +127,15 @@ export default function Download() {
                 </code>
                 <CopyStatus />
               </button>
-              <button data-component="cli-row" onClick={handleCopyClick("npm i -g bugbee-ai")}>
+              <button data-component="cli-row" onClick={handleCopyClick("npm i -g bugbee")}>
                 <code>
-                  npm i -g <strong>bugbee-ai</strong>
+                  npm i -g <strong>bugbee</strong>
                 </code>
                 <CopyStatus />
               </button>
-              <button data-component="cli-row" onClick={handleCopyClick("bun add -g bugbee-ai")}>
+              <button data-component="cli-row" onClick={handleCopyClick("bun add -g bugbee")}>
                 <code>
-                  bun add -g <strong>bugbee-ai</strong>
+                  bun add -g <strong>bugbee</strong>
                 </code>
                 <CopyStatus />
               </button>

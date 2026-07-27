@@ -196,9 +196,8 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
 
         for (const check of checks) {
           const output = yield* check.command()
-          const installedName =
-            check.name === "brew" || check.name === "choco" || check.name === "scoop" ? "bugbee" : "bugbee-ai"
-          if (output.includes(installedName)) {
+          // Package managers install the "bugbee" package (binary name matches).
+          if (output.includes("bugbee")) {
             return check.name
           }
         }
@@ -227,7 +226,7 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
         if (detectedMethod === "npm" || detectedMethod === "bun" || detectedMethod === "pnpm") {
           const response = yield* httpOk.execute(
             HttpClientRequest.get(
-              `${yield* NpmConfig.registry(process.cwd())}/bugbee-ai/${InstallationChannel}`,
+              `${yield* NpmConfig.registry(process.cwd())}/bugbee/${InstallationChannel}`,
             ).pipe(HttpClientRequest.acceptJson),
           )
           const data = yield* HttpClientResponse.schemaBodyJson(NpmPackage)(response)
@@ -269,24 +268,24 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
             upgradeResult = yield* upgradeCurl(target)
             break
           case "npm":
-            upgradeResult = yield* run(["npm", "install", "-g", `bugbee-ai@${target}`])
+            upgradeResult = yield* run(["npm", "install", "-g", `bugbee@${target}`])
             break
           case "pnpm":
-            upgradeResult = yield* run(["pnpm", "install", "-g", `bugbee-ai@${target}`])
+            upgradeResult = yield* run(["pnpm", "install", "-g", `bugbee@${target}`])
             break
           case "bun":
-            upgradeResult = yield* run(["bun", "install", "-g", `bugbee-ai@${target}`])
+            upgradeResult = yield* run(["bun", "install", "-g", `bugbee@${target}`])
             break
           case "brew": {
             const formula = yield* getBrewFormula()
             const env = { HOMEBREW_NO_AUTO_UPDATE: "1" }
             if (formula.includes("/")) {
-              const tap = yield* run(["brew", "tap", "anomalyco/tap"], { env })
+              const tap = yield* run(["brew", "tap", "neuralbroker/tap"], { env })
               if (tap.code !== 0) {
                 upgradeResult = tap
                 break
               }
-              const repo = yield* text(["brew", "--repo", "anomalyco/tap"])
+              const repo = yield* text(["brew", "--repo", "neuralbroker/tap"])
               const dir = repo.trim()
               if (dir) {
                 const pull = yield* run(["git", "pull", "--ff-only"], { cwd: dir, env })
