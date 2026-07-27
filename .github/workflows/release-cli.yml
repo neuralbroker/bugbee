@@ -116,21 +116,6 @@ jobs:
       - name: List release artifacts
         run: ls -lah packages/bugbee/dist/*.{tar.gz,zip} 2>/dev/null || ls -lah packages/bugbee/dist/
 
-      - name: Publish to npm
-        if: ${{ !inputs.skip_npm }}
-        working-directory: packages/bugbee
-        env:
-          BUGBEE_VERSION: ${{ inputs.version }}
-          BUGBEE_RELEASE: "1"
-          BUGBEE_CHANNEL: latest
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "NPM_TOKEN secret is not set. Add it under repo Settings → Secrets."
-            exit 1
-          fi
-          bun run script/mvp-publish.ts
-
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -145,6 +130,21 @@ jobs:
           fi
           gh release edit "$TAG" --draft=false --latest
 
+      # Runs after GH release so curl install works even if npm token is wrong.
+      - name: Publish to npm
+        if: ${{ !inputs.skip_npm }}
+        working-directory: packages/bugbee
+        env:
+          BUGBEE_VERSION: ${{ inputs.version }}
+          BUGBEE_RELEASE: "1"
+          BUGBEE_CHANNEL: latest
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN secret is not set. Add it under repo Settings → Secrets."
+            exit 1
+          fi
+          bun run script/mvp-publish.ts
       - name: Summary
         run: |
           echo "## Bugbee ${{ inputs.version }} released" >> "$GITHUB_STEP_SUMMARY"
