@@ -95,25 +95,30 @@ function isMusl() {
 
 function packageNames() {
   const baseline = arch === "x64" && !supportsAvx2()
+  let names = []
 
   if (platform === "linux") {
     if (isMusl()) {
       if (arch === "x64")
-        return baseline
+        names = baseline
           ? [`${base}-baseline-musl`, `${base}-musl`, `${base}-baseline`, base]
           : [`${base}-musl`, `${base}-baseline-musl`, base, `${base}-baseline`]
-      return [`${base}-musl`, base]
-    }
-
-    if (arch === "x64")
-      return baseline
+      else names = [`${base}-musl`, base]
+    } else if (arch === "x64") {
+      names = baseline
         ? [`${base}-baseline`, base, `${base}-baseline-musl`, `${base}-musl`]
         : [base, `${base}-baseline`, `${base}-musl`, `${base}-baseline-musl`]
-    return [base, `${base}-musl`]
+    } else {
+      names = [base, `${base}-musl`]
+    }
+  } else if (arch === "x64") {
+    names = baseline ? [`${base}-baseline`, base] : [base, `${base}-baseline`]
+  } else {
+    names = [base]
   }
 
-  if (arch === "x64") return baseline ? [`${base}-baseline`, base] : [base, `${base}-baseline`]
-  return [base]
+  // Prefer unscoped historical names, then scoped fallbacks under @neuralbroker/*
+  return names.flatMap((name) => [name, `@neuralbroker/${name}`])
 }
 
 function resolveBinary(name) {
@@ -135,7 +140,7 @@ function installPackage(name) {
       { stdio: "inherit", windowsHide: true },
     )
     if (result.status !== 0) return
-    const packageDir = path.join(temp, "node_modules", name)
+    const packageDir = path.join(temp, "node_modules", ...name.split("/"))
     copyBinary(path.join(packageDir, "bin", sourceBinary), targetBinary)
     return true
   } finally {

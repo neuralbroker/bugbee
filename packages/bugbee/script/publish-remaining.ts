@@ -6,8 +6,10 @@
  * Env:
  *   BUGBEE_VERSION   e.g. 1.0.0
  *   NODE_AUTH_TOKEN  npm token
- *   NPM_PUBLISH_DELAY_MS (default 15000)
- *   NPM_PUBLISH_RETRIES (default 10)
+ *   NPM_PUBLISH_DELAY_MS (default 30000)
+ *   NPM_PUBLISH_RETRIES (default 12)
+ *   NPM_PUBLISH_COOLDOWN_MS (default 60000)
+ *   BUGBEE_ONLY_MISSING (default 1)
  */
 import { $ } from "bun"
 import path from "path"
@@ -24,18 +26,38 @@ if (!process.env.NODE_AUTH_TOKEN) {
 }
 
 const delayMs = Number(process.env.NPM_PUBLISH_DELAY_MS ?? 30_000)
-const maxAttempts = Number(process.env.NPM_PUBLISH_RETRIES ?? 15)
+const maxAttempts = Number(process.env.NPM_PUBLISH_RETRIES ?? 12)
 const onlyMissing = (process.env.BUGBEE_ONLY_MISSING ?? "1") === "1"
 const initialCooldownMs = Number(process.env.NPM_PUBLISH_COOLDOWN_MS ?? 60_000)
 const root = path.resolve(fileURLToPath(new URL("../../..", import.meta.url)))
 const work = path.join(root, "packages/bugbee/dist/remaining-publish")
 const base = `https://github.com/neuralbroker/bugbee/releases/download/v${version}`
 const metaName = "@neuralbroker/bugbee"
+const scope = "@neuralbroker"
 
-const platforms = [
-  { name: "bugbee-linux-x64", archive: `${base}/bugbee-linux-x64.tar.gz`, binary: "bugbee", os: "linux", cpu: "x64" },
+type Platform = {
+  /** Preferred unscoped npm name (historical) */
+  name: string
+  /** Fallback scoped name if unscoped creation is rate-limited */
+  scopedName: string
+  archive: string
+  binary: string
+  os: string
+  cpu: string
+}
+
+const platforms: Platform[] = [
+  {
+    name: "bugbee-linux-x64",
+    scopedName: `${scope}/bugbee-linux-x64`,
+    archive: `${base}/bugbee-linux-x64.tar.gz`,
+    binary: "bugbee",
+    os: "linux",
+    cpu: "x64",
+  },
   {
     name: "bugbee-linux-x64-baseline",
+    scopedName: `${scope}/bugbee-linux-x64-baseline`,
     archive: `${base}/bugbee-linux-x64-baseline.tar.gz`,
     binary: "bugbee",
     os: "linux",
@@ -43,6 +65,7 @@ const platforms = [
   },
   {
     name: "bugbee-linux-x64-musl",
+    scopedName: `${scope}/bugbee-linux-x64-musl`,
     archive: `${base}/bugbee-linux-x64-musl.tar.gz`,
     binary: "bugbee",
     os: "linux",
@@ -50,30 +73,55 @@ const platforms = [
   },
   {
     name: "bugbee-linux-x64-baseline-musl",
+    scopedName: `${scope}/bugbee-linux-x64-baseline-musl`,
     archive: `${base}/bugbee-linux-x64-baseline-musl.tar.gz`,
     binary: "bugbee",
     os: "linux",
     cpu: "x64",
   },
-  { name: "bugbee-linux-arm64", archive: `${base}/bugbee-linux-arm64.tar.gz`, binary: "bugbee", os: "linux", cpu: "arm64" },
+  {
+    name: "bugbee-linux-arm64",
+    scopedName: `${scope}/bugbee-linux-arm64`,
+    archive: `${base}/bugbee-linux-arm64.tar.gz`,
+    binary: "bugbee",
+    os: "linux",
+    cpu: "arm64",
+  },
   {
     name: "bugbee-linux-arm64-musl",
+    scopedName: `${scope}/bugbee-linux-arm64-musl`,
     archive: `${base}/bugbee-linux-arm64-musl.tar.gz`,
     binary: "bugbee",
     os: "linux",
     cpu: "arm64",
   },
-  { name: "bugbee-darwin-x64", archive: `${base}/bugbee-darwin-x64.zip`, binary: "bugbee", os: "darwin", cpu: "x64" },
+  {
+    name: "bugbee-darwin-x64",
+    scopedName: `${scope}/bugbee-darwin-x64`,
+    archive: `${base}/bugbee-darwin-x64.zip`,
+    binary: "bugbee",
+    os: "darwin",
+    cpu: "x64",
+  },
   {
     name: "bugbee-darwin-x64-baseline",
+    scopedName: `${scope}/bugbee-darwin-x64-baseline`,
     archive: `${base}/bugbee-darwin-x64-baseline.zip`,
     binary: "bugbee",
     os: "darwin",
     cpu: "x64",
   },
-  { name: "bugbee-darwin-arm64", archive: `${base}/bugbee-darwin-arm64.zip`, binary: "bugbee", os: "darwin", cpu: "arm64" },
+  {
+    name: "bugbee-darwin-arm64",
+    scopedName: `${scope}/bugbee-darwin-arm64`,
+    archive: `${base}/bugbee-darwin-arm64.zip`,
+    binary: "bugbee",
+    os: "darwin",
+    cpu: "arm64",
+  },
   {
     name: "bugbee-windows-x64",
+    scopedName: `${scope}/bugbee-windows-x64`,
     archive: `${base}/bugbee-windows-x64.zip`,
     binary: "bugbee.exe",
     os: "win32",
@@ -81,6 +129,7 @@ const platforms = [
   },
   {
     name: "bugbee-windows-x64-baseline",
+    scopedName: `${scope}/bugbee-windows-x64-baseline`,
     archive: `${base}/bugbee-windows-x64-baseline.zip`,
     binary: "bugbee.exe",
     os: "win32",
@@ -88,12 +137,13 @@ const platforms = [
   },
   {
     name: "bugbee-windows-arm64",
+    scopedName: `${scope}/bugbee-windows-arm64`,
     archive: `${base}/bugbee-windows-arm64.zip`,
     binary: "bugbee.exe",
     os: "win32",
     cpu: "arm64",
   },
-] as const
+]
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -111,34 +161,32 @@ async function npmPublish(dir: string, label: string) {
     if (result.exitCode === 0) {
       console.log(`published ${label}`)
       await sleep(delayMs)
-      return
+      return true
     }
     const stderr = result.stderr.toString("utf8")
     const retriable = /E429|Too Many Requests|ETIMEDOUT|ECONNRESET|network|socket/i.test(stderr)
     if (!retriable || attempt === maxAttempts) {
       console.error(stderr)
-      throw new Error(`npm publish failed for ${label}`)
+      return false
     }
-    const wait = delayMs * attempt
+    const wait = Math.min(delayMs * attempt, 180_000)
     console.log(`retry ${attempt}/${maxAttempts} for ${label} in ${wait}ms`)
     await sleep(wait)
   }
+  return false
 }
 
-async function publishPlatform(p: (typeof platforms)[number]) {
-  if (await published(p.name)) {
-    console.log(`already on npm: ${p.name}@${version}`)
-    return
-  }
-
-  const dir = path.join(work, p.name)
+async function materialize(p: Platform, pkgName: string) {
+  const dir = path.join(work, pkgName.replace("/", "__"))
   await $`rm -rf ${dir}`
   await $`mkdir -p ${path.join(dir, "bin")}`
   const asset = path.join(work, `${p.name}.asset`)
-  console.log(`downloading ${p.archive}`)
-  await $`curl -fsSL -o ${asset} ${p.archive}`
+  if (!(await Bun.file(asset).exists())) {
+    console.log(`downloading ${p.archive}`)
+    await $`curl -fsSL -o ${asset} ${p.archive}`
+  }
   if (p.archive.endsWith(".zip")) {
-    await $`unzip -q ${asset} -d ${path.join(dir, "bin")}`
+    await $`unzip -qo ${asset} -d ${path.join(dir, "bin")}`
   } else {
     await $`tar -xzf ${asset} -C ${path.join(dir, "bin")}`
   }
@@ -158,7 +206,7 @@ async function publishPlatform(p: (typeof platforms)[number]) {
   await Bun.file(path.join(dir, "package.json")).write(
     JSON.stringify(
       {
-        name: p.name,
+        name: pkgName,
         version,
         preferUnplugged: true,
         os: [p.os],
@@ -168,13 +216,39 @@ async function publishPlatform(p: (typeof platforms)[number]) {
       2,
     ) + "\n",
   )
-  await npmPublish(dir, `${p.name}@${version}`)
+  return dir
+}
+
+async function publishPlatform(p: Platform) {
+  // Prefer unscoped if present or creatable; else scoped fallback.
+  if (await published(p.name)) {
+    console.log(`already on npm: ${p.name}@${version}`)
+    return p.name
+  }
+  if (await published(p.scopedName)) {
+    console.log(`already on npm: ${p.scopedName}@${version}`)
+    return p.scopedName
+  }
+
+  console.log(`=== publishing ${p.name} (unscoped) ===`)
+  try {
+    const dir = await materialize(p, p.name)
+    if (await npmPublish(dir, `${p.name}@${version}`)) return p.name
+  } catch (error) {
+    console.error(error)
+  }
+
+  console.log(`=== fallback scoped ${p.scopedName} ===`)
+  const dir = await materialize(p, p.scopedName)
+  if (await npmPublish(dir, `${p.scopedName}@${version}`)) return p.scopedName
+  throw new Error(`failed to publish ${p.name} and ${p.scopedName}`)
 }
 
 async function listAvailable() {
   const deps: Record<string, string> = {}
   for (const p of platforms) {
     if (await published(p.name)) deps[p.name] = version
+    else if (await published(p.scopedName)) deps[p.scopedName] = version
   }
   return deps
 }
@@ -230,7 +304,9 @@ async function ensureMeta(deps: Record<string, string>) {
       2,
     ) + "\n",
   )
-  await npmPublish(dir, `${metaName}@${metaVersion}`)
+  if (!(await npmPublish(dir, `${metaName}@${metaVersion}`))) {
+    throw new Error(`failed to publish meta ${metaName}@${metaVersion}`)
+  }
 }
 
 await $`rm -rf ${work}`
@@ -244,8 +320,8 @@ if (initialCooldownMs > 0) {
 
 const failures: string[] = []
 for (const p of platforms) {
-  if (onlyMissing && (await published(p.name))) {
-    console.log(`skip present: ${p.name}@${version}`)
+  if (onlyMissing && ((await published(p.name)) || (await published(p.scopedName)))) {
+    console.log(`skip present: ${p.name}`)
     continue
   }
   try {
@@ -261,15 +337,12 @@ console.log("available platforms", Object.keys(deps).sort())
 await ensureMeta(deps)
 
 console.log("\n=== inventory ===")
-for (const name of [metaName, ...platforms.map((p) => p.name)]) {
-  const ok = await published(name, name === metaName ? undefined : version)
-  // meta may be on a bumped version
-  if (name === metaName) {
-    const latest = await $`npm view ${metaName} version`.nothrow()
-    console.log(`${name}: ${latest.exitCode === 0 ? latest.stdout.toString("utf8").trim() : "MISSING"}`)
-  } else {
-    console.log(`${name}: ${ok ? version : "MISSING"}`)
-  }
+const latest = await $`npm view ${metaName} version`.nothrow()
+console.log(`${metaName}: ${latest.exitCode === 0 ? latest.stdout.toString("utf8").trim() : "MISSING"}`)
+for (const p of platforms) {
+  const unscoped = await published(p.name)
+  const scoped = await published(p.scopedName)
+  console.log(`${p.name}: ${unscoped ? version : scoped ? p.scopedName + "@" + version : "MISSING"}`)
 }
 
 if (failures.length) {
