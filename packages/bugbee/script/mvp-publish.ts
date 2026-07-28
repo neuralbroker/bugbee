@@ -99,10 +99,14 @@ await Bun.file(`./dist/${pkg.name}/bin/${pkg.name}.exe`).write(
   ].join("\n"),
 )
 
+// Bare name `bugbee` is blocked by npm (too similar to existing package `buble`).
+// Publish the installable CLI under the scoped name; binary remains `bugbee`.
+const publishName = process.env.BUGBEE_NPM_NAME ?? "@neuralbroker/bugbee"
+
 await Bun.file(`./dist/${pkg.name}/package.json`).write(
   JSON.stringify(
     {
-      name: pkg.name,
+      name: publishName,
       description: "Bugbee — open source AI coding agent",
       repository: {
         type: "git",
@@ -110,7 +114,7 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
       },
       homepage: "https://github.com/neuralbroker/bugbee",
       bin: {
-        [pkg.name]: `./bin/${pkg.name}.exe`,
+        bugbee: `./bin/${pkg.name}.exe`,
       },
       scripts: {
         postinstall: "node ./postinstall.mjs",
@@ -130,6 +134,6 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
 for (const name of platformNames) {
   await publishPackage(`./dist/${name}`, name, binaries[name])
 }
-await publishPackage(`./dist/${pkg.name}`, pkg.name, version)
+await publishPackage(`./dist/${pkg.name}`, publishName, version)
 
-console.log(`\nmvp-publish done: npm install -g ${pkg.name}@${version}`)
+console.log(`\nmvp-publish done: npm install -g ${publishName}@${version}`)

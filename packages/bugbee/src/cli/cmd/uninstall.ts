@@ -129,10 +129,10 @@ async function showRemovalSummary(targets: RemovalTargets, method: Installation.
 
   if (method !== "curl" && method !== "unknown") {
     const cmds: Record<string, string> = {
-      npm: "npm uninstall -g bugbee",
-      pnpm: "pnpm uninstall -g bugbee",
-      bun: "bun remove -g bugbee",
-      yarn: "yarn global remove bugbee",
+      npm: "npm uninstall -g @neuralbroker/bugbee",
+      pnpm: "pnpm uninstall -g @neuralbroker/bugbee",
+      bun: "bun remove -g @neuralbroker/bugbee",
+      yarn: "yarn global remove @neuralbroker/bugbee",
       brew: "brew uninstall bugbee",
       choco: "choco uninstall bugbee",
       scoop: "scoop uninstall bugbee",
@@ -180,10 +180,10 @@ async function executeUninstall(method: Installation.Method, targets: RemovalTar
 
   if (method !== "curl" && method !== "unknown") {
     const cmds: Record<string, string[]> = {
-      npm: ["npm", "uninstall", "-g", "bugbee"],
-      pnpm: ["pnpm", "uninstall", "-g", "bugbee"],
-      bun: ["bun", "remove", "-g", "bugbee"],
-      yarn: ["yarn", "global", "remove", "bugbee"],
+      npm: ["npm", "uninstall", "-g", "@neuralbroker/bugbee"],
+      pnpm: ["pnpm", "uninstall", "-g", "@neuralbroker/bugbee"],
+      bun: ["bun", "remove", "-g", "@neuralbroker/bugbee"],
+      yarn: ["yarn", "global", "remove", "@neuralbroker/bugbee"],
       brew: ["brew", "uninstall", "bugbee"],
       choco: ["choco", "uninstall", "bugbee"],
       scoop: ["scoop", "uninstall", "bugbee"],

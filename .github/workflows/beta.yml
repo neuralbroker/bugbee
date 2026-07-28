@@ -28,7 +28,7 @@ jobs:
           bugbee-app-secret: ${{ secrets.BUGBEE_APP_SECRET }}
 
       - name: Install Bugbee
-        run: bun i -g bugbee
+        run: bun i -g @neuralbroker/bugbee
 
       - name: Sync beta branch
         env:

@@ -24,11 +24,15 @@ curl -fsSL https://github.com/neuralbroker/bugbee/install | bash
 **Package managers:**
 
 ```bash
-npm install -g bugbee
-# or: bun install -g bugbee
-# or: pnpm install -g bugbee
+npm install -g @neuralbroker/bugbee
+# or: bun install -g @neuralbroker/bugbee
+# or: pnpm install -g @neuralbroker/bugbee
 # or: brew install neuralbroker/tap/bugbee
 ```
+
+> **Note:** The bare npm name `bugbee` is blocked by npm’s typo-squatting rules
+> (too similar to an existing package). The CLI package is **`@neuralbroker/bugbee`**;
+> the installed command is still **`bugbee`**.
 
 Then run:
 
@@ -144,21 +148,21 @@ gh secret set NPM_TOKEN -R neuralbroker/bugbee
 gh workflow run release-cli.yml -R neuralbroker/bugbee -f version=1.0.0
 ```
 
-This builds platform binaries, attaches them to `v1.0.0`, and runs `npm publish` for `bugbee` plus platform packages (`bugbee-linux-x64`, …).
+This builds platform binaries, attaches them to `v1.0.0`, and runs `npm publish` for `@neuralbroker/bugbee` plus platform packages (`bugbee-linux-x64`, …).
 
 After it finishes:
 
 ```bash
 # anyone on the internet
 curl -fsSL https://github.com/neuralbroker/bugbee/install | bash
-npm install -g bugbee
+npm install -g @neuralbroker/bugbee
 bugbee --version
 bugbee doctor
 ```
 
 ### Notes
 
-- Claim the bare npm name **`bugbee`** with the first successful publish (it was free when this pipeline was added).
+- npm meta package is **`@neuralbroker/bugbee`** (bare `bugbee` is blocked by npm).
 - Homebrew / Scoop / Chocolatey / AUR are optional later; they should point at the same GitHub Release assets.
 - The full `publish.yml` workflow is for desktop + signing + extras and needs more secrets/runners.
 

@@ -196,7 +196,7 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
 
         for (const check of checks) {
           const output = yield* check.command()
-          // Package managers install the "bugbee" package (binary name matches).
+          // Binary is always `bugbee`; npm package is `@neuralbroker/bugbee`.
           if (output.includes("bugbee")) {
             return check.name
           }
@@ -226,7 +226,7 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
         if (detectedMethod === "npm" || detectedMethod === "bun" || detectedMethod === "pnpm") {
           const response = yield* httpOk.execute(
             HttpClientRequest.get(
-              `${yield* NpmConfig.registry(process.cwd())}/bugbee/${InstallationChannel}`,
+              `${yield* NpmConfig.registry(process.cwd())}/@neuralbroker%2fbugbee/${InstallationChannel}`,
             ).pipe(HttpClientRequest.acceptJson),
           )
           const data = yield* HttpClientResponse.schemaBodyJson(NpmPackage)(response)
@@ -268,13 +268,13 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
             upgradeResult = yield* upgradeCurl(target)
             break
           case "npm":
-            upgradeResult = yield* run(["npm", "install", "-g", `bugbee@${target}`])
+            upgradeResult = yield* run(["npm", "install", "-g", `@neuralbroker/bugbee@${target}`])
             break
           case "pnpm":
-            upgradeResult = yield* run(["pnpm", "install", "-g", `bugbee@${target}`])
+            upgradeResult = yield* run(["pnpm", "install", "-g", `@neuralbroker/bugbee@${target}`])
             break
           case "bun":
-            upgradeResult = yield* run(["bun", "install", "-g", `bugbee@${target}`])
+            upgradeResult = yield* run(["bun", "install", "-g", `@neuralbroker/bugbee@${target}`])
             break
           case "brew": {
             const formula = yield* getBrewFormula()

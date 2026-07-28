@@ -51,7 +51,7 @@ jobs:
 
       - name: Install Bugbee
         if: inputs.bump || inputs.version
-        run: bun i -g bugbee
+        run: bun i -g @neuralbroker/bugbee
 
       - id: version
         run: |

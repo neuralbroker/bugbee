@@ -94,7 +94,7 @@ jobs:
           \`\`\`bash
           curl -fsSL https://github.com/neuralbroker/bugbee/install | bash
           # or
-          npm install -g bugbee@${{ inputs.version }}
+          npm install -g @neuralbroker/bugbee@${{ inputs.version }}
           \`\`\`"
           fi
 
@@ -151,6 +151,6 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- Release: https://github.com/${{ github.repository }}/releases/tag/v${{ inputs.version }}" >> "$GITHUB_STEP_SUMMARY"
           if [ "${{ inputs.skip_npm }}" != "true" ]; then
-            echo "- npm: \`npm install -g bugbee@${{ inputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- npm: \`npm install -g @neuralbroker/bugbee@${{ inputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
           fi
           echo "- curl: \`curl -fsSL https://github.com/neuralbroker/bugbee/install | bash\`" >> "$GITHUB_STEP_SUMMARY"
