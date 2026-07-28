@@ -17,6 +17,12 @@ const dir = fileURLToPath(new URL("..", import.meta.url))
 process.chdir(dir)
 
 const tag = Script.channel === "latest" ? "latest" : Script.channel
+const delayMs = Number(process.env.NPM_PUBLISH_DELAY_MS ?? 8000)
+const maxAttempts = Number(process.env.NPM_PUBLISH_RETRIES ?? 6)
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 async function published(name: string, version: string) {
   return (await $`npm view ${name}@${version} version`.nothrow()).exitCode === 0
@@ -28,9 +34,30 @@ async function publishPackage(packageDir: string, name: string, version: string)
     console.log(`already published ${name}@${version}`)
     return
   }
+
+  // Clean previous packs so `npm publish *.tgz` is unambiguous
+  await $`rm -f *.tgz`.cwd(packageDir).nothrow()
   await $`bun pm pack`.cwd(packageDir)
-  await $`npm publish *.tgz --access public --tag ${tag}`.cwd(packageDir)
-  console.log(`published ${name}@${version}`)
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const result = await $`npm publish *.tgz --access public --tag ${tag}`.cwd(packageDir).nothrow()
+    if (result.exitCode === 0) {
+      console.log(`published ${name}@${version}`)
+      await sleep(delayMs)
+      return
+    }
+
+    const stderr = result.stderr.toString("utf8")
+    const retriable = /E429|Too Many Requests|ETIMEDOUT|ECONNRESET|socket hang up|network/i.test(stderr)
+    if (!retriable || attempt === maxAttempts) {
+      console.error(stderr)
+      throw new Error(`npm publish failed for ${name}@${version} (attempt ${attempt}/${maxAttempts})`)
+    }
+
+    const wait = delayMs * attempt
+    console.log(`rate-limited publishing ${name}; retry ${attempt}/${maxAttempts} in ${wait}ms`)
+    await sleep(wait)
+  }
 }
 
 const binaries: Record<string, string> = {}
@@ -50,7 +77,8 @@ if (Object.keys(binaries).length === 0) {
 }
 
 const version = Object.values(binaries)[0]
-console.log("mvp-publish", { version, channel: tag, platforms: Object.keys(binaries) })
+const platformNames = Object.keys(binaries).sort()
+console.log("mvp-publish", { version, channel: tag, platforms: platformNames })
 
 await $`mkdir -p ./dist/${pkg.name}/bin`
 await $`cp ./script/postinstall.mjs ./dist/${pkg.name}/postinstall.mjs`
@@ -98,8 +126,9 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
   ),
 )
 
-for (const [name, ver] of Object.entries(binaries)) {
-  await publishPackage(`./dist/${name}`, name, ver)
+// Publish remaining platform packages first (skip already published), then meta.
+for (const name of platformNames) {
+  await publishPackage(`./dist/${name}`, name, binaries[name])
 }
 await publishPackage(`./dist/${pkg.name}`, pkg.name, version)
 
