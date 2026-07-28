@@ -2,10 +2,14 @@
 
 import childProcess from "child_process"
 import fs from "fs"
+import https from "https"
+import http from "http"
 import os from "os"
 import path from "path"
 import { createRequire } from "module"
 import { fileURLToPath } from "url"
+import { createWriteStream } from "fs"
+import { pipeline } from "stream/promises"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const require = createRequire(import.meta.url)
@@ -27,6 +31,7 @@ const arch = archMap[os.arch()] ?? os.arch()
 const base = `bugbee-${platform}-${arch}`
 const sourceBinary = platform === "windows" ? "bugbee.exe" : "bugbee"
 const targetBinary = path.join(__dirname, "bin", "bugbee.exe")
+const releaseVersion = String(packageJson.version || "").replace(/^v/, "")
 
 function supportsAvx2() {
   if (arch !== "x64") return false
@@ -121,6 +126,27 @@ function packageNames() {
   return names.flatMap((name) => [name, `@neuralbroker/${name}`])
 }
 
+function releaseAssets() {
+  const baseline = arch === "x64" && !supportsAvx2()
+  const ext = platform === "linux" ? ".tar.gz" : ".zip"
+  const tags = []
+  if (platform === "linux") {
+    if (isMusl()) {
+      if (arch === "x64") tags.push(baseline ? `${base}-baseline-musl` : `${base}-musl`, base)
+      else tags.push(`${base}-musl`, base)
+    } else if (arch === "x64") {
+      tags.push(baseline ? `${base}-baseline` : base, base)
+    } else {
+      tags.push(base)
+    }
+  } else if (arch === "x64") {
+    tags.push(baseline ? `${base}-baseline` : base, base)
+  } else {
+    tags.push(base)
+  }
+  return [...new Set(tags)].map((tag) => `${tag}${ext}`)
+}
+
 function resolveBinary(name) {
   const packageJsonPath = require.resolve(`${name}/package.json`)
   const binaryPath = path.join(path.dirname(packageJsonPath), "bin", sourceBinary)
@@ -169,7 +195,67 @@ function verifyBinary() {
   return result.status === 0
 }
 
-function main() {
+function fetchFollow(url, dest, redirects = 0) {
+  return new Promise((resolve, reject) => {
+    if (redirects > 8) return reject(new Error(`too many redirects for ${url}`))
+    const lib = url.startsWith("https:") ? https : http
+    const req = lib.get(url, { headers: { "User-Agent": "bugbee-postinstall" } }, (res) => {
+      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume()
+        return resolve(fetchFollow(res.headers.location, dest, redirects + 1))
+      }
+      if (res.statusCode !== 200) {
+        res.resume()
+        return reject(new Error(`download failed ${res.statusCode} for ${url}`))
+      }
+      const out = createWriteStream(dest)
+      pipeline(res, out).then(resolve).catch(reject)
+    })
+    req.on("error", reject)
+  })
+}
+
+async function installFromGitHubRelease() {
+  if (!releaseVersion) return false
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "bugbee-release-"))
+  try {
+    for (const asset of releaseAssets()) {
+      const url = `https://github.com/neuralbroker/bugbee/releases/download/v${releaseVersion}/${asset}`
+      const archive = path.join(temp, asset)
+      try {
+        await fetchFollow(url, archive)
+      } catch {
+        continue
+      }
+
+      const extractDir = path.join(temp, "out")
+      fs.mkdirSync(extractDir, { recursive: true })
+      if (asset.endsWith(".tar.gz")) {
+        const result = childProcess.spawnSync("tar", ["-xzf", archive, "-C", extractDir], { encoding: "utf8" })
+        if (result.status !== 0) continue
+      } else {
+        // Prefer unzip; fall back to tar which handles zip on some systems
+        let result = childProcess.spawnSync("unzip", ["-qo", archive, "-d", extractDir], { encoding: "utf8" })
+        if (result.status !== 0) {
+          result = childProcess.spawnSync("tar", ["-xf", archive, "-C", extractDir], { encoding: "utf8" })
+          if (result.status !== 0) continue
+        }
+      }
+
+      const candidate = path.join(extractDir, sourceBinary)
+      const alt = path.join(extractDir, "bugbee")
+      const source = fs.existsSync(candidate) ? candidate : fs.existsSync(alt) ? alt : null
+      if (!source) continue
+      copyBinary(source, targetBinary)
+      if (verifyBinary()) return true
+    }
+    return false
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true })
+  }
+}
+
+async function main() {
   for (const name of packageNames()) {
     try {
       copyBinary(resolveBinary(name), targetBinary)
@@ -179,16 +265,18 @@ function main() {
     }
   }
 
+  // npm may be missing some platform packages (rate limits / name blocks).
+  // Fall back to the matching GitHub Release asset for this package version.
+  if (await installFromGitHubRelease()) return
+
   throw new Error(
-    `It seems your package manager failed to install the right bugbee CLI package. Try manually installing ${packageNames()
-      .map((name) => JSON.stringify(name))
-      .join(" or ")}.`,
+    `Failed to install the Bugbee binary for ${platform}/${arch}. ` +
+      `Try: curl -fsSL https://github.com/neuralbroker/bugbee/install | bash ` +
+      `or manually install one of: ${packageNames().map((name) => JSON.stringify(name)).join(", ")}.`,
   )
 }
 
-try {
-  main()
-} catch (error) {
-  console.error(error.message)
+main().catch((error) => {
+  console.error(error.message || error)
   process.exit(1)
-}
+})
