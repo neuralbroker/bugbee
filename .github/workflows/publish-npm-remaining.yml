@@ -1,0 +1,50 @@
+# Publish any missing platform packages for a GitHub release version from release assets,
+# then ensure @neuralbroker/bugbee lists all available platforms.
+name: publish-npm-remaining
+run-name: "npm remaining ${{ inputs.version }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semver already on GitHub Releases (e.g. 1.0.0)"
+        required: true
+        type: string
+        default: "1.0.0"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: github.repository == 'neuralbroker/bugbee'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+
+      - uses: ./.github/actions/setup-bun
+        with:
+          install-flags: --ignore-scripts
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Ensure unzip
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Publish remaining packages
+        working-directory: packages/bugbee
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          BUGBEE_VERSION: ${{ inputs.version }}
+          NPM_PUBLISH_DELAY_MS: "20000"
+          NPM_PUBLISH_RETRIES: "12"
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "NPM_TOKEN secret is not set"
+            exit 1
+          fi
+          bun run script/publish-remaining.ts
