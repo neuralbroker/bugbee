@@ -23,8 +23,10 @@ if (!process.env.NODE_AUTH_TOKEN) {
   process.exit(1)
 }
 
-const delayMs = Number(process.env.NPM_PUBLISH_DELAY_MS ?? 15_000)
-const maxAttempts = Number(process.env.NPM_PUBLISH_RETRIES ?? 10)
+const delayMs = Number(process.env.NPM_PUBLISH_DELAY_MS ?? 30_000)
+const maxAttempts = Number(process.env.NPM_PUBLISH_RETRIES ?? 15)
+const onlyMissing = (process.env.BUGBEE_ONLY_MISSING ?? "1") === "1"
+const initialCooldownMs = Number(process.env.NPM_PUBLISH_COOLDOWN_MS ?? 60_000)
 const root = path.resolve(fileURLToPath(new URL("../../..", import.meta.url)))
 const work = path.join(root, "packages/bugbee/dist/remaining-publish")
 const base = `https://github.com/neuralbroker/bugbee/releases/download/v${version}`
@@ -233,10 +235,19 @@ async function ensureMeta(deps: Record<string, string>) {
 
 await $`rm -rf ${work}`
 await $`mkdir -p ${work}`
-console.log("publish-remaining", { version, delayMs, maxAttempts })
+console.log("publish-remaining", { version, delayMs, maxAttempts, onlyMissing, initialCooldownMs })
+
+if (initialCooldownMs > 0) {
+  console.log(`cooldown ${initialCooldownMs}ms before publishing...`)
+  await sleep(initialCooldownMs)
+}
 
 const failures: string[] = []
 for (const p of platforms) {
+  if (onlyMissing && (await published(p.name))) {
+    console.log(`skip present: ${p.name}@${version}`)
+    continue
+  }
   try {
     await publishPlatform(p)
   } catch (error) {

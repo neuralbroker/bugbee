@@ -40,8 +40,10 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           BUGBEE_VERSION: ${{ inputs.version }}
-          NPM_PUBLISH_DELAY_MS: "20000"
-          NPM_PUBLISH_RETRIES: "12"
+          BUGBEE_ONLY_MISSING: "1"
+          NPM_PUBLISH_COOLDOWN_MS: "120000"
+          NPM_PUBLISH_DELAY_MS: "45000"
+          NPM_PUBLISH_RETRIES: "20"
         run: |
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
             echo "NPM_TOKEN secret is not set"
