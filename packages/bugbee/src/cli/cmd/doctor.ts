@@ -191,6 +191,6 @@ export const DoctorCommand = cmd({
       return
     }
     UI.println(UI.Style.TEXT_SUCCESS_BOLD + "All checks passed." + UI.Style.TEXT_NORMAL)
-    UI.println("Next: ./bin/bugbee   or   bun run dev")
+    UI.println("Next: run bugbee in a project, then use /doctor for readiness and /init for project guidance.")
   },
 })
