@@ -1,50 +1,38 @@
-## Usage
+# @bugbee-ai/app
 
-Dependencies for these templates are managed with [pnpm](https://pnpm.io) using `pnpm up -Lri`.
+The browser application for Bugbee. It connects to a Bugbee server and provides the visual
+workspace for sessions, diffs, permissions, terminals, settings, and project navigation.
 
-This is the reason you see a `pnpm-lock.yaml`. That said, any package manager will work. This file can safely be removed once you clone a template.
+The app is also consumed by the Electron desktop package, so shared UI and session behavior
+belongs here while desktop-only concerns stay in `packages/desktop`.
+
+## Development
+
+Run from this package directory:
 
 ```bash
-$ npm install # or pnpm install or yarn install
+bun run dev
 ```
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+The Vite app uses its configured local port. A Bugbee backend is expected at `localhost:4096`
+unless overridden by the app's server settings.
 
-## Available Scripts
+## Build and test
 
-In the project directory, you can run:
+```bash
+bun run build
+bun run test
+```
 
-### `npm run dev` or `npm start`
-
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.<br>
-
-### `npm run build`
-
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## E2E Testing
-
-Playwright starts the Vite dev server automatically via `webServer`, and UI tests expect an bugbee backend at `localhost:4096` by default.
+Browser tests use Playwright:
 
 ```bash
 bunx playwright install chromium
 bun run test:e2e:local
-bun run test:e2e:local -- --grep "settings"
+bun run test:e2e:local -- --grep settings
 ```
 
-Environment options:
+The backend and frontend ports can be configured with `PLAYWRIGHT_SERVER_HOST`,
+`PLAYWRIGHT_SERVER_PORT`, `PLAYWRIGHT_PORT`, and `PLAYWRIGHT_BASE_URL`.
 
-- `PLAYWRIGHT_SERVER_HOST` / `PLAYWRIGHT_SERVER_PORT` (backend address, default: `localhost:4096`)
-- `PLAYWRIGHT_PORT` (Vite dev server port, default: `3000`)
-- `PLAYWRIGHT_BASE_URL` (override base URL, default: `http://localhost:<PLAYWRIGHT_PORT>`)
-
-## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+Type checking is run from the repository root with `bun typecheck`.

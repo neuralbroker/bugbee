@@ -1,5 +1,5 @@
 <p align="center">
-  <strong>Bugbee</strong> — the open source AI coding agent
+  <strong>Bugbee</strong> — AI engineering with a paper trail
 </p>
 
 <p align="center">
@@ -9,7 +9,11 @@
 
 # Bugbee
 
-Bugbee is an **AI coding agent** for the terminal, desktop, and IDE.
+Bugbee is an open-source AI engineering agent for the terminal, desktop, IDE, and API.
+It keeps work durable, makes autonomy visible, and gives every change a reviewable trail.
+
+Bugbee is built for developers who want an agent that can act across a real repository
+without losing project context, tool history, permissions, or verification state.
 
 Bugbee is published under the MIT License. See [LICENSE](./LICENSE) for details.
 
@@ -40,6 +44,23 @@ Then run:
 bugbee
 bugbee doctor
 ```
+
+For a guided readiness check inside a session, use:
+
+```bash
+bugbee
+> /doctor
+```
+
+From a project directory, your first task can be as simple as:
+
+```bash
+bugbee
+```
+
+Bugbee will check the project, configuration, and providers before you begin. Use
+`bugbee doctor` for the offline installation check, or `/init` inside a session to create
+project-specific `AGENTS.md` guidance.
 
 ### From source
 
@@ -98,6 +119,9 @@ Optional agent-loop controls (see [docs/SUPERHARNESS.md](./docs/SUPERHARNESS.md)
 - **trace** — appends tool steps to `.bugbee/harness/trace.jsonl`  
 - **review** agent — read-only subagent for adversarial review  
 
+These controls make Bugbee useful for longer-running engineering work: sessions can resume,
+project memory can persist, edits can be verified, and agent activity can be inspected.
+
 ```bash
 ./bin/bugbee doctor
 ./bin/bugbee agent list   # includes review
@@ -113,10 +137,12 @@ Optional agent-loop controls (see [docs/SUPERHARNESS.md](./docs/SUPERHARNESS.md)
 
 | Package | Role |
 |---------|------|
-| `packages/bugbee` | CLI + agent entry |
-| `packages/core` | Runtime, providers, plugins |
-| `packages/app` / `desktop` / `tui` | UI shells |
-| `packages/sdk` / `schema` / `plugin` | APIs & plugins |
+| `packages/bugbee` / `packages/cli` | CLI and agent entry points |
+| `packages/core` / `packages/server` | Durable runtime, providers, tools, and HTTP server |
+| `packages/app` / `packages/desktop` / `packages/tui` | Web, desktop, and terminal clients |
+| `packages/schema` / `packages/protocol` / `packages/client` | Shared contracts and generated clients |
+| `packages/plugin` / `packages/codemode` | Extensions and confined tool orchestration |
+| `packages/sdk` / `packages/sdk-next` | Embedded and programmatic Bugbee hosts |
 
 ## Develop
 
@@ -171,6 +197,17 @@ bugbee doctor
 - [AGENTS.md](./AGENTS.md) — repo conventions
 - [CONTRIBUTING.md](./CONTRIBUTING.md)
 - [SECURITY.md](./SECURITY.md)
+
+## Product direction
+
+Bugbee's core product is the durable engineering run: an objective, the agent actions it
+took, the permissions it received, the files and commands it touched, and the verification
+that followed. The terminal is the primary interface, but the same run can be consumed from
+the desktop app, IDE integrations, shared web views, Slack, or the SDK.
+
+The project favors controlled autonomy over opaque automation. See [CONTEXT.md](./CONTEXT.md)
+for the session model and [docs/SUPERHARNESS.md](./docs/SUPERHARNESS.md) for agent-loop
+controls.
 
 ## License
 
