@@ -6,6 +6,7 @@ import { ConsoleCommand } from "./cli/cmd/account"
 import { ProvidersCommand } from "./cli/cmd/providers"
 import { AgentCommand } from "./cli/cmd/agent"
 import { DoctorCommand } from "./cli/cmd/doctor"
+import { SetupCommand } from "./cli/cmd/setup"
 import { UpgradeCommand } from "./cli/cmd/upgrade"
 import { UninstallCommand } from "./cli/cmd/uninstall"
 import { ModelsCommand } from "./cli/cmd/models"
@@ -90,6 +91,7 @@ const cli = yargs(args)
   .command(ProvidersCommand)
   .command(AgentCommand)
   .command(DoctorCommand)
+  .command(SetupCommand)
   .command(UpgradeCommand)
   .command(UninstallCommand)
   .command(ServeCommand)

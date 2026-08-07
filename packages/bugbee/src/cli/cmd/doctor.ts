@@ -15,20 +15,15 @@ type Check = {
   detail: string
 }
 
+export type DoctorArgs = {
+  readonly json?: boolean
+}
+
 /**
  * Bugbee readiness check.
  * Offline, no LLM required — validates install identity, paths, and config surface.
  */
-export const DoctorCommand = cmd({
-  command: "doctor",
-  describe: "check Bugbee install health (paths, config, branding)",
-  builder: (yargs) =>
-    yargs.option("json", {
-      type: "boolean",
-      default: false,
-      describe: "machine-readable output",
-    }),
-  handler: async (args) => {
+export const runDoctor = async (args: DoctorArgs) => {
     const checks: Check[] = []
 
     checks.push({
@@ -192,5 +187,16 @@ export const DoctorCommand = cmd({
     }
     UI.println(UI.Style.TEXT_SUCCESS_BOLD + "All checks passed." + UI.Style.TEXT_NORMAL)
     UI.println("Next: run bugbee in a project, then use /doctor for readiness and /init for project guidance.")
-  },
+}
+
+export const DoctorCommand = cmd({
+  command: "doctor",
+  describe: "check Bugbee install health (paths, config, branding)",
+  builder: (yargs) =>
+    yargs.option("json", {
+      type: "boolean",
+      default: false,
+      describe: "machine-readable output",
+    }),
+  handler: runDoctor,
 })
