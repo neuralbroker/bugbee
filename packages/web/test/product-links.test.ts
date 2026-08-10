@@ -13,3 +13,13 @@ test("documentation auth links use the canonical Bugbee product URL", async () =
 
   expect(invalid).toEqual([])
 })
+
+test("CLI documentation covers the guided setup flow", async () => {
+  const content = await Bun.file(new URL("../src/content/docs/cli.mdx", import.meta.url)).text()
+
+  expect(content).toContain("### setup")
+  expect(content).toContain("bugbee setup --json")
+  expect(content).toContain("/connect")
+  expect(content).toContain("/doctor")
+  expect(content).toContain("/init")
+})

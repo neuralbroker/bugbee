@@ -52,6 +52,31 @@ The Bugbee CLI also has the following commands.
 
 ---
 
+### setup
+
+Check local readiness and print the recommended first steps for using Bugbee in a project.
+
+```bash
+bugbee setup
+```
+
+This runs the same offline checks as `bugbee doctor`, then guides you through:
+
+1. Starting Bugbee from your project directory
+2. Connecting a model provider with `/connect`
+3. Rechecking readiness with `/doctor`
+4. Generating project-specific guidance with `/init`
+
+Use `--json` when another tool needs machine-readable readiness results:
+
+```bash
+bugbee setup --json
+```
+
+Setup does not call an LLM or modify project files. The `/init` step is the one that can create or update the project `AGENTS.md` file.
+
+---
+
 ### agent
 
 Manage agents for Bugbee.
