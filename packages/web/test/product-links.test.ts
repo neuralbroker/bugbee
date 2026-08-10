@@ -21,6 +21,7 @@ test("CLI documentation covers the guided setup flow", async () => {
   expect(content).toContain("### doctor")
   expect(content).toContain("bugbee setup --json")
   expect(content).toContain("bugbee doctor --json")
+  expect(content).toContain("bugbee providers [command]")
   expect(content).toContain("/connect")
   expect(content).toContain("/doctor")
   expect(content).toContain("/init")
