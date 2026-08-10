@@ -77,6 +77,24 @@ Setup does not call an LLM or modify project files. The `/init` step is the one 
 
 ---
 
+### doctor
+
+Check the local Bugbee installation, configuration paths, and harness readiness.
+
+```bash
+bugbee doctor
+```
+
+The command reports each check in a human-readable format and exits with a failure status when a check fails. Use `--json` for automation or CI integrations:
+
+```bash
+bugbee doctor --json
+```
+
+The JSON output includes the installation version, overall `ok` status, and the individual checks.
+
+---
+
 ### agent
 
 Manage agents for Bugbee.

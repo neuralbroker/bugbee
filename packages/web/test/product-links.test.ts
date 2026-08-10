@@ -18,7 +18,9 @@ test("CLI documentation covers the guided setup flow", async () => {
   const content = await Bun.file(new URL("../src/content/docs/cli.mdx", import.meta.url)).text()
 
   expect(content).toContain("### setup")
+  expect(content).toContain("### doctor")
   expect(content).toContain("bugbee setup --json")
+  expect(content).toContain("bugbee doctor --json")
   expect(content).toContain("/connect")
   expect(content).toContain("/doctor")
   expect(content).toContain("/init")
