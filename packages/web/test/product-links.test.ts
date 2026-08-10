@@ -25,6 +25,8 @@ test("CLI documentation covers the guided setup flow", async () => {
   expect(content).toContain("/connect")
   expect(content).toContain("/doctor")
   expect(content).toContain("/init")
+  expect(content).toContain("https://opncd.ai/share/abc123")
+  expect(content).not.toContain("https://opncd.ai/s/abc123")
 })
 
 test("getting started documentation points to guided setup", async () => {
