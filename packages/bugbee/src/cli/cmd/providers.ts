@@ -464,7 +464,7 @@ export const ProvidersLoginCommand = effectCmd({
     }
 
     if (provider === "bugbee") {
-      yield* Prompt.log.info("Create an api key at https://github.com/neuralbroker/bugbee/auth")
+      yield* Prompt.log.info("Create an api key at https://bugbee.dev/auth")
     }
 
     if (provider === "vercel") {
