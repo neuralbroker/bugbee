@@ -23,3 +23,10 @@ test("CLI documentation covers the guided setup flow", async () => {
   expect(content).toContain("/doctor")
   expect(content).toContain("/init")
 })
+
+test("getting started documentation points to guided setup", async () => {
+  const content = await Bun.file(new URL("../src/content/docs/index.mdx", import.meta.url)).text()
+
+  expect(content).toContain("bugbee setup")
+  expect(content).toContain("checks your local installation")
+})
