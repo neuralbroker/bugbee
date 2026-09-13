@@ -9,6 +9,10 @@
 
 # Bugbee
 
+> **Attribution:** Bugbee is derived from [anomalyco/opencode](https://github.com/anomalyco/opencode) (itself from the `sst/opencode` lineage) under MIT — see [NOTICE](./NOTICE). The original contribution in this repo is the **Superharness** verification/memory layer (`packages/bugbee/src/harness/`, [docs/SUPERHARNESS.md](./docs/SUPERHARNESS.md)): `max_steps` caps, verify-after-mutate commands, `.bugbee/memory` context loading, `trace.jsonl`, and a read-only review agent. Upstream SST/TUI/Electron packages are carried over, not original work.
+
+**AI developer infrastructure for coding, tool execution, persistent project context and verification workflows.**
+
 Bugbee is an open-source AI engineering agent for the terminal, desktop, IDE, and API.
 It keeps work durable, makes autonomy visible, and gives every change a reviewable trail.
 
