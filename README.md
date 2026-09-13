@@ -1,218 +1,84 @@
-<p align="center">
-  <strong>Bugbee</strong> — AI engineering with a paper trail
-</p>
-
-<p align="center">
-  <a href="https://github.com/neuralbroker/bugbee"><img alt="GitHub" src="https://img.shields.io/badge/github-neuralbroker%2Fbugbee-blue?style=flat-square" /></a>
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-green?style=flat-square" />
-</p>
-
 # Bugbee
 
-> **Attribution:** Bugbee is derived from [anomalyco/opencode](https://github.com/anomalyco/opencode) (itself from the `sst/opencode` lineage) under MIT — see [NOTICE](./NOTICE). The original contribution in this repo is the **Superharness** verification/memory layer (`packages/bugbee/src/harness/`, [docs/SUPERHARNESS.md](./docs/SUPERHARNESS.md)): `max_steps` caps, verify-after-mutate commands, `.bugbee/memory` context loading, `trace.jsonl`, and a read-only review agent. Upstream SST/TUI/Electron packages are carried over, not original work.
+> **Attribution:** derived from [anomalyco/opencode](https://github.com/anomalyco/opencode) (`sst/opencode` lineage) under MIT — see [NOTICE](./NOTICE). Original work here is the **Superharness** layer (`packages/bugbee/src/harness/`, `docs/SUPERHARNESS.md`). Upstream packages are carried over, not original.
 
-**AI developer infrastructure for coding, tool execution, persistent project context and verification workflows.**
+AI coding agent with durable runs and a reviewable trail.
 
-Bugbee is an open-source AI engineering agent for the terminal, desktop, IDE, and API.
-It keeps work durable, makes autonomy visible, and gives every change a reviewable trail.
+## Problem
 
-Bugbee is built for developers who want an agent that can act across a real repository
-without losing project context, tool history, permissions, or verification state.
+Agents lose project context, tool history, permissions, and verification state across real-repo work.
 
-Bugbee is published under the MIT License. See [LICENSE](./LICENSE) for details.
+## Solution
 
-## Install
+A permission-scoped agent loop with explicit state and opt-in verification:
 
-**Install script (recommended):**
-
-```bash
-curl -fsSL https://github.com/neuralbroker/bugbee/install | bash
+```text
+User
+ ↓
+Agent (build/plan/review)
+ ↓
+Tools (edit/write/bash/read/glob/grep/web)
+ ↓
+Execution (admit → drain → provider turn)
+ ↓
+Verification (verify-after-mutate + doctor)
+ ↓
+Project Context (memory + trace + compaction)
 ```
 
-**Package managers:**
+## Architecture
 
-```bash
-npm install -g @neuralbroker/bugbee
-# or: bun install -g @neuralbroker/bugbee
-# or: pnpm install -g @neuralbroker/bugbee
-# or: brew install neuralbroker/tap/bugbee
-```
+1. **Agent:** `build` (full tools), `plan` (docs-only edits), `review` (read-only). Steps capped (`max_steps` 80).
+2. **Tools:** confined filesystem/code/web set gated by `allow/ask/deny`.
+3. **State:** prompt admission + process-local drain; `.bugbee/memory/*.md` loaded as instructions; compaction starts a new epoch.
+4. **Verify:** `harness.verify.commands` (e.g. `bun test`) run after mutations; `trace.jsonl` appended; `bugbee doctor` for offline health.
 
-> **Note:** The bare npm name `bugbee` is blocked by npm’s typo-squatting rules
-> (too similar to an existing package). The CLI package is **`@neuralbroker/bugbee`**;
-> the installed command is still **`bugbee`**.
+Details: `docs/SUPERHARNESS.md`, `CONTEXT.md`, `AGENTS.md`.
 
-Then run:
+## Key Engineering Decisions
 
-```bash
-bugbee
-bugbee doctor
-```
+1. Permission-scoped modes over one omnipotent agent.
+2. Explicit admission/drain semantics over implicit concurrency.
+3. File-based memory + trace over hidden state.
+4. Opt-in post-mutation verification over blocking gates.
 
-For a guided readiness check inside a session, use:
+## Tech Stack
 
-```bash
-bugbee
-> /doctor
-```
+TypeScript · Bun · SQLite (Drizzle) · Effect
 
-From a project directory, your first task can be as simple as:
+## Features
 
-```bash
-bugbee
-```
+1. Terminal/TUI/desktop/IDE/API surfaces
+2. Permission-scoped agent modes
+3. Tool registry with output bounding
+4. Durable session/message/part/todo tables
+5. Memory + trace + compaction epochs
+6. Verify-after-mutate + doctor checks
 
-Bugbee will check the project, configuration, and providers before you begin. Use
-`bugbee doctor` for the offline installation check, or `/init` inside a session to create
-project-specific `AGENTS.md` guidance.
-
-### From source
-
-**Requirements:** [Bun](https://bun.sh) 1.3+
-
-```bash
-git clone https://github.com/neuralbroker/bugbee.git
-cd bugbee
-bun install --ignore-scripts
-
-# CLI / TUI (must use packages/bugbee cwd for OpenTUI JSX preload)
-bun run dev
-# or
-./bin/bugbee
-# or
-bun run --cwd packages/bugbee --conditions=browser src/index.ts
-```
-
-```bash
-./bin/bugbee doctor
-./bin/bugbee --help
-./bin/bugbee agent list
-./bin/bugbee providers
-```
-
-## Themes
-
-Default theme is `bugbee`. Transparent terminal background:
-
-```jsonc
-// tui.json / ~/.config/bugbee/tui.json
-{ "theme": "transparent" }
-```
-
-## Superharness
-
-Optional agent-loop controls (see [docs/SUPERHARNESS.md](./docs/SUPERHARNESS.md)):
-
-```jsonc
-// bugbee.jsonc
-{
-  "harness": {
-    "max_steps": 80,
-    "memory": { "enabled": true },
-    "verify": {
-      "enabled": true,
-      "commands": ["bun test"]
-    },
-    "trace": { "enabled": true }
-  }
-}
-```
-
-- **memory** — loads `.bugbee/memory/*.md` into context  
-- **verify** — runs commands after edit/write/apply_patch (opt-in)  
-- **trace** — appends tool steps to `.bugbee/harness/trace.jsonl`  
-- **review** agent — read-only subagent for adversarial review  
-
-These controls make Bugbee useful for longer-running engineering work: sessions can resume,
-project memory can persist, edits can be verified, and agent activity can be inspected.
-
-```bash
-./bin/bugbee doctor
-./bin/bugbee agent list   # includes review
-```
-
-## Config
-
-- Project: `bugbee.json` / `bugbee.jsonc` and `.bugbee/`
-- Global: `~/.config/bugbee`
-- Environment: `BUGBEE_*` (see `packages/core/src/flag/flag.ts`)
-
-## Packages
-
-| Package | Role |
-|---------|------|
-| `packages/bugbee` / `packages/cli` | CLI and agent entry points |
-| `packages/core` / `packages/server` | Durable runtime, providers, tools, and HTTP server |
-| `packages/app` / `packages/desktop` / `packages/tui` | Web, desktop, and terminal clients |
-| `packages/schema` / `packages/protocol` / `packages/client` | Shared contracts and generated clients |
-| `packages/plugin` / `packages/codemode` | Extensions and confined tool orchestration |
-| `packages/sdk` / `packages/sdk-next` | Embedded and programmatic Bugbee hosts |
-
-## Develop
+## Running Locally
 
 ```bash
 bun install --ignore-scripts
-bun run dev
-bun run --cwd packages/bugbee test
+bun run dev            # or ./bin/bugbee
+./bin/bugbee doctor
 ```
 
-## Maintainers: cut a public release
+Requires Bun 1.3+.
 
-Global users install **your** builds from GitHub Releases + npm (`bugbee`).
-
-### One-time setup
-
-1. Create an [npm](https://www.npmjs.com) account (2FA recommended).
-2. Create an npm **Automation** token (Access Tokens).
-3. Add it to this repo:
+## Testing
 
 ```bash
-gh secret set NPM_TOKEN -R neuralbroker/bugbee
+bun test --timeout 30000   # 600+ tests across packages (upstream + harness)
 ```
 
-4. Ensure GitHub Actions are enabled for the repo.
+## Performance
 
-### Publish CLI (npm + curl install assets)
+No published agent benchmarks in this repo. Do not cite success-rate/latency numbers.
 
-```bash
-gh workflow run release-cli.yml -R neuralbroker/bugbee -f version=1.0.0
-```
+## Limitations
 
-This builds platform binaries, attaches them to `v1.0.0`, and runs `npm publish` for `@neuralbroker/bugbee` plus platform packages (`bugbee-linux-x64`, …).
+Monorepo carries full upstream SST/TUI/Electron/Nix surface; single squashed import (no upstream sync); verification is opt-in (`enabled: false` by default); drains are process-local (no clustering).
 
-After it finishes:
+## Future Improvements
 
-```bash
-# anyone on the internet
-curl -fsSL https://github.com/neuralbroker/bugbee/install | bash
-npm install -g @neuralbroker/bugbee
-bugbee --version
-bugbee doctor
-```
-
-### Notes
-
-- npm meta package is **`@neuralbroker/bugbee`** (bare `bugbee` is blocked by npm).
-- Homebrew / Scoop / Chocolatey / AUR are optional later; they should point at the same GitHub Release assets.
-- The full `publish.yml` workflow is for desktop + signing + extras and needs more secrets/runners.
-
-## Docs for contributors
-
-- [AGENTS.md](./AGENTS.md) — repo conventions
-- [CONTRIBUTING.md](./CONTRIBUTING.md)
-- [SECURITY.md](./SECURITY.md)
-
-## Product direction
-
-Bugbee's core product is the durable engineering run: an objective, the agent actions it
-took, the permissions it received, the files and commands it touched, and the verification
-that followed. The terminal is the primary interface, but the same run can be consumed from
-the desktop app, IDE integrations, shared web views, Slack, or the SDK.
-
-The project favors controlled autonomy over opaque automation. See [CONTEXT.md](./CONTEXT.md)
-for the session model and [docs/SUPERHARNESS.md](./docs/SUPERHARNESS.md) for agent-loop
-controls.
-
-## License
-
-MIT. See [LICENSE](./LICENSE) for details.
+Extract Superharness as a standalone plugin with eval fixtures; move release runbook out of README; add `docs/ARCHITECTURE.md` + `docs/CONFIG.md`; publish agent success/verify metrics only after measurement.
