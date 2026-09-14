@@ -81,4 +81,4 @@ Monorepo carries full upstream SST/TUI/Electron/Nix surface; single squashed imp
 
 ## Future Improvements
 
-Extract Superharness as a standalone plugin with eval fixtures; move release runbook out of README; add `docs/ARCHITECTURE.md` + `docs/CONFIG.md`; publish agent success/verify metrics only after measurement.
+Extract Superharness as a standalone plugin with eval fixtures; publish agent success/verify metrics only after measurement. Details: `docs/ARCHITECTURE.md`, `docs/CONFIG.md`, `docs/SUPERHARNESS.md`.
